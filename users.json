@@ -1,0 +1,23 @@
+{
+    "islam.admin": {
+        "password_hash": "$2y$10$klc9SwRvb9FWGFNFk2cpoO475p5vn6sCoDjUhd75XadMw4nbPzsHy",
+        "name": "Islam Elbaz",
+        "role": "admin",
+        "active": true,
+        "created": "2026-04-09"
+    },
+    "eunoia.sales": {
+        "password_hash": "$2y$10$avlxQ.oYh9kk5\/pHMn1cOeH39LA.8OvEO38Ubo.Ss6eNfJpQ67BVW",
+        "name": "Sales Team",
+        "role": "sales",
+        "active": true,
+        "created": "2026-04-09"
+    },
+    "eunoia.viewer": {
+        "password_hash": "$2y$10$urIF0eUq3.8\/p\/vnPJrHUOShTUJtS44vpAhagX42HJ7vfimTwTTQe",
+        "name": "Viewer",
+        "role": "viewer",
+        "active": true,
+        "created": "2026-04-09"
+    }
+}
