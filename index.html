@@ -1180,12 +1180,22 @@ async function callAPI(prompt, reportType, attempt=1) {
       })
     });
     if (res.status === 524 || res.status === 522 || res.status === 504) throw new Error('timeout');
-    if (!res.ok) throw new Error('API error ' + res.status);
+    if (!res.ok) {
+      const errData = await res.json().catch(()=>({}));
+      const errMsg = errData.error || errData.message || 'API error ' + res.status;
+      throw new Error(errMsg);
+    }
     return res.json();
   } catch(e) {
     if (attempt < 2 && (e.message==='timeout' || e.message.includes('fetch'))) {
       await new Promise(r=>setTimeout(r,2000));
       return callAPI(prompt, reportType, attempt+1);
+    }
+    if (attempt === 1 && (e.message.includes('rate_limit') || e.message.includes('Rate limit') || e.message.includes('429'))) {
+      const statusEl = document.getElementById('status-txt') || document.getElementById('multi-progress-txt');
+      if (statusEl) statusEl.textContent = '⏳ Rate limit reached — retrying in 30s...';
+      await new Promise(r => setTimeout(r, 30000));
+      return callAPI(prompt, reportType, 2);
     }
     throw e;
   }
@@ -1253,6 +1263,15 @@ async function runSingleReport(rt,ctx){
   document.getElementById('status-bar').classList.remove('show');
 }
 
+async function showMultiCountdown(totalMs, nextLabel) {
+  const txtEl = document.getElementById('multi-progress-txt');
+  const steps = Math.ceil(totalMs / 1000);
+  for (let s = steps; s > 0; s--) {
+    if (txtEl) txtEl.textContent = `⏳ ${currentLang==='ar'?'التقرير التالي':'Next report'}: ${nextLabel} — ${currentLang==='ar'?'في':'in'} ${s}s...`;
+    await new Promise(r => setTimeout(r, 1000));
+  }
+}
+
 async function runMultiReport(rtypes,ctx){
   const ICONS={preliminary:'📋',detailed:'📊',full:'🎯',competitor:'🔍',campaign:'📈',content:'✍️',brand:'🏆',clv:'💎',executive:'📋',sentiment:'💬',trend:'📡',crisis:'🚨',pricing:'💲',social_audit:'📱',lead_quality:'🎯',market_entry:'🚀',ecommerce_growth:'🛒',media_mix:'📡',seasonal:'📅',customer_journey:'🗺️',annual_budget:'💰',rebranding:'🔄',b2b_strategy:'🤝',product_launch:'🚀',digital_readiness:'💻',influencer:'⭐'};
   document.getElementById('status-bar').classList.remove('show');
@@ -1270,10 +1289,11 @@ async function runMultiReport(rtypes,ctx){
   const searchTypes=['sentiment','trend','competitor','brand'];
   for(let i=0;i<rtypes.length;i++){
     const rt=rtypes[i];
-    document.getElementById('multi-progress-txt').textContent=`${i+1}/${rtypes.length} — ${currentLang==='ar'?'جاري توليد':'Generating'} ${RTYPES[rt]}...`;
+    const label=`${ICONS[rt]||''} ${RTYPES[rt]||rt}`;
+    const progressTxt=document.getElementById('multi-progress-txt');
+    if(progressTxt) progressTxt.textContent=`🔄 ${i+1}/${rtypes.length}: ${label} — ${currentLang==='ar'?'جاري التوليد':'Generating'}...`;
     const tab=document.getElementById('rtab-'+rt);
-    if(tab)tab.classList.add('loading');
-    const useSearch=can('web_search')&&searchTypes.includes(rt);
+    if(tab){tab.classList.remove('done','error');tab.classList.add('loading');}
     const prompt=buildPrompt(rt,ctx);
     try{
       const data=await callAPI(prompt, rt);
@@ -1293,10 +1313,17 @@ async function runMultiReport(rtypes,ctx){
       renderAny(rt,r,ctx,panel);
       saveHistory(r,ctx);
       if(tab){tab.classList.remove('loading');tab.classList.add('done');}
+      if(progressTxt) progressTxt.textContent=`✅ ${i+1}/${rtypes.length}: ${label} — ${currentLang==='ar'?'تم':'Done'}`;
     }catch(err){
       const panel=document.getElementById('rpanel-'+rt);
       if(panel)panel.innerHTML=`<div style="padding:20px;color:var(--red);background:var(--red-light);border-radius:8px;margin:16px">❌ خطأ في توليد ${RTYPES[rt]}: ${err.message}</div>`;
       if(tab){tab.classList.remove('loading');tab.classList.add('error');}
+      if(progressTxt) progressTxt.textContent=`❌ ${i+1}/${rtypes.length}: ${label} — ${currentLang==='ar'?'خطأ':'Error'}: ${err.message}`;
+    }
+    if(i < rtypes.length - 1){
+      const nextRt=rtypes[i+1];
+      const nextLabel=`${ICONS[nextRt]||''} ${RTYPES[nextRt]||nextRt}`;
+      await showMultiCountdown(20000, nextLabel);
     }
   }
   switchReportTab(rtypes[0]);
