@@ -1020,9 +1020,24 @@ function buildPrompt(d) {
   const riskWeightsStr = Object.entries(sec.risk_weights)
     .map(([k, v]) => k + ' ' + v + '%').join(', ');
 
-  const prompt = 'You are a senior financial analyst, investment consultant, and market researcher specializing in Egypt and GCC markets (2025-2026). Deep knowledge of Egypt economics: 25%+ inflation, EGP impact, rising costs, digital economy growth.\n'
-    + 'Generate a rigorous, realistic feasibility study with actual calculations based on the data provided.\n'
+  const EGYPT_MACRO_2025 = '\u2550\u2550\u2550 EGYPT MACROECONOMIC CONTEXT 2025 \u2550\u2550\u2550\n'
+    + 'CBE Overnight Deposit Rate: 27.25% | Lending: 28.25% \u2014 use as risk-free rate for WACC\n'
+    + 'Official CPI Inflation: 33.8% YoY (April 2025) \u2014 apply to ALL costs every year\n'
+    + 'USD/EGP Exchange Rate: ~49.5 EGP \u2014 apply to any USD-priced inputs (imported equipment, raw materials)\n'
+    + 'GDP Growth: 3.8% FY2025 | Consumer confidence: recovering but cautious\n'
+    + 'Construction costs 2025: basic finishing EGP 4,500-6,000/sqm | medium EGP 7,000-9,500/sqm | premium EGP 11,000-16,000/sqm\n'
+    + 'Construction costs by city: New Cairo +35%, Sheikh Zayed +30%, Cairo center benchmark, 6 Oct -10%, Provinces -20%\n'
+    + 'SALARY BENCHMARKS 2025 (EGP/month net): Receptionist 4,000-6,500 | Cashier 4,500-7,000 | Sales rep 5,000-9,000+commission | Technician 6,000-12,000 | Accountant 8,000-15,000 | Doctor/Specialist 15,000-35,000 | Manager 12,000-25,000 | Senior Manager 20,000-45,000\n'
+    + 'Digital ad costs 2025: Meta CPM +40% vs 2023 in EGP terms | Google CPC +35% | TikTok +50% | Factor into monthly marketing budget\n'
+    + 'Rent 2025: New Cairo/Sheikh Zayed commercial EGP 600-1,200/sqm/year | Cairo center EGP 800-1,500/sqm/year | 6 Oct EGP 350-600/sqm/year | Provinces EGP 200-450/sqm/year\n'
+    + 'Minimum WACC recommendation: CBE rate (27.25%) + risk premium (5-10%) = 32-37% for equity-only projects\n'
+    + '\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550';
+
+  const prompt = 'You are a senior financial analyst, investment consultant, and market researcher specializing in Egypt and GCC markets (2025-2026).\n'
+    + 'Generate a rigorous, realistic feasibility study with ACTUAL CALCULATIONS based on the data provided.\n'
     + 'Language: Arabic for all text fields, numbers in EGP.\n\n'
+    + '\u2550\u2550 EGYPT MACROECONOMIC CONTEXT 2025 \u2550\u2550\n'
+    + EGYPT_MACRO_2025 + '\n\n'
     + '\u2550\u2550 PROJECT PROFILE \u2550\u2550\n'
     + 'Name: ' + d.name + ' | Sector: ' + d.sector_name + ' (' + d.sector_sub + ')\n'
     + 'Location: ' + d.location + (d.area ? ' | Area: ' + d.area + ' m2' : '') + '\n'
@@ -1033,12 +1048,11 @@ function buildPrompt(d) {
     + '\u2550\u2550 FINANCIAL PARAMETERS \u2550\u2550\n'
     + 'Capital: ' + d.capital + ' EGP\n'
     + 'Funding: ' + d.funding + (d.loan_pct ? ' \u2014 Loan: ' + d.loan_pct + '%' : '') + '\n'
-    + 'WACC/Discount Rate: ' + d.discount + '%\n'
+    + 'WACC/Discount Rate: ' + d.discount + '% (IMPORTANT: minimum recommended is 32% per CBE 27.25% + 5% risk premium)\n'
     + 'Study Period: ' + d.years + ' years\n'
     + 'Revenue Growth/Year: ' + d.growth + '%\n'
-    + 'Inflation Rate: ' + d.inflation + '% (apply to costs each year)\n'
+    + 'Inflation Rate: ' + d.inflation + '% \u2014 APPLY TO EVERY COST LINE EVERY YEAR (salaries, rent, utilities, materials, marketing)\n'
     + 'Income Tax: ' + d.tax + '%\n'
-    + 'EGYPT 2025 ECONOMICS: Inflation ~25%/yr (apply to ALL costs), construction costs +60% vs 2022, salaries +25%/yr, digital ads +40% in EGP terms. Factor into every year of projections.\n'
     + 'Main Competitors: ' + (d.comps || 'Not specified') + '\n'
     + 'Client Concerns: ' + (d.concerns || 'None stated') + '\n\n'
     + '\u2550\u2550 CLIENT-PROVIDED MARKET DATA (actual prices from the market) \u2550\u2550\n'
@@ -1167,7 +1181,15 @@ function buildPrompt(d) {
     + '    "Key assumption 2"\n'
     + '    // List all major assumptions made\n'
     + '  ],\n'
-    + '  "advisor_opinion": "2 sentences from a senior Egyptian investment advisor: should they proceed or not, and why \u2014 be direct and honest"\n'
+    + '  "advisor_opinion": "2 sentences from a senior Egyptian investment advisor: should they proceed or not, and why \u2014 be direct and honest",\n'
+    + '  "monte_carlo_inputs": {\n'
+    + '    "base_monthly_revenue": number,\n'
+    + '    "base_monthly_opex": number,\n'
+    + '    "revenue_volatility_pct": number,\n'
+    + '    "cost_volatility_pct": number,\n'
+    + '    "total_investment": number\n'
+    + '    // Provide base values so client-side Monte Carlo can simulate 1000 scenarios\n'
+    + '  }\n'
     + '}';
 
   return prompt;
@@ -1608,6 +1630,58 @@ function renderReport(r, d) {
         html += '</div></div>';
       });
     }
+    html += '</div></div>';
+  }
+
+  // Monte Carlo Simulation (client-side, 1000 iterations)
+  if (r.monte_carlo_inputs) {
+    var mc = r.monte_carlo_inputs;
+    var mcBaseRev = mc.base_monthly_revenue || (r.kpis && r.kpis.monthly_revenue_y1) || 0;
+    var mcBaseOpex = mc.base_monthly_opex || (r.kpis && r.kpis.monthly_expenses_y1) || 0;
+    var mcRevVol = (mc.revenue_volatility_pct || 25) / 100;
+    var mcCostVol = (mc.cost_volatility_pct || 20) / 100;
+    var mcInvest = mc.total_investment || (r.kpis && r.kpis.total_investment) || parseFloat(d.capital) || 1;
+    var mcYears = parseInt(d.years) || 5;
+    var mcGrowth = ((parseFloat(d.growth) || 15)) / 100;
+    var mcInflation = ((parseFloat(d.inflation) || 33)) / 100;
+    var mcDiscount = ((parseFloat(d.discount) || 30)) / 100;
+    var simResults = [];
+    for (var sim = 0; sim < 1000; sim++) {
+      var npvSim = -mcInvest;
+      var revR = mcBaseRev;
+      var costR = mcBaseOpex;
+      for (var yr = 1; yr <= mcYears; yr++) {
+        var revRand = revR * (1 + (Math.random() * 2 - 1) * mcRevVol);
+        var costRand = costR * (1 + (Math.random() * 2 - 1) * mcCostVol);
+        var netCF = (revRand - costRand) * 12;
+        npvSim += netCF / Math.pow(1 + mcDiscount, yr);
+        revR *= (1 + mcGrowth);
+        costR *= (1 + mcInflation);
+      }
+      simResults.push(npvSim);
+    }
+    simResults.sort(function(a, b) { return a - b; });
+    var probPositive = simResults.filter(function(v) { return v > 0; }).length / 10;
+    var p10 = simResults[99];
+    var p50 = simResults[499];
+    var p90 = simResults[899];
+    var mcColor = probPositive >= 70 ? 'var(--teal)' : probPositive >= 50 ? 'var(--amber)' : 'var(--red)';
+    var mcBg = probPositive >= 70 ? 'var(--teal-light)' : probPositive >= 50 ? 'var(--amber-light)' : 'var(--red-light)';
+    var mcVerdict = probPositive >= 70 ? '\u0627\u062d\u062a\u0645\u0627\u0644\u064a\u0629 \u0646\u062c\u0627\u062d \u0645\u0631\u062a\u0641\u0639\u0629' : probPositive >= 50 ? '\u0646\u062c\u0627\u062d \u0645\u062d\u062a\u0645\u0644 \u0628\u0634\u0631\u0648\u0637' : '\u0645\u062e\u0627\u0637\u0631 \u0639\u0627\u0644\u064a\u0629 \u2014 \u0645\u0631\u0627\u062c\u0639\u0629 \u0645\u0637\u0644\u0648\u0628\u0629';
+    html += '<div class="report-section" style="border:2px solid ' + mcColor + ';border-radius:var(--radius)">';
+    html += '<h3 style="padding:12px 18px;background:' + mcBg + ';margin:0;color:' + mcColor + ';border-radius:var(--radius) var(--radius) 0 0">\ud83c\udfb2 \u0645\u062d\u0627\u0643\u0627\u0629 \u0645\u0648\u0646\u062a \u0643\u0627\u0631\u0644\u0648 \u2014 1,000 \u0633\u064a\u0646\u0627\u0631\u064a\u0648</h3>';
+    html += '<div style="padding:18px;display:grid;gap:12px">';
+    html += '<div style="display:flex;align-items:center;gap:12px">';
+    html += '<div style="font-size:42px;font-weight:900;color:' + mcColor + '">' + Math.round(probPositive) + '%</div>';
+    html += '<div><div style="font-size:14px;font-weight:700;color:' + mcColor + '">' + mcVerdict + '</div>';
+    html += '<div style="font-size:12px;color:var(--muted);margin-top:3px">\u0627\u062d\u062a\u0645\u0627\u0644\u064a\u0629 \u062a\u062d\u0642\u064a\u0642 NPV \u0645\u0648\u062c\u0628 \u0645\u0646 1,000 \u0633\u064a\u0646\u0627\u0631\u064a\u0648 \u0639\u0634\u0648\u0627\u0626\u064a</div></div>';
+    html += '</div>';
+    html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">';
+    html += '<div style="background:var(--red-light);border-radius:var(--radius-sm);padding:12px;text-align:center"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">\u0633\u064a\u0646\u0627\u0631\u064a\u0648 \u0645\u062a\u0634\u0627\u0626\u0645 (P10)</div><div style="font-size:16px;font-weight:700;color:var(--red)">' + fmtN(Math.round(p10)) + ' \u062c</div><div style="font-size:11px;color:var(--muted)">NPV</div></div>';
+    html += '<div style="background:var(--amber-light);border-radius:var(--radius-sm);padding:12px;text-align:center"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">\u0633\u064a\u0646\u0627\u0631\u064a\u0648 \u0645\u062a\u0648\u0633\u0637 (P50)</div><div style="font-size:16px;font-weight:700;color:var(--amber-dark)">' + fmtN(Math.round(p50)) + ' \u062c</div><div style="font-size:11px;color:var(--muted)">NPV</div></div>';
+    html += '<div style="background:var(--teal-light);border-radius:var(--radius-sm);padding:12px;text-align:center"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">\u0633\u064a\u0646\u0627\u0631\u064a\u0648 \u0645\u062a\u0641\u0627\u0626\u0644 (P90)</div><div style="font-size:16px;font-weight:700;color:var(--teal)">' + fmtN(Math.round(p90)) + ' \u062c</div><div style="font-size:11px;color:var(--muted)">NPV</div></div>';
+    html += '</div>';
+    html += '<div style="font-size:11px;color:var(--muted2);background:var(--gray-bg);padding:8px 12px;border-radius:6px">\ud83d\udcca \u0627\u0644\u0645\u062d\u0627\u0643\u0627\u0629 \u062a\u0633\u062a\u062e\u062f\u0645 \u062a\u0642\u0644\u0628 \u0625\u064a\u0631\u0627\u062f\u0627\u062a \u00b1' + Math.round(mcRevVol*100) + '% \u0648\u062a\u0642\u0644\u0628 \u062a\u0643\u0627\u0644\u064a\u0641 \u00b1' + Math.round(mcCostVol*100) + '% \u2014 \u0645\u0639\u062f\u0644 \u0627\u0644\u062e\u0635\u0645 ' + d.discount + '% \u2014 \u0645\u062f\u0629 \u0627\u0644\u062f\u0631\u0627\u0633\u0629 ' + mcYears + ' \u0633\u0646\u0648\u0627\u062a</div>';
     html += '</div></div>';
   }
 

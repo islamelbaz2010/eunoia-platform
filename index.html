@@ -398,7 +398,68 @@ body{font-family:"Segoe UI",Tahoma,Arial,sans-serif;background:var(--cream);colo
   .form-grid{grid-template-columns:1fr}.form-group.full{grid-column:span 1}
   .pain-grid,.why-grid,.charts-row,.kpi-grid{grid-template-columns:1fr}
   .report-tabs{flex-wrap:wrap}
+  .main-wrap{padding:16px 12px 60px}
+  .topbar{padding:0 12px;height:52px}
+  .topbar-user{display:none}
+  .login-box{padding:32px 20px}
+  .level-selector{grid-template-columns:1fr 1fr}
+  .ez-report-header{padding:16px}
+  .report-topbar{padding:12px 16px}
+  .form-card{padding:16px}
+  .rpt-btns{flex-direction:column}
 }
+@media(max-width:400px){
+  .level-selector{grid-template-columns:1fr}
+  .report-tabs{display:none}
+}
+
+/* ── DARK MODE ── */
+[data-theme="dark"]{
+  --cream:#0f0d12;--cream-dark:#1a1720;--gray-bg:#1e1b24;--gray-border:#2e2b38;
+  --gray-text:#9b95a8;--text:#e8e0f0;--white:#1e1b24;
+  --purple:#b07cc8;--purple-mid:#9a5cb5;--purple-light:#2a1f35;
+  --red:#f06080;--red-dark:#d04060;--red-light:#2a1520;
+  --amber:#f5b84a;--amber-dark:#c88520;--amber-light:#2a2010;
+  --teal:#4ab8a0;--teal-light:#0f2520;
+}
+[data-theme="dark"] body{background:#0f0d12;color:var(--text)}
+[data-theme="dark"] .topbar{background:#1a1720;border-bottom:1px solid #2e2b38}
+[data-theme="dark"] .form-card,[data-theme="dark"] .sc,[data-theme="dark"] .main-tabs,
+[data-theme="dark"] .report-tabs,[data-theme="dark"] .report-topbar{background:#1e1b24;border-color:#2e2b38}
+[data-theme="dark"] .login-box{background:#1e1b24;box-shadow:0 32px 80px rgba(0,0,0,.6)}
+[data-theme="dark"] .form-group input,[data-theme="dark"] .form-group select,[data-theme="dark"] .form-group textarea{background:#2a2730;border-color:#3a3748;color:var(--text)}
+[data-theme="dark"] .form-group input:focus,[data-theme="dark"] .form-group select:focus{background:#2e2b3c;border-color:var(--red)}
+[data-theme="dark"] .rtype-menu,[data-theme="dark"] .sector-menu{background:#1e1b24;border-color:#3a3748}
+[data-theme="dark"] .rtype-trigger{background:#2a2730;border-color:#3a3748;color:var(--text)}
+[data-theme="dark"] .kpi-card{background:#2a2730;border-color:#3a3748}
+[data-theme="dark"] .level-card{background:#1e1b24;border-color:#2e2b38}
+[data-theme="dark"] .level-card:hover{background:var(--purple-light);border-color:var(--red)}
+[data-theme="dark"] .leads-table th{background:#2a2730}
+[data-theme="dark"] .leads-table tr:hover td{background:#2a2730}
+[data-theme="dark"] .ez-report-header{background:linear-gradient(135deg,#2a1f35,#1e1b24)}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeSlideIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes pulseBadge{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+.sc{animation:fadeSlideIn .35s ease both}
+.sc:nth-child(1){animation-delay:.04s}.sc:nth-child(2){animation-delay:.08s}
+.sc:nth-child(3){animation-delay:.12s}.sc:nth-child(4){animation-delay:.16s}
+.sc:nth-child(5){animation-delay:.20s}.sc:nth-child(6){animation-delay:.24s}
+.sc:nth-child(7){animation-delay:.28s}.sc:nth-child(8){animation-delay:.32s}
+.report-panel.active{animation:fadeIn .3s ease}
+.ez-report-header{animation:fadeSlideIn .4s ease}
+.gen-btn{position:relative;overflow:hidden}
+.gen-btn::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.15),transparent);transform:translateX(-100%);transition:transform .5s}
+.gen-btn:hover::after{transform:translateX(100%)}
+.kpi-card{transition:transform .15s,box-shadow .15s}
+.kpi-card:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(74,16,66,.12)}
+[data-theme="dark"] .kpi-card:hover{box-shadow:0 4px 12px rgba(0,0,0,.4)}
+.tb-btn{transition:background .15s,transform .1s}
+.tb-btn:active{transform:scale(.96)}
+.level-card{transition:all .2s cubic-bezier(.34,1.56,.64,1)}
+.level-card:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(74,16,66,.15)}
+[data-theme="dark"] .level-card:hover{box-shadow:0 8px 20px rgba(0,0,0,.4)}
 </style>
 </head>
 <body>
@@ -433,6 +494,7 @@ body{font-family:"Segoe UI",Tahoma,Arial,sans-serif;background:var(--cream);colo
       <span class="role-badge" id="role-badge"></span>
       <button class="tb-btn" onclick="window.open('feasibility.html','_blank')" title="دراسة الجدوى" style="background:var(--amber);color:var(--purple)">📊 جدوى</button>
       <button class="tb-btn lang-btn" id="lang-btn" onclick="toggleLang()" title="تبديل اللغة">🌐 EN</button>
+      <button class="tb-btn" id="theme-btn" onclick="toggleTheme()" title="Dark mode" style="font-size:15px;padding:4px 10px">🌙</button>
       <button class="tb-btn admin-btn" id="admin-tab-btn" onclick="switchTab('admin')" style="display:none">⚙️ Admin</button>
       <button class="tb-btn logout" onclick="doLogout()">خروج</button>
     </div>
@@ -782,6 +844,27 @@ const currentCharts=[];
 // ── LANGUAGE — must be at top before any render function uses L() ──
 let currentLang='ar';
 function L(ar, en){ return currentLang==='ar' ? ar : en; }
+
+// ── DARK MODE ──
+function toggleTheme(){
+  const isDark = document.documentElement.getAttribute('data-theme')==='dark';
+  const next = isDark ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('ez_theme', next);
+  const btn = document.getElementById('theme-btn');
+  if (btn) btn.textContent = next === 'dark' ? '☀️' : '🌙';
+}
+(function(){
+  const saved = localStorage.getItem('ez_theme') ||
+    (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  if (saved === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.addEventListener('DOMContentLoaded', function(){
+      const btn = document.getElementById('theme-btn');
+      if (btn) btn.textContent = '☀️';
+    });
+  }
+})();
 
 // ══ BRAND ════════════════════════════════════════════════════════
 const EZ={
@@ -1159,8 +1242,7 @@ async function generateReport(){
 
 
 // ══ API CALL via Cloudflare Worker ═══════════════════════════════
-async function callAPI(prompt, reportType, attempt=1) {
-  // Collect social links for scraping
+async function callAPI(prompt, reportType, attempt=1, ctx=null) {
   const social_links = {};
   const lnk = {
     website:  document.getElementById('f-website-link')?.value.trim(),
@@ -1169,15 +1251,22 @@ async function callAPI(prompt, reportType, attempt=1) {
   Object.keys(lnk).forEach(k => { if(lnk[k]) social_links[k] = lnk[k]; });
 
   try {
+    const payload = {
+      prompt,
+      lang: currentLang,
+      report_type: reportType||'preliminary',
+      social_links: Object.keys(social_links).length ? social_links : undefined
+    };
+    // Pass company/sector/city so worker can run SerpAPI live research
+    if (ctx) {
+      if (ctx.name) payload.company = ctx.name;
+      if (ctx.industry) payload.sector = ctx.industry;
+      if (ctx.loc) payload.city = ctx.loc;
+    }
     const res = await fetch('https://halannews.com/api-proxy', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        prompt,
-        lang: currentLang,
-        report_type: reportType||'preliminary',
-        social_links: Object.keys(social_links).length ? social_links : undefined
-      })
+      body: JSON.stringify(payload)
     });
     if (res.status === 524 || res.status === 522 || res.status === 504) throw new Error('timeout');
     if (!res.ok) {
@@ -1227,7 +1316,7 @@ async function runSingleReport(rt,ctx){
   const useSearch=can('web_search')&&searchTypes.includes(rt);
   const prompt=buildPrompt(rt,ctx);
   try{
-    const data=await callAPI(prompt, rt);
+    const data=await callAPI(prompt, rt, 1, ctx);
     clearInterval(intv);
     const raw=data.content.map(i=>i.text||'').join('');
     let r;
@@ -1296,7 +1385,7 @@ async function runMultiReport(rtypes,ctx){
     if(tab){tab.classList.remove('done','error');tab.classList.add('loading');}
     const prompt=buildPrompt(rt,ctx);
     try{
-      const data=await callAPI(prompt, rt);
+      const data=await callAPI(prompt, rt, 1, ctx);
       const raw=data.content.map(x=>x.text||'').join('');
       let r;
       try{
@@ -1413,7 +1502,41 @@ function buildPrompt(rt,ctx){
     cleaning:     {cpl_meta:'50-150 EGP',cpl_google:'70-180 EGP',avg_margin:'35-55%',net_margin:'15-30%',decision_cycle:'1-7 days',avg_ticket:'300-1,500 EGP/service',top_formats:'Before/After cleaning, Team professionalism, Offer packages',peak_seasons:'Pre-Eid (biggest), Post-Ramadan, Winter (deep clean)',market_growth:'15% annually Egypt home services',market_size:'EGP 8B Egypt cleaning 2025',cac_benchmark:'200-600 EGP',ltv_benchmark:'1,000-5,000 EGP/year',city_premium:'Compound areas: +30%',engagement_benchmark:'3-6%',top_pain:'Trust bringing strangers home, quality consistency, price'},
     startup:      {cpl_meta:'50-200 EGP',cpl_google:'80-250 EGP',avg_margin:'varies highly',net_margin:'varies (often negative early)',decision_cycle:'varies',avg_ticket:'varies',top_formats:'Founder story, Product demo, Problem-solution, Early adopter CTA',peak_seasons:'Jan, post-summer, Q4 (investment rounds)',market_growth:'30% annually Egypt startup ecosystem',market_size:'EGP 15B Egypt startup investment 2025',cac_benchmark:'varies',ltv_benchmark:'varies',city_premium:'Cairo/Alex: benchmark',engagement_benchmark:'3-7%',top_pain:'Trust as new brand, early traction, funding dependency'},
     sme:          {cpl_meta:'30-100 EGP',cpl_google:'50-150 EGP',avg_margin:'20-40%',net_margin:'8-20%',decision_cycle:'7-30 days',avg_ticket:'varies',top_formats:'Owner story, Product quality showcase, Local social proof',peak_seasons:'Eid, Back-to-school, Ramadan',market_growth:'12% annually Egypt SME',market_size:'EGP 500B Egypt SME sector 2025',cac_benchmark:'200-600 EGP',ltv_benchmark:'1,000-10,000 EGP',city_premium:'varies by type',engagement_benchmark:'3-6%',top_pain:'Budget constraints, competition from big brands, trust building'},
-    supermarket:  {cpl_meta:'20-60 EGP',cpl_google:'N/A — use local SEO',avg_margin:'8-18%',net_margin:'2-6%',decision_cycle:'Same day (habit)',avg_ticket:'200-800 EGP/visit',top_formats:'Weekly offers, New product highlight, Recipe content',peak_seasons:'Ramadan (highest sales), Eid, Back-to-school',market_growth:'12% annually Egypt retail',market_size:'EGP 250B Egypt FMCG 2025',cac_benchmark:'50-150 EGP',ltv_benchmark:'5,000-15,000 EGP/year',city_premium:'Compound areas: +25%',engagement_benchmark:'2-5%',top_pain:'Price competitiveness, variety, loyalty card'}
+    supermarket:  {cpl_meta:'20-60 EGP',cpl_google:'N/A — use local SEO',avg_margin:'8-18%',net_margin:'2-6%',decision_cycle:'Same day (habit)',avg_ticket:'200-800 EGP/visit',top_formats:'Weekly offers, New product highlight, Recipe content',peak_seasons:'Ramadan (highest sales), Eid, Back-to-school',market_growth:'12% annually Egypt retail',market_size:'EGP 250B Egypt FMCG 2025',cac_benchmark:'50-150 EGP',ltv_benchmark:'5,000-15,000 EGP/year',city_premium:'Compound areas: +25%',engagement_benchmark:'2-5%',top_pain:'Price competitiveness, variety, loyalty card'},
+    // ── VETERINARY & PET ──
+    veterinary:   {cpl_meta:'60-180 EGP',cpl_google:'100-250 EGP',avg_margin:'50-65%',net_margin:'25-40%',decision_cycle:'Same day (emergency) or 1-7 days',avg_ticket:'300-1,500 EGP/visit',top_formats:'Pet health tips, Vet expertise reels, Patient (pet) recovery stories',peak_seasons:'Year-round, Summer (breeding), Eid (new pets)',market_growth:'25% annually Egypt pet market',market_size:'EGP 4B Egypt pet industry 2025',cac_benchmark:'300-800 EGP',ltv_benchmark:'1,500-8,000 EGP/year',city_premium:'New Cairo/Maadi: +40%',engagement_benchmark:'5-9% (highest engagement — pet content viral)',top_pain:'Finding trusted vet, emergency availability, price transparency'},
+    petservices:  {cpl_meta:'40-120 EGP',cpl_google:'N/A — use local SEO',avg_margin:'55-70%',net_margin:'25-40%',decision_cycle:'1-7 days',avg_ticket:'150-600 EGP/session',top_formats:'Grooming transformation, Happy pet videos, Package deals',peak_seasons:'Summer (grooming), Eid, Year-round',market_growth:'30% annually Egypt',market_size:'EGP 2B Egypt pet services 2025',cac_benchmark:'200-600 EGP',ltv_benchmark:'1,000-4,000 EGP/year',city_premium:'Compound areas: +50%',engagement_benchmark:'6-10%',top_pain:'Trust with pet safety, price, finding qualified groomers'},
+    // ── ENERGY & ENVIRONMENT ──
+    solar:        {cpl_meta:'200-600 EGP',cpl_google:'300-800 EGP',avg_margin:'20-35%',net_margin:'10-22%',decision_cycle:'14-60 days',avg_ticket:'50,000-300,000 EGP/system',top_formats:'ROI calculator, Installation timelapse, Bill savings proof',peak_seasons:'Summer (peak electric bills), Jan, post-subsidy-cut news',market_growth:'45% annually Egypt solar 2025',market_size:'EGP 25B Egypt renewable energy 2025',cac_benchmark:'2,000-8,000 EGP',ltv_benchmark:'50,000-200,000 EGP',city_premium:'No premium — national',engagement_benchmark:'2-5%',top_pain:'Upfront cost, ROI trust, finding licensed installers, grid connection'},
+    // ── PHOTOGRAPHY & MEDIA PRODUCTION ──
+    photography:  {cpl_meta:'80-220 EGP',cpl_google:'100-280 EGP',avg_margin:'60-80%',net_margin:'35-55%',decision_cycle:'7-30 days',avg_ticket:'2,000-15,000 EGP/shoot',top_formats:'Portfolio reels, Behind-the-scenes, Seasonal offer packages',peak_seasons:'Wedding season (Oct-May), Graduation (May-June), Eid',market_growth:'20% annually Egypt',market_size:'EGP 5B Egypt creative services 2025',cac_benchmark:'500-1,500 EGP',ltv_benchmark:'3,000-20,000 EGP',city_premium:'Cairo: benchmark, Compound areas: +35%',engagement_benchmark:'4-8%',top_pain:'Price, finding specific style, portfolio trust, delivery time'},
+    production:   {cpl_meta:'300-800 EGP',cpl_google:'400-1,000 EGP',avg_margin:'35-55%',net_margin:'15-30%',decision_cycle:'14-60 days',avg_ticket:'10,000-100,000 EGP/project',top_formats:'Showreel, Case study films, Behind-the-scenes',peak_seasons:'Q4 (brand year-end), Ramadan campaign prep (Jan-Feb), Sept',market_growth:'30% annually Egypt content production',market_size:'EGP 8B Egypt media production 2025',cac_benchmark:'3,000-10,000 EGP',ltv_benchmark:'30,000-200,000 EGP/year',city_premium:'Cairo/6 Oct: benchmark',engagement_benchmark:'2-4%',top_pain:'Quality trust, delivery timeline, price vs quality'},
+    // ── ARCHITECTURE & DESIGN ──
+    architecture: {cpl_meta:'300-800 EGP',cpl_google:'400-1,000 EGP',avg_margin:'25-45%',net_margin:'12-28%',decision_cycle:'30-120 days',avg_ticket:'30,000-500,000 EGP/project',top_formats:'3D renders, Project portfolio, Process timelapse',peak_seasons:'Sept-Nov, Jan-March, post-Eid',market_growth:'20% annually Egypt construction boom',market_size:'EGP 350B Egypt construction 2025',cac_benchmark:'2,000-8,000 EGP',ltv_benchmark:'50,000-300,000 EGP',city_premium:'New cities: +40%',engagement_benchmark:'2-5%',top_pain:'Portfolio trust, budget accuracy, delivery promises'},
+    // ── PRINTING & SIGNAGE ──
+    printing:     {cpl_meta:'50-150 EGP',cpl_google:'80-200 EGP',avg_margin:'25-45%',net_margin:'10-22%',decision_cycle:'1-14 days',avg_ticket:'500-10,000 EGP/order',top_formats:'Product showcase, Before/After signage, Offer packages',peak_seasons:'Election season, Ramadan (banners), Pre-Eid, Back-to-school',market_growth:'10% annually Egypt',market_size:'EGP 12B Egypt printing 2025',cac_benchmark:'300-800 EGP',ltv_benchmark:'2,000-15,000 EGP/year',city_premium:'Industrial areas: benchmark',engagement_benchmark:'2-4%',top_pain:'Price, turnaround time, quality consistency'},
+    // ── SECURITY SYSTEMS ──
+    security:     {cpl_meta:'150-400 EGP',cpl_google:'200-500 EGP',avg_margin:'30-50%',net_margin:'15-28%',decision_cycle:'7-30 days',avg_ticket:'5,000-50,000 EGP/system',top_formats:'Case studies, Deterrence demo, Smart home integration',peak_seasons:'Post-security incidents, Jan (home upgrades), Pre-summer',market_growth:'18% annually Egypt security tech',market_size:'EGP 6B Egypt security systems 2025',cac_benchmark:'1,000-4,000 EGP',ltv_benchmark:'10,000-40,000 EGP',city_premium:'New Cairo compounds: +30%',engagement_benchmark:'2-4%',top_pain:'Trust, price, finding reliable maintenance'},
+    // ── CHILDREN & ENTERTAINMENT ──
+    kidsenter:    {cpl_meta:'40-120 EGP',cpl_google:'60-150 EGP',avg_margin:'40-60%',net_margin:'15-30%',decision_cycle:'Same day or 1-7 days',avg_ticket:'100-500 EGP/visit',top_formats:'Child joy videos, Parent testimonials, Birthday packages',peak_seasons:'Summer (June-Aug), Eid, School breaks, Weekends',market_growth:'20% annually Egypt entertainment',market_size:'EGP 10B Egypt family entertainment 2025',cac_benchmark:'200-600 EGP',ltv_benchmark:'1,000-5,000 EGP/year',city_premium:'New Cairo/Sheikh Zayed: +35%',engagement_benchmark:'5-9%',top_pain:'Safety trust, price, variety of activities, cleanliness'},
+    // ── IMPORT / EXPORT ──
+    importexport: {cpl_meta:'300-800 EGP',cpl_google:'400-1,000 EGP',avg_margin:'10-25%',net_margin:'4-12%',decision_cycle:'14-90 days',avg_ticket:'50,000-500,000 EGP/shipment',top_formats:'Product sourcing showcase, Compliance proof, Case studies',peak_seasons:'Pre-Eid (imports spike), Back-to-school, Year-end clearance',market_growth:'15% annually Egypt trade',market_size:'EGP 800B Egypt import/export 2025',cac_benchmark:'3,000-10,000 EGP',ltv_benchmark:'50,000-500,000 EGP/year',city_premium:'Port Said/Alexandria: key hubs',engagement_benchmark:'1-3%',top_pain:'Customs delays, USD availability, price volatility, finding reliable partners'},
+    // ── WHOLESALE & DISTRIBUTION ──
+    wholesale:    {cpl_meta:'100-300 EGP',cpl_google:'150-400 EGP',avg_margin:'8-20%',net_margin:'3-10%',decision_cycle:'7-30 days',avg_ticket:'10,000-200,000 EGP/order',top_formats:'Product catalog, Volume discount offers, B2B relationship content',peak_seasons:'Ramadan (FMCG surge), Eid, Back-to-school',market_growth:'10% annually Egypt',market_size:'EGP 400B Egypt wholesale 2025',cac_benchmark:'1,000-5,000 EGP',ltv_benchmark:'20,000-200,000 EGP/year',city_premium:'Industrial zones: benchmark',engagement_benchmark:'1-3%',top_pain:'Payment terms, stock reliability, price competition'},
+    // ── JEWELLERY & ACCESSORIES ──
+    jewellery:    {cpl_meta:'100-300 EGP',cpl_google:'150-400 EGP',avg_margin:'40-60%',net_margin:'15-30%',decision_cycle:'1-14 days',avg_ticket:'500-10,000 EGP',top_formats:'Product showcase, Gift campaign, Customization highlight',peak_seasons:'Eid Al-Fitr (biggest), Valentine, Mothers Day, Wedding season',market_growth:'15% annually Egypt',market_size:'EGP 35B Egypt jewellery 2025',cac_benchmark:'400-1,200 EGP',ltv_benchmark:'2,000-15,000 EGP/year',city_premium:'Khan el-Khalili/Mohandessin: benchmark',engagement_benchmark:'4-8%',top_pain:'Authenticity trust, price, finding unique designs'},
+    // ── OPTOMETRY ──
+    optometry:    {cpl_meta:'80-200 EGP',cpl_google:'120-280 EGP',avg_margin:'45-65%',net_margin:'20-38%',decision_cycle:'1-7 days',avg_ticket:'500-3,000 EGP',top_formats:'Vision awareness content, Frame styling, Eye health tips',peak_seasons:'Back-to-school (Sept), Jan, Pre-exam season',market_growth:'12% annually Egypt',market_size:'EGP 8B Egypt optical 2025',cac_benchmark:'400-1,000 EGP',ltv_benchmark:'1,500-6,000 EGP/year',city_premium:'Mall locations: +25%',engagement_benchmark:'3-5%',top_pain:'Price of lenses, finding fashionable frames, trust in eye exam quality'},
+    // ── PSYCHOLOGY & THERAPY ──
+    psychology:   {cpl_meta:'100-280 EGP',cpl_google:'150-350 EGP',avg_margin:'70-85%',net_margin:'40-60%',decision_cycle:'3-21 days',avg_ticket:'400-1,500 EGP/session',top_formats:'Awareness content, Myth-busting, Therapist expertise',peak_seasons:'Sept-Oct (back-to-normal), Jan, Ramadan (stress)',market_growth:'35% annually Egypt mental health awareness',market_size:'EGP 3B Egypt mental health services 2025',cac_benchmark:'500-1,500 EGP',ltv_benchmark:'2,000-12,000 EGP',city_premium:'Zamalek/New Cairo: +40%',engagement_benchmark:'4-7%',top_pain:'Social stigma, finding trusted therapist, online vs in-person, price'},
+    // ── CAR SERVICES ──
+    carwash:      {cpl_meta:'20-60 EGP',cpl_google:'N/A — use local SEO',avg_margin:'50-70%',net_margin:'20-35%',decision_cycle:'Same day',avg_ticket:'80-400 EGP/service',top_formats:'Before/After car photos, Package deals, Membership offers',peak_seasons:'Summer (dust), Before Eid, Ramadan',market_growth:'15% annually Egypt',market_size:'EGP 3B Egypt car wash/detailing 2025',cac_benchmark:'100-300 EGP',ltv_benchmark:'800-3,000 EGP/year',city_premium:'Compound areas/main roads: benchmark',engagement_benchmark:'3-6%',top_pain:'Consistent quality, price, finding trustworthy service'},
+    // ── LANDSCAPING & AGRICULTURE ──
+    landscaping:  {cpl_meta:'100-300 EGP',cpl_google:'150-400 EGP',avg_margin:'35-55%',net_margin:'15-28%',decision_cycle:'7-30 days',avg_ticket:'3,000-30,000 EGP/project',top_formats:'Garden transformation, Maintenance showcase, Portfolio',peak_seasons:'Spring (March-May), Post-Eid, New compounds opening',market_growth:'25% annually new cities',market_size:'EGP 5B Egypt landscaping 2025',cac_benchmark:'500-2,000 EGP',ltv_benchmark:'5,000-25,000 EGP',city_premium:'New cities compounds: +50%',engagement_benchmark:'3-6%',top_pain:'Water management, maintenance reliability, price, finding skilled workers'},
+    // ── FREELANCING & CONSULTING ──
+    freelancing:  {cpl_meta:'80-250 EGP',cpl_google:'100-300 EGP',avg_margin:'80-95%',net_margin:'60-80%',decision_cycle:'3-21 days',avg_ticket:'1,000-15,000 EGP/project',top_formats:'Portfolio showcase, Client results, Personal branding content',peak_seasons:'Jan (new year projects), Sept, Q4',market_growth:'40% annually Egypt freelance economy',market_size:'EGP 12B Egypt freelance 2025',cac_benchmark:'200-800 EGP',ltv_benchmark:'3,000-30,000 EGP',city_premium:'No premium — remote/digital',engagement_benchmark:'4-8%',top_pain:'Trust without formal entity, price negotiation, finding recurring clients'},
+    // ── PROPERTY MANAGEMENT ──
+    propmanage:   {cpl_meta:'200-500 EGP',cpl_google:'300-700 EGP',avg_margin:'10-18%',net_margin:'5-12%',decision_cycle:'14-60 days',avg_ticket:'2,000-8,000 EGP/unit/month',top_formats:'Property showcase, ROI calculator for landlords, Tenant testimonials',peak_seasons:'Sept-Oct (leasing season), Jan, Post-Eid',market_growth:'22% annually Egypt',market_size:'EGP 80B Egypt property management 2025',cac_benchmark:'2,000-6,000 EGP',ltv_benchmark:'20,000-100,000 EGP/year',city_premium:'New Cairo/New Capital: +40%',engagement_benchmark:'2-4%',top_pain:'Trust with asset management, transparency, finding reliable tenants'}
   };
 
   // City-level CPL multipliers (vs Cairo baseline)
@@ -1440,8 +1563,22 @@ function buildPrompt(rt,ctx){
   // Adjust CPL for city
   const cityAdjustedCPL = cityMultiplier !== 1.0 ? ` (${locName} adjusted: x${cityMultiplier})` : '';
 
+  // Egypt 2025 macroeconomic context — injected into every report
+  const EGYPT_MACRO = `\n═══ EGYPT MACROECONOMIC CONTEXT 2025 ═══
+• CBE Overnight Deposit Rate: 27.25% | Overnight Lending: 28.25%
+• Official CPI Inflation: 33.8% YoY (April 2025) — apply to all cost projections
+• USD/EGP Exchange Rate: ~49.5 EGP (use for any USD-priced inputs)
+• GDP Growth Forecast: 3.8% FY2025
+• Internet Users: 72% penetration (108M total population)
+• Facebook: 45M users | Instagram: 22M | TikTok: 15M | YouTube: 50M
+• Mobile-first: 95% access internet via mobile — design all campaigns mobile-first
+• Consumer insight: inflation squeezing discretionary spend — value messaging critical
+• Digital ad costs: +40% in EGP terms YoY — factor into all budget recommendations
+• Key 2025 opportunities: solar energy, fintech, e-commerce, health-tech, edtech
+═══════════════════════════════════════`;
+
   const base=`You are a senior marketing strategist, digital intelligence expert, and business analyst at Eunoia Zones Agency — Egypt and GCC specialist since 2020, with a portfolio of 200+ clients across 40+ sectors.
-${langInstruction}
+${langInstruction}${EGYPT_MACRO}
 
 ════ CRITICAL QUALITY RULES — NEVER VIOLATE ════
 • ZERO placeholders: every single field must contain REAL, SPECIFIC, ACTIONABLE content — never "X EGP" or "action 1"
