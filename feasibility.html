@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>دراسة الجدوى الذكية — Eunoia Zones</title>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet"/>
 <style>
 :root{
   --purple:#4A1042;--purple-mid:#7B3F8C;--purple-light:#F0E8EF;--purple-dark:#2E0A28;
@@ -221,13 +221,57 @@ tr.total-row td{font-weight:700;background:var(--purple-light);color:var(--purpl
   .swot-grid{grid-template-columns:1fr}
   .risk-grid{grid-template-columns:1fr}
 }
+
+/* ── DARK THEME ── */
+[data-theme="dark"]{
+  --purple:#9B59B6;--purple-mid:#A569BD;--purple-light:#2D1B3D;--purple-dark:#1A0A28;
+  --red:#E74C6B;--red-light:#3D0A1A;
+  --amber:#F0A020;--amber-light:#2D1E00;--amber-dark:#F0C040;
+  --teal:#48C9B0;--teal-light:#0A2D28;
+  --green:#58D68D;--green-light:#0A2D18;
+  --cream:#0F0F1A;--white:#1A1A2E;
+  --border:#2D2D4A;--border2:#4D3D6A;
+  --text:#E8E8F0;--muted:#9090A8;--muted2:#606080;
+  --gray-bg:#161628;
+}
+[data-theme="dark"] body{background:#0F0F1A;color:#E8E8F0}
+[data-theme="dark"] .card{background:#1A1A2E;border-color:#2D2D4A}
+[data-theme="dark"] .form-group input,[data-theme="dark"] .form-group select,[data-theme="dark"] .form-group textarea{background:#161628;border-color:#2D2D4A;color:#E8E8F0}
+[data-theme="dark"] .form-group input:focus,[data-theme="dark"] .form-group select:focus,[data-theme="dark"] .form-group textarea:focus{background:#1A1A2E}
+[data-theme="dark"] .form-group select option{background:#161628;color:#E8E8F0}
+[data-theme="dark"] .form-group label{color:#9090A8}
+[data-theme="dark"] .progress-wrap{background:#1A1A2E;border-color:#2D2D4A}
+[data-theme="dark"] .sector-btn{background:#161628;border-color:#2D2D4A;color:#E8E8F0}
+[data-theme="dark"] .sector-btn:hover{background:#2D1B3D;border-color:#9B59B6}
+[data-theme="dark"] .sector-btn.selected{background:#2D1B3D;border-color:#9B59B6;box-shadow:0 0 0 3px rgba(155,89,182,.2)}
+[data-theme="dark"] .sector-name{color:#E8E8F0}
+[data-theme="dark"] .sector-sub{color:#9090A8}
+[data-theme="dark"] .report-section{background:#1A1A2E;border-color:#2D2D4A}
+[data-theme="dark"] th{background:#161628;color:#9090A8}
+[data-theme="dark"] td{color:#E8E8F0;border-color:#2D2D4A}
+[data-theme="dark"] .kpi-card{background:#1A1A2E}
+[data-theme="dark"] .rec-item{background:#161628}
+[data-theme="dark"] .risk-item{background:#161628;border-color:#2D2D4A}
+[data-theme="dark"] .btn-secondary{background:#1A1A2E;color:#E8E8F0;border-color:#2D2D4A}
+[data-theme="dark"] .btn-secondary:hover{background:#2D1B3D}
+[data-theme="dark"] .action-row{background:#161628}
+[data-theme="dark"] .scorecard-row{border-color:#2D2D4A}
+[data-theme="dark"] .phase-item{border-color:#2D2D4A}
+[data-theme="dark"] .reality-table td{border-color:#2D2D4A}
+[data-theme="dark"] .section-divider-line{background:#2D2D4A}
+[data-theme="dark"] .err-box{background:#3D0A1A;border-color:#E74C6B}
+.theme-toggle{background:none;border:1px solid rgba(255,255,255,.4);color:#fff;padding:5px 12px;border-radius:20px;cursor:pointer;font-size:12px;font-weight:600;transition:.2s;font-family:'Cairo',sans-serif}
+.theme-toggle:hover{background:rgba(255,255,255,.15)}
 </style>
 </head>
 <body>
 
 <div class="topbar">
   <div class="topbar-logo">Eunoia <span>Zones</span></div>
-  <a href="/" class="topbar-back">← العودة</a>
+  <div style="display:flex;align-items:center;gap:10px">
+    <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()">🌙 Dark</button>
+    <a href="/" class="topbar-back">← العودة</a>
+  </div>
 </div>
 
 <div class="hero">
@@ -406,6 +450,15 @@ tr.total-row td{font-weight:700;background:var(--purple-light);color:var(--purpl
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 const API_URL = 'https://halannews.com/api-proxy';
 
+function toggleTheme() {
+  const curr = document.documentElement.getAttribute('data-theme') || 'light';
+  const next = curr === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('eunoia-theme', next);
+  const tb = document.getElementById('theme-toggle');
+  if (tb) tb.textContent = next === 'dark' ? '☀️ Light' : '🌙 Dark';
+}
+
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 // SECTOR DATA \u2014 Global scope, NO syntax tricks
 // All strings are simple, no multiline single-quoted strings
@@ -440,7 +493,10 @@ const SECTORS = {
       { id: 'sf-cogs', label: '\u062a\u0643\u0644\u0641\u0629 \u0627\u0644\u062e\u0627\u0645\u0627\u062a % \u0645\u0646 \u0627\u0644\u0625\u064a\u0631\u0627\u062f\u0627\u062a', type: 'number', ph: '35' },
       { id: 'sf-setup', label: '\u062a\u0643\u0627\u0644\u064a\u0641 \u062a\u062c\u0647\u064a\u0632 \u0648\u062a\u0634\u0637\u064a\u0628 (EGP)', type: 'number', ph: '200000' },
       { id: 'sf-equip', label: '\u062a\u0643\u0627\u0644\u064a\u0641 \u0627\u0644\u0645\u0639\u062f\u0627\u062a \u0648\u0627\u0644\u0645\u0637\u0628\u062e (EGP)', type: 'number', ph: '150000' },
-      { id: 'sf-delivery', label: '\u0646\u0633\u0628\u0629 \u0645\u0628\u064a\u0639\u0627\u062a Delivery % \u0645\u0646 \u0627\u0644\u0625\u062c\u0645\u0627\u0644\u064a', type: 'number', ph: '40' }
+      { id: 'sf-delivery', label: '\u0646\u0633\u0628\u0629 \u0645\u0628\u064a\u0639\u0627\u062a Delivery % \u0645\u0646 \u0627\u0644\u0625\u062c\u0645\u0627\u0644\u064a', type: 'number', ph: '40' },
+      { id: 'sf-furniture', label: '\u062a\u0643\u0644\u0641\u0629 \u0627\u0644\u0623\u062b\u0627\u062b \u0648\u0627\u0644\u062f\u064a\u0643\u0648\u0631 (EGP)', type: 'number', ph: '80000' },
+      { id: 'sf-licenses', label: '\u062a\u0643\u0627\u0644\u064a\u0641 \u0627\u0644\u062a\u0631\u0627\u062e\u064a\u0635 \u0648\u0627\u0644\u0635\u062d\u0629 \u0648\u0627\u0644\u0633\u0644\u0627\u0645\u0629 (EGP)', type: 'number', ph: '30000' },
+      { id: 'sf-platform-commission', label: '\u0639\u0645\u0648\u0644\u0629 \u0645\u0646\u0635\u0627\u062a Delivery % (Talabat/Noon/Otlob)', type: 'number', ph: '25' }
     ],
     reality_fields: [
       { id: 'r-avg-bill', label: '\u0645\u062a\u0648\u0633\u0637 \u0641\u0627\u062a\u0648\u0631\u0629 \u0627\u0644\u0634\u062e\u0635 \u0644\u0644\u0645\u0646\u0627\u0641\u0633\u064a\u0646 \u0641\u064a \u0627\u0644\u0645\u0646\u0637\u0642\u0629 (EGP)', ph: '\u0645\u062b\u0627\u0644: 180' },
@@ -514,7 +570,9 @@ const SECTORS = {
       { id: 'sf-salary', label: '\u0645\u062a\u0648\u0633\u0637 \u0627\u0644\u0631\u0627\u062a\u0628 \u0627\u0644\u0634\u0647\u0631\u064a (EGP)', type: 'number', ph: '5000' },
       { id: 'sf-inventory', label: '\u0642\u064a\u0645\u0629 \u0627\u0644\u0645\u062e\u0632\u0648\u0646 \u0627\u0644\u0623\u0648\u0644\u064a (EGP)', type: 'number', ph: '150000' },
       { id: 'sf-marketing', label: '\u0645\u064a\u0632\u0627\u0646\u064a\u0629 \u0627\u0644\u062a\u0633\u0648\u064a\u0642 \u0627\u0644\u0634\u0647\u0631\u064a\u0629 (EGP)', type: 'number', ph: '10000' },
-      { id: 'sf-setup', label: '\u062a\u0643\u0627\u0644\u064a\u0641 \u0627\u0644\u062a\u062c\u0647\u064a\u0632 \u0648\u0627\u0644\u062a\u0623\u0633\u064a\u0633 (EGP)', type: 'number', ph: '80000' }
+      { id: 'sf-setup', label: '\u062a\u0643\u0627\u0644\u064a\u0641 \u0627\u0644\u062a\u062c\u0647\u064a\u0632 \u0648\u0627\u0644\u062a\u0623\u0633\u064a\u0633 (EGP)', type: 'number', ph: '80000' },
+      { id: 'sf-shrinkage', label: '\u0646\u0633\u0628\u0629 \u0627\u0644\u0641\u0627\u0642\u062f (Shrinkage) % \u0645\u0646 \u0627\u0644\u0645\u062e\u0632\u0648\u0646', type: 'number', ph: '3' },
+      { id: 'sf-fitout', label: '\u062a\u0643\u0644\u0641\u0629 \u062a\u062c\u0647\u064a\u0632 \u0627\u0644\u0645\u062d\u0644 Fit-Out (EGP)', type: 'number', ph: '120000' }
     ],
     reality_fields: [
       { id: 'r-aov', label: '\u0645\u062a\u0648\u0633\u0637 \u0642\u064a\u0645\u0629 \u0627\u0644\u0637\u0644\u0628 \u0644\u0644\u0645\u0646\u0627\u0641\u0633\u064a\u0646 (EGP)', ph: '\u0645\u062b\u0627\u0644: 400' },
@@ -583,7 +641,9 @@ const SECTORS = {
       { id: 'sf-energy', label: '\u062a\u0643\u0644\u0641\u0629 \u0627\u0644\u0637\u0627\u0642\u0629 \u0627\u0644\u0634\u0647\u0631\u064a\u0629 (EGP)', type: 'number', ph: '20000' },
       { id: 'sf-rent', label: '\u0625\u064a\u062c\u0627\u0631 \u0627\u0644\u0645\u0635\u0646\u0639 / \u0627\u0644\u0648\u0631\u0634\u0629 \u0627\u0644\u0634\u0647\u0631\u064a (EGP)', type: 'number', ph: '30000' },
       { id: 'sf-equip', label: '\u062a\u0643\u0627\u0644\u064a\u0641 \u0627\u0644\u0645\u0639\u062f\u0627\u062a \u0648\u0627\u0644\u0622\u0644\u0627\u062a (EGP)', type: 'number', ph: '500000' },
-      { id: 'sf-setup', label: '\u062a\u0643\u0627\u0644\u064a\u0641 \u062a\u062c\u0647\u064a\u0632 \u0648\u0625\u0646\u0634\u0627\u0621 \u0627\u0644\u0645\u0635\u0646\u0639 (EGP)', type: 'number', ph: '200000' }
+      { id: 'sf-setup', label: '\u062a\u0643\u0627\u0644\u064a\u0641 \u062a\u062c\u0647\u064a\u0632 \u0648\u0625\u0646\u0634\u0627\u0621 \u0627\u0644\u0645\u0635\u0646\u0639 (EGP)', type: 'number', ph: '200000' },
+      { id: 'sf-local-pct', label: '\u0646\u0633\u0628\u0629 \u0627\u0644\u0645\u0628\u064a\u0639\u0627\u062a \u0627\u0644\u0645\u062d\u0644\u064a\u0629 vs \u0627\u0644\u062a\u0635\u062f\u064a\u0631 %', type: 'number', ph: '80' },
+      { id: 'sf-labor-unit', label: '\u062a\u0643\u0644\u0641\u0629 \u0627\u0644\u0639\u0645\u0627\u0644\u0629 \u0644\u0643\u0644 \u0648\u062d\u062f\u0629 \u0645\u0646\u062a\u062c\u0629 (EGP)', type: 'number', ph: '80' }
     ],
     reality_fields: [
       { id: 'r-price', label: '\u0645\u062a\u0648\u0633\u0637 \u0633\u0639\u0631 \u0628\u064a\u0639 \u0627\u0644\u0645\u0646\u0627\u0641\u0633\u064a\u0646 (EGP/\u0648\u062d\u062f\u0629)', ph: '\u0645\u062b\u0627\u0644: 480' },
@@ -617,7 +677,10 @@ const SECTORS = {
       { id: 'sf-build-months', label: '\u0645\u062f\u0629 \u0627\u0644\u0625\u0646\u0634\u0627\u0621 \u0627\u0644\u0645\u062a\u0648\u0642\u0639\u0629 (\u0634\u0647\u0648\u0631)', type: 'number', ph: '18' },
       { id: 'sf-sales-months', label: '\u0645\u062f\u0629 \u0628\u064a\u0639 \u0627\u0644\u0648\u062d\u062f\u0627\u062a \u0627\u0644\u0645\u062a\u0648\u0642\u0639\u0629 (\u0634\u0647\u0648\u0631)', type: 'number', ph: '12' },
       { id: 'sf-admin-pct', label: '\u0646\u0633\u0628\u0629 \u0627\u0644\u0645\u0635\u0627\u0631\u064a\u0641 \u0627\u0644\u0625\u062f\u0627\u0631\u064a\u0629 \u0648\u0627\u0644\u062a\u0633\u0648\u064a\u0642\u064a\u0629 % \u0645\u0646 \u0627\u0644\u0645\u0628\u064a\u0639\u0627\u062a', type: 'number', ph: '8' },
-      { id: 'sf-down-pct', label: '\u0646\u0633\u0628\u0629 \u0627\u0644\u0645\u0642\u062f\u0645 \u0645\u0646 \u0633\u0639\u0631 \u0627\u0644\u0648\u062d\u062f\u0629 %', type: 'number', ph: '20' }
+      { id: 'sf-down-pct', label: '\u0646\u0633\u0628\u0629 \u0627\u0644\u0645\u0642\u062f\u0645 \u0645\u0646 \u0633\u0639\u0631 \u0627\u0644\u0648\u062d\u062f\u0629 %', type: 'number', ph: '20' },
+      { id: 'sf-finish-level', label: '\u0645\u0633\u062a\u0648\u0649 \u0627\u0644\u062a\u0634\u0637\u064a\u0628', type: 'select', opts: ['\u0628\u062f\u0648\u0646 \u062a\u0634\u0637\u064a\u0628 (Core & Shell)', '\u062a\u0634\u0637\u064a\u0628 \u0639\u0627\u062f\u064a (EGP 4,500-6,000/m2)', '\u062a\u0634\u0637\u064a\u0628 \u0645\u062a\u0648\u0633\u0637 (EGP 7,000-9,500/m2)', '\u062a\u0634\u0637\u064a\u0628 \u0641\u0627\u062e\u0631 (EGP 11,000-16,000/m2)'] },
+      { id: 'sf-cash-pct', label: '\u0646\u0633\u0628\u0629 \u0627\u0644\u0628\u064a\u0639 \u0628\u0627\u0644\u0643\u0627\u0634 (vs \u062a\u0642\u0633\u064a\u0637) %', type: 'number', ph: '30' },
+      { id: 'sf-land-cost-sqm', label: '\u062a\u0643\u0644\u0641\u0629 \u0627\u0644\u0623\u0631\u0636 EGP/\u0645\u00b2', type: 'number', ph: '8000' }
     ],
     reality_fields: [
       { id: 'r-sell-sqm', label: '\u0645\u062a\u0648\u0633\u0637 \u0633\u0639\u0631 \u0628\u064a\u0639 \u0645\u00b2 \u0641\u064a \u0627\u0644\u0645\u0646\u0637\u0642\u0629 \u0641\u0639\u0644\u064a\u0627\u064b (EGP)', ph: '\u0645\u062b\u0627\u0644: 48000' },
@@ -649,7 +712,10 @@ const SECTORS = {
       { id: 'sf-salary', label: '\u0645\u062a\u0648\u0633\u0637 \u0627\u0644\u0631\u0627\u062a\u0628 \u0627\u0644\u0634\u0647\u0631\u064a (EGP)', type: 'number', ph: '6000' },
       { id: 'sf-rent', label: '\u0625\u064a\u062c\u0627\u0631 \u0634\u0647\u0631\u064a (EGP)', type: 'number', ph: '20000' },
       { id: 'sf-marketing', label: '\u0645\u064a\u0632\u0627\u0646\u064a\u0629 \u0627\u0644\u062a\u0633\u0648\u064a\u0642 \u0627\u0644\u0634\u0647\u0631\u064a\u0629 (EGP)', type: 'number', ph: '8000' },
-      { id: 'sf-setup', label: '\u062a\u0643\u0627\u0644\u064a\u0641 \u0627\u0644\u062a\u062c\u0647\u064a\u0632 \u0648\u0627\u0644\u0623\u062b\u0627\u062b \u0648\u0627\u0644\u0623\u062c\u0647\u0632\u0629 (EGP)', type: 'number', ph: '150000' }
+      { id: 'sf-setup', label: '\u062a\u0643\u0627\u0644\u064a\u0641 \u0627\u0644\u062a\u062c\u0647\u064a\u0632 \u0648\u0627\u0644\u0623\u062b\u0627\u062b \u0648\u0627\u0644\u0623\u062c\u0647\u0632\u0629 (EGP)', type: 'number', ph: '150000' },
+      { id: 'sf-instructor-cost', label: '\u062a\u0643\u0644\u0641\u0629 \u0627\u0644\u0645\u062f\u0631\u0628/\u0627\u0644\u0645\u062d\u0627\u0636\u0631 \u0644\u0643\u0644 \u0628\u0627\u062a\u0634 (EGP)', type: 'number', ph: '8000' },
+      { id: 'sf-platform-cost', label: '\u062a\u0643\u0644\u0641\u0629 \u0645\u0646\u0635\u0629 \u0627\u0644\u062a\u0639\u0644\u064a\u0645 \u0627\u0644\u0634\u0647\u0631\u064a\u0629 (EGP)', type: 'number', ph: '2000' },
+      { id: 'sf-mktg-student', label: '\u062a\u0643\u0644\u0641\u0629 \u0627\u0643\u062a\u0633\u0627\u0628 \u0637\u0627\u0644\u0628 \u062c\u062f\u064a\u062f (EGP/\u0637\u0627\u0644\u0628)', type: 'number', ph: '500' }
     ],
     reality_fields: [
       { id: 'r-fee', label: '\u0631\u0633\u0648\u0645 \u0627\u0644\u0637\u0627\u0644\u0628 \u0627\u0644\u0634\u0647\u0631\u064a\u0629 \u0639\u0646\u062f \u0627\u0644\u0645\u0646\u0627\u0641\u0633\u064a\u0646 (EGP)', ph: '\u0645\u062b\u0627\u0644: 1800' },
@@ -684,7 +750,11 @@ const SECTORS = {
       { id: 'sf-rent', label: '\u0625\u064a\u062c\u0627\u0631 \u0634\u0647\u0631\u064a (EGP)', type: 'number', ph: '15000' },
       { id: 'sf-supplies', label: '\u062a\u0643\u0644\u0641\u0629 \u0627\u0644\u0645\u0633\u062a\u0644\u0632\u0645\u0627\u062a \u0627\u0644\u0637\u0628\u064a\u0629 \u0627\u0644\u0634\u0647\u0631\u064a\u0629 (EGP)', type: 'number', ph: '8000' },
       { id: 'sf-equip', label: '\u062a\u0643\u0627\u0644\u064a\u0641 \u0627\u0644\u0623\u062c\u0647\u0632\u0629 \u0627\u0644\u0637\u0628\u064a\u0629 (EGP)', type: 'number', ph: '200000' },
-      { id: 'sf-setup', label: '\u062a\u0643\u0627\u0644\u064a\u0641 \u0627\u0644\u062a\u062c\u0647\u064a\u0632 \u0648\u0627\u0644\u062a\u0634\u0637\u064a\u0628 (EGP)', type: 'number', ph: '100000' }
+      { id: 'sf-setup', label: '\u062a\u0643\u0627\u0644\u064a\u0641 \u0627\u0644\u062a\u062c\u0647\u064a\u0632 \u0648\u0627\u0644\u062a\u0634\u0637\u064a\u0628 (EGP)', type: 'number', ph: '100000' },
+      { id: 'sf-consult-ratio', label: '\u0646\u0633\u0628\u0629 \u0627\u0644\u0643\u0634\u0641 \u0645\u0642\u0627\u0628\u0644 \u0627\u0644\u0625\u062c\u0631\u0627\u0621\u0627\u062a/\u062a\u062d\u0627\u0644\u064a\u0644 %', type: 'number', ph: '70' },
+      { id: 'sf-med-insurance', label: '\u062a\u0643\u0644\u0641\u0629 \u0627\u0644\u062a\u0623\u0645\u064a\u0646 \u0627\u0644\u0637\u0628\u064a \u0648\u0627\u0644\u0645\u0633\u0624\u0648\u0644\u064a\u0629 \u0627\u0644\u0633\u0646\u0648\u064a\u0629 (EGP)', type: 'number', ph: '30000' },
+      { id: 'sf-nurses', label: '\u0639\u062f\u062f \u0627\u0644\u062a\u0645\u0631\u064a\u0636', type: 'number', ph: '2' },
+      { id: 'sf-admin', label: '\u0639\u062f\u062f \u0627\u0644\u0625\u062f\u0627\u0631\u064a\u064a\u0646', type: 'number', ph: '1' }
     ],
     reality_fields: [
       { id: 'r-checkup', label: '\u0645\u062a\u0648\u0633\u0637 \u0633\u0639\u0631 \u0627\u0644\u0643\u0634\u0641 \u0641\u064a \u0627\u0644\u0645\u0646\u0637\u0642\u0629 \u0644\u0644\u062a\u062e\u0635\u0635 \u0627\u0644\u0645\u0634\u0627\u0628\u0647 (EGP)', ph: '\u0645\u062b\u0627\u0644: 600' },
@@ -711,6 +781,8 @@ const SECTORS = {
       { id: 'sf-type', label: '\u0646\u0648\u0639 \u0627\u0644\u0645\u0646\u062a\u062c', type: 'select', opts: ['SaaS (\u0627\u0634\u062a\u0631\u0627\u0643 \u0634\u0647\u0631\u064a)', '\u062a\u0637\u0628\u064a\u0642 \u0645\u0648\u0628\u0627\u064a\u0644', '\u0645\u0646\u0635\u0629 E-commerce', 'Marketplace', 'Fintech', 'Edtech', 'Healthtech', '\u0623\u062e\u0631\u0649'] },
       { id: 'sf-model', label: '\u0646\u0645\u0648\u0630\u062c \u0627\u0644\u0625\u064a\u0631\u0627\u062f', type: 'select', opts: ['Subscription \u0634\u0647\u0631\u064a', 'Per transaction \u0639\u0645\u0648\u0644\u0629', 'Freemium', 'One-time License', 'Advertising', 'Hybrid'] },
       { id: 'sf-users-y1', label: '\u0627\u0644\u0645\u0633\u062a\u062e\u062f\u0645\u0648\u0646 / \u0627\u0644\u0639\u0645\u0644\u0627\u0621 \u0627\u0644\u0645\u062f\u0641\u0648\u0639\u0648\u0646 \u0627\u0644\u0645\u062a\u0648\u0642\u0639\u0648\u0646 (\u0627\u0644\u0633\u0646\u0629 1)', type: 'number', ph: '100' },
+      { id: 'sf-users-y2', label: '\u0627\u0644\u0645\u0633\u062a\u062e\u062f\u0645\u0648\u0646 \u0627\u0644\u0645\u062a\u0648\u0642\u0639\u0648\u0646 (\u0627\u0644\u0633\u0646\u0629 2)', type: 'number', ph: '300' },
+      { id: 'sf-users-y3', label: '\u0627\u0644\u0645\u0633\u062a\u062e\u062f\u0645\u0648\u0646 \u0627\u0644\u0645\u062a\u0648\u0642\u0639\u0648\u0646 (\u0627\u0644\u0633\u0646\u0629 3)', type: 'number', ph: '700' },
       { id: 'sf-arpu', label: '\u0645\u062a\u0648\u0633\u0637 \u0627\u0644\u0625\u064a\u0631\u0627\u062f \u0644\u0643\u0644 \u0645\u0633\u062a\u062e\u062f\u0645 \u0634\u0647\u0631\u064a\u0627\u064b (EGP)', type: 'number', ph: '200' },
       { id: 'sf-churn', label: '\u0645\u0639\u062f\u0644 \u0625\u0644\u063a\u0627\u0621 \u0627\u0644\u0627\u0634\u062a\u0631\u0627\u0643 \u0627\u0644\u0634\u0647\u0631\u064a \u0627\u0644\u0645\u062a\u0648\u0642\u0639 %', type: 'number', ph: '5' },
       { id: 'sf-cac', label: '\u062a\u0643\u0644\u0641\u0629 \u0627\u0643\u062a\u0633\u0627\u0628 \u0627\u0644\u0639\u0645\u064a\u0644 (CAC) (EGP)', type: 'number', ph: '500' },
@@ -752,7 +824,9 @@ const SECTORS = {
       { id: 'sf-salary', label: '\u0645\u062a\u0648\u0633\u0637 \u0627\u0644\u0631\u0627\u062a\u0628 \u0627\u0644\u0634\u0647\u0631\u064a (EGP)', type: 'number', ph: '6000' },
       { id: 'sf-equip', label: '\u062a\u0643\u0627\u0644\u064a\u0641 \u0627\u0644\u0645\u0639\u062f\u0627\u062a \u0627\u0644\u0631\u064a\u0627\u0636\u064a\u0629 (EGP)', type: 'number', ph: '350000' },
       { id: 'sf-setup', label: '\u062a\u0643\u0627\u0644\u064a\u0641 \u0627\u0644\u062a\u062c\u0647\u064a\u0632 \u0648\u0627\u0644\u062a\u0634\u0637\u064a\u0628 (EGP)', type: 'number', ph: '150000' },
-      { id: 'sf-maint', label: '\u062a\u0643\u0644\u0641\u0629 \u0635\u064a\u0627\u0646\u0629 \u0627\u0644\u0645\u0639\u062f\u0627\u062a \u0627\u0644\u0634\u0647\u0631\u064a\u0629 (EGP)', type: 'number', ph: '5000' }
+      { id: 'sf-maint', label: '\u062a\u0643\u0644\u0641\u0629 \u0635\u064a\u0627\u0646\u0629 \u0627\u0644\u0645\u0639\u062f\u0627\u062a \u0627\u0644\u0634\u0647\u0631\u064a\u0629 (EGP)', type: 'number', ph: '5000' },
+      { id: 'sf-pt-revenue', label: '\u0625\u064a\u0631\u0627\u062f \u062c\u0644\u0633\u0627\u062a Personal Training \u0627\u0644\u0634\u0647\u0631\u064a\u0629 (EGP)', type: 'number', ph: '20000' },
+      { id: 'sf-corp-clients', label: '\u0639\u062f\u062f \u0639\u0645\u0644\u0627\u0621 Corporate Wellness (\u0634\u0631\u0643\u0627\u062a)', type: 'number', ph: '0' }
     ],
     reality_fields: [
       { id: 'r-sub', label: '\u0645\u062a\u0648\u0633\u0637 \u0627\u0634\u062a\u0631\u0627\u0643 \u0627\u0644\u062c\u064a\u0645\u0627\u062a \u0627\u0644\u0645\u0634\u0627\u0628\u0647\u0629 \u0641\u064a \u0627\u0644\u0645\u0646\u0637\u0642\u0629 (EGP)', ph: '\u0645\u062b\u0627\u0644: 900' },
@@ -792,7 +866,10 @@ const SECTORS = {
       { id: 'sf-equipment', label: 'تكلفة المعدات والآلات (EGP)', type: 'number', ph: '120000' },
       { id: 'sf-materials', label: 'تكلفة المواد الخام الشهرية (EGP)', type: 'number', ph: '15000' },
       { id: 'sf-marketing', label: 'ميزانية التسويق الشهرية (EGP)', type: 'number', ph: '5000' },
-      { id: 'sf-setup', label: 'تكاليف التأسيس الأولية إضافة للمعدات (EGP)', type: 'number', ph: '30000' }
+      { id: 'sf-setup', label: 'تكاليف التأسيس الأولية إضافة للمعدات (EGP)', type: 'number', ph: '30000' },
+      { id: 'sf-machine-count', label: 'عدد الآلات / الماكينات العاملة', type: 'number', ph: '2' },
+      { id: 'sf-material-kg', label: 'تكلفة المواد الخام لكل كيلو (EGP/kg)', type: 'number', ph: '250' },
+      { id: 'sf-b2b-pct', label: 'نسبة مبيعات B2B (شركات) من الإجمالي %', type: 'number', ph: '60' }
     ],
     reality_fields: [
       { id: 'r-aov', label: 'متوسط قيمة طلبات المنافسين (EGP)', ph: 'مثال: 350' },
@@ -933,6 +1010,12 @@ function goStep3() {
 
 // Funding toggle
 document.addEventListener('DOMContentLoaded', function() {
+  const savedTheme = localStorage.getItem('eunoia-theme') || 'light';
+  if (savedTheme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    const tb = document.getElementById('theme-toggle');
+    if (tb) tb.textContent = '☀️ Light';
+  }
   buildSectorGrid();
   const fundSel = document.getElementById('f-funding');
   if (fundSel) {
@@ -1022,7 +1105,7 @@ function buildPrompt(d) {
 
   const EGYPT_MACRO_2025 = '\u2550\u2550\u2550 EGYPT MACROECONOMIC CONTEXT 2025 \u2550\u2550\u2550\n'
     + 'CBE Overnight Deposit Rate: 27.25% | Lending: 28.25% \u2014 use as risk-free rate for WACC\n'
-    + 'Official CPI Inflation: 33.8% YoY (April 2025) \u2014 apply to ALL costs every year\n'
+    + 'Official CPI Inflation: 25% \u2014 apply to ALL costs every year\n'
     + 'USD/EGP Exchange Rate: ~49.5 EGP \u2014 apply to any USD-priced inputs (imported equipment, raw materials)\n'
     + 'GDP Growth: 3.8% FY2025 | Consumer confidence: recovering but cautious\n'
     + 'Construction costs 2025: basic finishing EGP 4,500-6,000/sqm | medium EGP 7,000-9,500/sqm | premium EGP 11,000-16,000/sqm\n'
@@ -1249,9 +1332,9 @@ async function generate() {
     try {
       // Clean markdown fences using hex codes to avoid backtick conflicts
       let clean = raw
-        .replace(new RegExp('^[`]{3}json\\s*', ''), '')
-        .replace(new RegExp('^[`]{3}\\s*', ''), '')
-        .replace(new RegExp('[`]{3}\\s*$', ''), '')
+        .replace(new RegExp('^\\x60{3}json\\s*', 'i'), '')
+        .replace(new RegExp('^\\x60{3}\\s*', ''), '')
+        .replace(new RegExp('\\x60{3}\\s*$', ''), '')
         .trim();
       const si = clean.indexOf('{');
       const ei = clean.lastIndexOf('}');
@@ -1643,7 +1726,7 @@ function renderReport(r, d) {
     var mcInvest = mc.total_investment || (r.kpis && r.kpis.total_investment) || parseFloat(d.capital) || 1;
     var mcYears = parseInt(d.years) || 5;
     var mcGrowth = ((parseFloat(d.growth) || 15)) / 100;
-    var mcInflation = ((parseFloat(d.inflation) || 33)) / 100;
+    var mcInflation = ((parseFloat(d.inflation) || 25)) / 100;
     var mcDiscount = ((parseFloat(d.discount) || 30)) / 100;
     var simResults = [];
     for (var sim = 0; sim < 1000; sim++) {
