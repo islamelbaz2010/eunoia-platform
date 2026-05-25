@@ -1,0 +1,1476 @@
+PROJECT TITLE:
+Build a world-class AI-powered Intelligence Ecosystem for Marketing, Media, Real Estate, Business Intelligence, Analytics, Freelancers, Careers, and Executive Decision-Making.
+
+Transform the current platform:
+https://halannews.com/
+
+from a traditional news portal into a futuristic enterprise-grade AI operating system specialized for the Middle East market, especially Egypt and GCC.
+
+The final product should feel like:
+“Bloomberg Terminal + Notion AI + SimilarWeb + HubSpot + Property Finder + Tableau + TradingView + Linear”
+inside one unified premium SaaS ecosystem.
+
+==================================================
+CORE PLATFORM VISION
+
+Create a premium AI-native platform combining:
+AI-powered news intelligence
+Marketing analytics
+Real estate intelligence
+Competitor tracking
+Predictive business analytics
+AI-generated reports
+Executive dashboards
+Social media intelligence
+Salary & hiring analytics
+Freelancer marketplace
+Events & exhibitions intelligence
+CRM & lead intelligence
+Consumer behavior analytics
+Media buying intelligence
+AI strategy generation
+AI-powered recommendations
+Interactive visualizations
+AI assistant ecosystem
+
+The platform should feel:
+
+premium
+futuristic
+fast
+elegant
+highly intelligent
+enterprise-grade
+AI-native
+scalable
+emotionally impressive
+modern SaaS quality
+
+==================================================
+PLATFORM EXPERIENCE PHILOSOPHY
+
+The platform must NOT feel like:
+
+a traditional news website
+
+a WordPress portal
+
+a crowded admin dashboard
+
+disconnected pages
+
+Instead, it should feel like:
+
+an AI Operating System
+
+feel as humanized touch
+
+executive intelligence center
+
+business command center
+
+modular SaaS ecosystem
+
+premium analytics workstation
+
+Every tab should feel like:
+a standalone SaaS product
+while still being deeply connected to the entire ecosystem.
+
+==================================================
+DESIGN & UI/UX DIRECTION
+
+Design Inspirations:
+
+Bloomberg Terminal (modern simplified version)
+
+Stripe Analytics
+
+Linear
+
+Notion AI
+
+Airtable
+
+TradingView
+
+Vercel
+
+Arc Browser
+
+Apple-level UX smoothness
+
+Behance-quality aesthetics
+
+==================================================
+VISUAL STYLE
+
+Premium dark mode
+
+Luxury business aesthetic
+
+Minimal but powerful
+
+AI-native experience
+
+Futuristic but practical
+
+Bento grid layouts
+
+Glassmorphism
+
+Smart dashboard layouts
+
+Floating AI widgets
+
+Elegant gradients
+
+Sticky sidebars
+
+Interactive analytics
+
+AI loading states
+
+Smooth transitions
+
+Responsive layouts
+
+Mobile-first UX
+
+Enterprise-grade hierarchy
+
+Soft shadows
+
+Smart spacing system
+
+Intelligent visual hierarchy
+
+==================================================
+DESIGN SYSTEM REQUIREMENTS
+
+Create a complete enterprise-level design system including:
+
+Typography hierarchy
+
+Color system
+
+Spacing scale
+
+Grid system
+
+Card system
+
+Shadows system
+
+Border radius system
+
+Animation system
+
+Iconography system
+
+Dashboard component system
+
+Mobile component system
+
+Analytics visualization system
+
+==================================================
+COLOR SYSTEM
+
+Backgrounds:
+#0B0B0F
+#111118
+#16161F
+
+Primary:
+#8B5CF6
+
+Accent:
+#EC4899
+
+CTA:
+#6366F1
+
+Text:
+#F5F5F7
+#A1A1AA
+
+==================================================
+TYPOGRAPHY
+
+Premium modern typography
+
+Arabic + English support
+
+Full RTL optimization
+
+Mobile readability optimization
+
+Recommended:
+
+Inter
+
+IBM Plex Sans Arabic
+
+Cairo
+
+==================================================
+PLATFORM INFORMATION ARCHITECTURE
+
+The platform must behave like a connected ecosystem.
+
+All modules must connect intelligently.
+
+Examples:
+
+AI Reports feed Dashboard widgets.
+
+News Intelligence affects trend predictions.
+
+Competitor tracking appears inside reports.
+
+Real estate insights connect with CRM & buyer personas.
+
+Salary intelligence connects with freelancer marketplace.
+
+Events connect with networking analytics.
+
+AI Assistant accesses all modules contextually.
+
+==================================================
+GLOBAL SHARED SYSTEMS
+
+Create shared platform-wide systems:
+
+1. Global AI Assistant
+
+
+2. Smart Search Command Center
+3. Notifications Center
+4. Saved Reports Library
+5. User Workspaces
+6. AI Recommendations Engine
+7. Smart Filters System
+8. Export Center
+9. Team Collaboration Layer
+10. Real-time Alerts System
+11. AI Memory System
+12. AI-generated summaries
+13. User personalization engine
+14. Personalized AI Feed
+15. AI Behavioral Learning System
+16. User Interest Mapping
+17. Smart Workflow Suggestions
+18. Personalized Recommendation Engine
+
+==================================================
+AI MEMORY & PERSONALIZATION SYSTEM
+
+The platform should learn from user behavior over time.
+
+Track:
+
+favorite reports
+
+most visited tabs
+
+industries of interest
+
+saved searches
+
+report generation history
+
+competitors followed
+
+preferred dashboards
+
+collaboration behavior
+
+
+The AI should:
+
+personalize dashboards
+
+recommend reports
+
+suggest opportunities
+
+recommend freelancers
+
+recommend events
+
+predict user needs
+
+build custom intelligence feeds
+
+
+The experience should feel:
+
+humanized
+
+adaptive
+
+highly personalized
+
+emotionally intelligent
+==================================================
+MAIN NAVIGATION TABS
+
+
+1. HOME DASHBOARD
+2. NEWS INTELLIGENCE HUB
+3. AI REPORTS CENTER
+4. REAL ESTATE INTELLIGENCE
+5. MARKETING INTELLIGENCE
+6. FREELANCER MARKETPLACE
+7. EVENTS & EXHIBITIONS HUB
+8. SALARIES & CAREERS
+9. ANALYTICS & VISUALIZATION
+10. AI ASSISTANT
+11. USER WORKSPACES
+12. CRM & LEADS INTELLIGENCE
+13. TEMPLATES & STRATEGIES
+14. COMMUNITY & COLLABORATION
+15. ADMIN CONTROL CENTER
+16. LEARNING & CERTIFICATIONS HUB
+17. VENDORS & SERVICE PROVIDERS
+
+
+
+==================================================
+TAB RELATIONSHIPS & CROSS-INTEGRATION
+
+All tabs must be interconnected intelligently.
+
+Examples:
+
+News Intelligence affects AI Reports.
+
+Competitor tracking appears inside Marketing Intelligence.
+
+Real Estate dashboards connect with CRM.
+
+Freelancer marketplace connects with Hiring Intelligence.
+
+Events connect with Networking Analytics.
+
+AI Assistant accesses all data across the platform.
+
+==================================================
+SMART CROSS-FEATURES
+
+Examples:
+
+Inside a news article:
+Generate report
+Analyze impact
+Compare competitors
+Create strategy
+Save to workspace
+Inside real estate dashboards:
+Generate buyer persona
+Analyze campaigns
+Predict demand
+Compare developers
+Inside freelancer profiles:
+AI compatibility score
+Team matching
+Suggested collaborations
+Suggested Courses
+
+==================================================
+HOME DASHBOARD
+
+Purpose:
+AI-powered executive command center.
+The dashboard should feel like:
+real-time intelligence hub
+premium operating system
+executive control center
+
+==================================================
+DASHBOARD WIDGETS
+
+Trending news
+Market sentiment
+AI recommendations
+Competitor movement
+Real estate heatmaps
+Viral social trends
+Economic indicators
+Smart alerts
+Campaign analytics
+Most searched projects
+AI-generated summaries
+Saved reports
+Team activity
+Live trend tracking
+AI opportunity detection
+
+==================================================
+DASHBOARD UX
+
+Drag & drop widgets
+Bento grid layouts
+Sticky intelligence sidebar
+Floating AI assistant
+Fullscreen widgets
+Expandable analytics cards
+Modular workspace system
+Personalized feeds
+Saved workspace layouts
+Smart notifications
+
+==================================================
+NEWS INTELLIGENCE HUB
+
+Categories:
+
+Real Estate
+Marketing
+AI & Tech
+Business
+Economy
+Egypt News
+GCC News
+Tourism
+Startups
+Investment
+Social Media Trends
+Advertising
+Exhibitions & Events
+
+==================================================
+NEWS FEATURES
+
+AI-generated summaries
+Fake news detection
+Sentiment analysis
+Keyword extraction
+Trend prediction
+Topic clustering
+“Why this matters”
+Smart search
+Timeline mode
+AI recommendations
+Related reports
+Generate strategy
+Generate insights
+
+==================================================
+DATA SOURCES
+
+RSS feeds
+News APIs
+Google Trends
+TikTok trends
+LinkedIn insights
+YouTube trends
+X/Twitter trends
+Social APIs
+Google Trends 
+SimilarWeb 
+Aqarmap 
+Reddit
+CRM 
+Financial Benchmarks 
+Predictive AI
+GA4 
+Hotjar
+Meta API 
+BigSpy
+Ahrefs 
+SEMrush 
+Search Console
+Social Listening 
+Mention 
+Google Trends
+Pinterest 
+YouTube Trends
+Financial Modeling 
+Historical Data
+LinkedIn Sales Navigator 
+Apollo
+NLP
+SocialBlade 
+HypeAuditor
+GIS
+Property Finder
+Telegram Analytics
+CAPMAS 
+Jumia
+Fawry
+Mortgage Trends 
+Property portals
+Arabic NLP 
+Arabic comments mining
+
+
+==================================================
+MASTER AI REPORTS SYSTEM
+
+Build an enterprise-level AI reporting engine containing 40+ intelligent reports.
+
+==================================================
+UNIFIED REPORT EXPERIENCE SYSTEM
+
+Every report must follow one premium unified structure.
+
+Each report screen must contain:
+
+1. Executive Summary
+2. AI Key Insights
+3. KPI Overview
+4. Interactive Charts
+5. Predictive Insights
+6. Opportunities & Risks
+7. Competitor Comparison
+8. AI Recommendations
+9. Action Plan Generator
+10. Presentation Generator
+11. Export System
+12. Shareable Dashboard
+13. Timeline View
+14. AI Voice Explanation
+15. Fullscreen Analytics Mode
+16. “What changed?”
+17. “Why it matters?”
+18. “What should happen next?”
+19. Generate strategy
+20. Generate client-ready PDF
+
+==================================================
+REPORT INPUT SYSTEM
+
+Each report must define:
+
+Required inputs
+Optional inputs
+AI-enriched inputs
+APIs connected
+External data sources
+AI confidence score
+Estimated processing time
+Filters system
+
+==================================================
+REPORT OUTPUT SYSTEM
+
+Each report should generate:
+
+Summary cards
+Charts
+Tables
+Heatmaps
+AI insights
+AI recommendations
+Shareable dashboards
+PDF export
+AI action plans
+Saved report versions
+
+==================================================
+REPORT PLACEMENT LOGIC
+
+Each generated report must appear contextually across the platform.
+
+Example:
+Campaign Performance Report →
+
+Dashboard widget
+Reports archive
+Marketing workspace
+AI assistant memory
+Team collaboration space
+
+==================================================
+CATEGORY 1 — REAL ESTATE INTELLIGENCE REPORTS
+
+1. Market Demand Report
+2. Developer Competitor Report
+3. Compound Comparison Report
+4. Investment Opportunity Report
+5. Real Estate Pricing Trends Report
+6. Buyer Persona Intelligence Report
+7. Real Estate Ads Performance Report
+8. Broker & Sales Team Performance Report
+
+Outputs:
+
+Heatmaps
+ROI analysis
+Demand scores
+Buyer psychology
+Competitor analysis
+Conversion analytics
+Pricing trends
+
+==================================================
+CATEGORY 2 — MARKETING INTELLIGENCE REPORTS
+
+9. Campaign Performance Report
+10. Social Media Trend Report
+11. Influencer Intelligence Report
+12. Audience Segmentation Report
+13. Content Performance Report
+14. Competitor Ads Tracking Report
+15. SEO & Website Analytics Report
+16. Brand Sentiment Analysis Report
+
+
+Outputs:
+
+ROI
+CTR
+Viral trends
+Funnel analytics
+Audience behavior
+Engagement insights
+Emotional sentiment analysis
+
+==================================================
+CATEGORY 3 — BUSINESS & ECONOMIC REPORTS
+
+17. Economic Indicators Dashboard
+18. Consumer Spending Behavior Report
+19. Startup & Investment Tracker
+20. Industry Growth Analysis Report
+21. Business Expansion Opportunity Report
+
+==================================================
+CATEGORY 4 — HR & SALARY INTELLIGENCE
+
+22. Salary Benchmark Report
+23. Hiring Demand Report
+24. Freelancer Market Report
+25. Team Productivity Report
+26. Employee Retention Report
+
+
+==================================================
+CATEGORY 5 — EVENTS & EXHIBITIONS REPORTS
+
+27. Exhibition ROI Report
+28. Sponsor Opportunity Report
+29. Visitor Analytics Report
+30. Networking Intelligence Report
+
+=================================================
+CATEGORY 6 — MEDIA BUYING & ADVERTISING
+
+31. Media Buying Optimization Report
+32. Ad Creative Intelligence Report
+33. Funnel Leakage Analysis Report
+34. Retargeting Effectiveness Report
+
+==================================================
+CATEGORY 7 — AI & PREDICTIVE INTELLIGENCE
+
+35. AI Future Trend Prediction Report
+36. Predictive Sales Reports
+37. AI Opportunity Detection Report
+38. Risk Detection & Alerts Report
+
+==================================================
+CATEGORY 8 — PLATFORM & USER ANALYTICS
+
+39. User Behavior Analytics Report
+40. Subscription & Revenue Analytics Report
+41. AI Assistant Usage Report
+
+==================================================
+CATEGORY 9 — GENERAL MARKETING REPORTS
+
+42. Competitor Analysis Report
+43. Market Share Report
+44. Industry Trend Analysis Report
+45. Pricing Comparison Report
+46. SWOT Analysis Report
+47. Brand Positioning Report
+48. Customer Demand Report
+49. Geographic Market Analysis Report
+50. Opportunity Gap Report
+51. Threat Detection Report
+52. Customer Segmentation Report
+53. Buyer Persona Report
+54. Customer Journey Report
+55. Customer Lifetime Value (CLV) Report
+56. Retention & Churn Report
+57. Lead Quality Report
+58. Customer Satisfaction Report (NPS)
+59. Behavioral Analysis Report
+60. Demographic Analysis Report
+61. Psychographic Analysis Report
+62. Marketing Qualified Leads (MQLs) Report
+63. Sales Qualified Leads (SQLs) Report
+64. Pipeline Influence Report
+65. Lead-to-Sale Conversion Report
+66. Revenue Attribution Report
+67. Sales Cycle Length Report
+68. Closed Deals Source Report
+69. Sales Team Performance Report
+70. Opportunity Win/Loss Analysis Report
+71. Revenue Forecast Report
+72. Growth Performance Report
+73. Market Expansion Opportunities Report
+74. Product Market Fit Report
+75. Growth Channel Analysis Report
+76. Scaling Strategy Report
+77. Demand Forecast Report
+78. Campaign Strategy Performance Report
+79. Experimentation & Innovation Report
+80. New Market Entry Report
+81. Strategic Recommendations Report
+82. Content Performance Report
+83. Blog & SEO Content Report
+84. Video Performance Report
+85. Creative Performance Analysis
+86. Content ROI Report
+87. Content Funnel Contribution Report
+88. Content Engagement Heatmap Report
+89. Topic Clustering Report
+90. Content Gap Analysis Report
+91. Content Repurposing Report
+92. Executive Marketing Summary Report
+93. KPI Dashboard Report
+94. Weekly Business Performance Report
+95. Monthly Growth Report
+96. Strategic Insights Report
+97. Market Position Report
+98. Business Health Report
+99. Opportunity & Risk Executive Report
+100. Competitive Landscape Overview
+101. Decision Support Report
+102. Website Traffic Report
+103. User Behavior Report (Heatmaps & Session Analysis)
+104. Landing Page Performance Report
+105. Bounce Rate Analysis Report
+106. Conversion Funnel Drop-off Report
+107. SEO Performance Report
+108. Keyword Ranking Report
+109. Organic vs Paid Traffic Report
+110. Page Speed & UX Performance Report
+111. Lead Form Conversion Report
+
+==================================================
+REAL ESTATE INTELLIGENCE SECTION
+
+Features:
+
+Compound comparison
+Smart property search
+Developer rankings
+ROI calculator
+Demand heatmaps
+Price prediction AI
+Buyer behavior analysis
+New Capital dashboards
+North Coast analytics
+Ras Sudr investment intelligence
+Commercial project analytics
+Luxury segment dashboards
+
+==================================================
+MARKETING INTELLIGENCE SECTION
+
+Features:
+
+Campaign analytics
+Competitor tracking
+Social listening
+Viral trends
+Influencer intelligence
+Audience segmentation
+Funnel analytics
+Brand sentiment
+Content intelligence
+AI marketing planner
+
+==================================================
+FREELANCER MARKETPLACE
+
+Sections:
+
+Freelancers
+Agencies
+Remote jobs
+Collaboration hub
+Projects marketplace
+
+Features:
+
+Portfolio system
+AI skill matching
+Ratings & reviews
+Proposal generator
+Messaging system
+Contract system
+Payment integration
+
+UX Direction:
+Behance + LinkedIn + Upwork hybrid.
+
+==================================================
+EVENTS & EXHIBITIONS HUB
+
+Features:
+
+Exhibition calendar
+Sponsor opportunities
+Ticketing system
+Visitor analytics
+Networking intelligence
+VIP recommendations
+Business matchmaking
+Smart reminders
+
+==================================================
+SALARIES & CAREERS
+
+Features:
+
+Salary benchmarks
+AI career advisor
+CV analyzer
+Interview simulator
+Skill demand tracking
+Hiring heatmaps
+Company reviews
+linkedin job posts
+
+==================================================
+CRM & LEADS INTELLIGENCE
+
+Features:
+
+Lead scoring
+AI lead analysis
+Customer segmentation
+Opportunity scoring
+Meeting notes AI
+Follow-up suggestions
+Pipeline analytics
+Smart CRM dashboards
+
+==================================================
+TEMPLATES & STRATEGIES
+
+Include:
+
+Marketing templates
+Campaign plans
+Sales scripts
+Proposal templates
+Presentation templates
+Content frameworks
+Strategy generators
+
+==================================================
+COMMUNITY & COLLABORATION
+
+Features:
+
+Marketers community
+Discussions
+Live rooms
+Case studies
+Mentorship
+Agency partnerships
+Collaboration requests
+
+==================================================
+ANALYTICS & VISUALIZATION
+
+Use:
+
+Heatmaps
+KPI cards
+Geographic maps
+Funnel visualizations
+AI insight cards
+Comparative analytics
+Animated charts
+Interactive dashboards
+Experience inspiration:
+Tableau
+PowerBI
+TradingView
+Stripe Analytics
+
+==================================================
+AI ASSISTANT
+
+Capabilities:
+
+Generate reports
+Explain dashboards
+Predict trends
+Analyze competitors
+Create marketing plans
+Generate presentations
+Summarize news
+Build buyer personas
+Recommend strategies
+Create campaigns
+
+Modes:
+
+Marketing Consultant
+Real Estate Advisor
+Business Analyst
+Media Planner
+CEO Assistant
+
+==================================================
+LEARNING & CERTIFICATIONS HUB
+
+Features:
+
+AI-powered learning paths
+marketing courses
+Marketing courses instructors
+real estate sales training
+AI marketing certifications
+workshops
+bootcamps
+live webinars
+recorded masterclasses
+skill assessments
+AI-generated study plans
+
+Include:
+
+certificates
+recruiter visibility
+freelancer skill badges
+company-sponsored learning tracks
+mentorship programs
+
+AI should recommend:
+
+courses
+certifications
+career paths
+skills needed for promotions
+missing skills based on job market analysis
+
+
+==================================================
+ENGAGEMENT & GAMIFICATION SYSTEM
+
+Features:
+
+achievement badges
+contributor rankings
+AI productivity scores
+streak systems
+report generation milestones
+leaderboard systems
+networking activity scores
+verified expert badges
+
+
+Purpose:
+Increase engagement, retention, and community interaction.
+
+==================================================
+VENDORS & SERVICE PROVIDERS
+
+Features:
+
+Vendors databases
+
+Include:
+
+Name 
+Company 
+Registration no
+Phone no 
+Service list 
+Shoots of work 
+
+
+==================================================
+MOBILE-FIRST EXPERIENCE
+
+The mobile experience must NOT be a simplified desktop copy.
+
+Requirements:
+
+Bottom navigation
+Swipeable cards
+Floating AI assistant
+Mobile analytics widgets
+Voice-enabled AI
+Smart collapsible sections
+Thumb-friendly UX
+Mobile-first reports viewer
+Optimized charts
+Fast loading experience
+
+The mobile app should feel like:
+Bloomberg + Notion AI + TradingView mobile apps.
+
+==================================================
+USER TYPES & ACCESS LEVELS
+
+FREE USERS:
+
+Limited reports
+Basic dashboards
+Limited AI usage
+
+PREMIUM USERS:
+
+Full AI reports
+Predictive analytics
+Advanced dashboards
+Unlimited AI assistant
+Full exports
+
+ENTERPRISE USERS:
+
+Team accounts
+White-label reports
+CRM integrations
+API access
+Custom dashboards
+Internal analytics
+
+==================================================
+FREEMIUM & SUBSCRIPTION CONTENT SYSTEM
+
+The platform must support a hybrid free + premium content model.
+
+==================================================
+FREE CONTENT EXPERIENCE
+
+Free users can access:
+
+limited news articles
+basic dashboards
+limited AI assistant usage
+preview versions of reports
+limited analytics
+selected free templates
+basic market insights
+
+==================================================
+PREMIUM CONTENT EXPERIENCE
+
+Premium users can access:
+
+full reports
+advanced dashboards
+predictive analytics
+AI-generated strategies
+advanced exports
+unlimited AI assistant
+premium analytics
+deep intelligence reports
+saved workspaces
+collaboration features
+
+==================================================
+REPORT PREVIEW SYSTEM
+
+Reports should support:
+partial free previews
+blurred premium sections
+locked analytics sections
+teaser insights
+
+“unlock full report” prompts
+
+==================================================
+REPORT ACCESS EXPERIENCE
+
+Example:
+
+Free user sees:
+executive summary
+limited charts
+basic KPIs
+Premium-only sections:
+predictive insights
+competitor deep analysis
+AI recommendations
+strategy generation
+full exports
+advanced dashboards
+
+==================================================
+SMART PAYWALL SYSTEM
+
+Create a premium AI-powered paywall experience.
+
+Features:
+
+personalized upgrade prompts
+AI-generated upgrade recommendations
+contextual subscription offers
+limited free usage counters
+report unlock system
+trial access system
+dynamic pricing experiments
+
+==================================================
+SUBSCRIPTION TIERS
+
+1. Free
+2. Pro
+3. Business
+4. Enterprise
+
+==================================================
+SUBSCRIPTION UX
+
+The subscription experience should feel:
+premium
+psychologically persuasive
+seamless
+modern SaaS quality
+non-intrusive
+
+==================================================
+LOCKED CONTENT EXPERIENCE
+
+Locked premium sections should:
+visually tease advanced insights
+show blurred charts
+preview hidden analytics
+encourage upgrades elegantly
+
+==================================================
+PREMIUM FEATURES HIGHLIGHTING
+Inside dashboards and reports:
+highlight premium insights
+show AI-powered advanced analysis
+show locked predictive sections
+promote enterprise features naturally
+
+==================================================
+REVENUE MODEL
+
+Revenue Sources:
+Premium subscriptions
+Enterprise plans
+Sponsored reports
+Featured listings
+AI report purchases
+Advertisements
+Recruitment services
+Data subscriptions
+Event sponsorships
+Featured freelancers
+
+==================================================
+ADVERTISING & SPONSORED PLACEMENTS SYSTEM
+
+Create a premium advertising ecosystem integrated naturally inside the platform.
+
+The advertising experience must NOT feel like traditional banner ads.
+
+Instead, ads should feel:
+
+premium
+native
+intelligent
+contextual
+relevant
+non-intrusive
+
+==================================================
+AD PLACEMENT TYPES
+
+1. Top Leaderboard Ads
+
+sticky premium banners
+shown on dashboards and news pages
+
+2. Sidebar Sponsored Panels
+
+intelligent contextual ads
+appear beside reports and analytics
+
+3. Bottom Sponsored Sections
+
+shown after reports and articles
+“Recommended companies”
+“Sponsored insights”
+
+4. Native Sponsored Cards
+
+integrated inside dashboards
+appear like intelligence widgets
+
+5. Sponsored Reports
+
+companies can sponsor AI-generated reports
+
+6. Featured Companies
+
+promoted real estate developers
+featured agencies
+featured freelancers
+featured tools
+
+7. Smart Sponsored Recommendations
+
+AI-recommended services based on user behavior
+
+8. Video & Interactive Ads
+
+premium motion ads
+
+interactive campaign showcases
+
+==================================================
+AD TARGETING SYSTEM
+
+Ads should use:
+
+user interests
+visited tabs
+report categories
+market sectors
+behavior analytics
+saved workspaces
+AI recommendations
+
+==================================================
+PREMIUM AD EXPERIENCE RULES
+
+avoid spammy ad layouts
+maintain luxury SaaS feeling
+ads should match dark UI system
+smooth animations only
+responsive ad layouts
+mobile optimized placements
+intelligent ad frequency control
+
+==================================================
+SPONSORED CONTENT FEATURES
+
+Allow companies to:
+
+sponsor reports
+sponsor newsletters
+sponsor dashboards
+sponsor events
+sponsor insights
+sponsor AI recommendations
+feature products/services
+
+==================================================
+MONETIZATION DASHBOARD
+
+Create admin dashboards for:
+
+ad performance
+impressions
+CTR
+sponsorship analytics
+campaign management
+advertiser management
+AI ad optimization
+
+ADVANCED AI FEATURES
+
+AI report generation
+AI predictive analytics
+AI opportunity detection
+AI recommendations engine
+AI fake news detection
+AI trend forecasting
+AI lead scoring
+AI marketing planner
+AI article summarization
+AI competitor tracking
+
+==================================================
+TECH STACK
+
+Frontend:
+
+Next.js
+React
+Tailwind CSS
+Framer Motion
+Shadcn UI
+
+Backend:
+
+Node.js
+Python AI services
+PostgreSQL
+
+Redis
+
+AI Stack:
+OpenAI
+Claude API
+LangChain
+Pinecone Vector Database
+
+Analytics:
+Apache ECharts
+Recharts
+Supabase
+
+==================================================
+LANDING PAGE REQUIREMENTS
+
+Sections:
+
+Hero section with AI dashboard preview
+
+Live market insights
+Interactive analytics preview
+AI-generated report showcase
+Trending intelligence widgets
+Testimonials
+Pricing section
+Trusted companies
+Smart CTA sections
+
+==================================================
+SPECIAL EXPERIENCE DETAILS
+
+The platform must:
+
+Feel expensive
+Feel AI-native
+Prioritize dashboards over article lists
+Use modular workspace layouts
+Be optimized for scalability
+Support Arabic + English perfectly
+Focus heavily on Egypt & GCC markets
+Feel futuristic but highly usable
+Reduce cognitive overload
+Use strong UX hierarchy
+Include smooth animations
+Include AI-native interactions
+Feel emotionally impressive
+
+==================================================
+WORKSPACE ECOSYSTEM
+
+Users should be able to create multiple workspaces.
+
+Examples:
+
+Agency Workspace
+Real Estate Workspace
+Startup Workspace
+Personal Workspace
+Enterprise Workspace
+
+
+Each workspace can contain:
+
+Reports
+
+dashboards
+saved AI chats
+competitor tracking
+team members
+campaigns
+templates
+analytics
+CRM pipelines
+
+
+Features:
+
+workspace permissions
+workspace AI memory
+team collaboration
+workspace branding
+workspace analytics
+custom widgets
+
+
+==================================================
+INTEGRATIONS & API ECOSYSTEM
+
+Integrations:
+
+Meta Ads
+Google Ads
+TikTok Ads
+LinkedIn
+HubSpot
+Salesforce
+Zoho CRM
+Google Analytics
+Search Console
+Mailchimp
+Slack
+Notion
+Trello
+Monday.com
+
+
+Features:
+
+API access
+webhooks
+custom integrations
+live data sync
+automated workflows
+third-party dashboards
+
+
+==================================================
+ENTERPRISE SECURITY & ADMIN SYSTEM
+
+Features:
+
+role-based permissions
+SSO login
+2FA authentication
+activity logs
+audit logs
+workspace permissions
+encrypted data
+admin monitoring
+enterprise analytics
+compliance-ready infrastructure
+
+
+==================================================
+AI AGENTS SYSTEM
+
+Create specialized AI agents inside the platform.
+
+Examples:
+
+Marketing Strategist Agent
+Real Estate Analyst Agent
+Media Buyer Agent
+SEO Specialist Agent
+Business Consultant Agent
+Sales Assistant Agent
+CEO Executive Agent
+Content Creator Agent
+Each AI agent should:
+remember context
+access reports
+generate insights
+recommend actions
+automate workflows
+collaborate with users
+
+
+==================================================
+FINAL GOAL
+
+Create the most advanced AI-powered intelligence ecosystem in the Middle East that combines:
+
+News + Marketing + Real Estate + AI + Analytics + Reports + Freelancers + Careers + Events + CRM + Business Intelligence
+
+inside one unified premium platform experience.
+
+The final platform should feel like:
+“The AI Operating System for Business Intelligence in the Middle East.”
