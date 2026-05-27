@@ -1,5 +1,5 @@
-// ── OPENAI API KEY ────────────────────────────────────────────────────────────
-const OPENAI_KEY = 'sk-proj-GYSej4qZcvJQubYIUYiCQNcZtWNmSziowSWwssCHIYycpZrjUTIMbT9TE-1NEdG2eMxoy_0y8LT3BlbkFJOc5N77nvVjDyJ0tLz5rmDQT5UxKMsLw8XTRHl5bKpztXpTX34fSM8G3FDXzankJHXsWVNYA';
+// ── OPENAI KEY: set OPENAI_KEY in Cloudflare Workers environment variables ───
+// Dashboard → Workers & Pages → your worker → Settings → Variables
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -54,12 +54,12 @@ function extractJSON(text) {
 }
 
 // ── OPENAI CALL ───────────────────────────────────────────────────────────────
-async function callOpenAI(prompt, systemPrompt, maxTokens) {
+async function callOpenAI(prompt, systemPrompt, maxTokens, apiKey) {
   const res = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + OPENAI_KEY,
+      'Authorization': 'Bearer ' + apiKey,
     },
     body: JSON.stringify({
       model: 'gpt-4o-mini',
@@ -90,9 +90,15 @@ async function callOpenAI(prompt, systemPrompt, maxTokens) {
 
 // ── MAIN HANDLER ──────────────────────────────────────────────────────────────
 export default {
-  async fetch(request) {
+  async fetch(request, env) {
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
     if (request.method !== 'POST') return new Response('ok', { status: 200, headers: CORS });
+
+    const apiKey = env.OPENAI_KEY;
+    if (!apiKey) {
+      return new Response(JSON.stringify({ error: 'OPENAI_KEY not configured in worker environment' }),
+        { status: 500, headers: { ...CORS, 'Content-Type': 'application/json' } });
+    }
 
     let body;
     try { body = await request.json(); }
@@ -134,7 +140,7 @@ export default {
 
     const systemPrompt = `You are an expert marketing strategist at Eunoia Zones Agency, Egypt. Write ALL report content in ENGLISH. Return ONLY valid JSON starting with { and ending with }. Use ONLY double quotes. No markdown. No trailing commas. Every field must have real, specific, actionable content.`;
 
-    const result = await callOpenAI(enrichedPrompt, systemPrompt, 6000);
+    const result = await callOpenAI(enrichedPrompt, systemPrompt, 6000, apiKey);
 
     if (!result.ok) {
       return new Response(JSON.stringify({
