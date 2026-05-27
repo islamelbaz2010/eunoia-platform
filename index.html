@@ -984,32 +984,31 @@ function _startSessionTimer(){
 }
 
 // ══ AUTH ══════════════════════════════════════════════════════════
-function doLogin(){
-  const u = document.getElementById('lu').value.trim();
-  const p = document.getElementById('lp').value;
-  if(!u||!p){ showLoginError('من فضلك أدخل اسم المستخدم وكلمة المرور'); return; }
+async function doLogin(){
+  console.log('[doLogin] called');
+  const u = (document.getElementById('lu').value || '').trim();
+  const p = document.getElementById('lp').value || '';
+  if(!u || !p){ showLoginError('من فضلك أدخل اسم المستخدم وكلمة المرور'); return; }
   const btn = document.getElementById('login-btn');
   btn.disabled = true; btn.textContent = 'جاري التحقق...';
-  // Small delay for UX feel
-  setTimeout(()=>{
-    const match = USERS[u];
-    if(match && match.password === p){
-      const rolePerms = {
-        admin:  ['all_report_types','web_search','admin_panel'],
-        agency: ['all_report_types','web_search'],
-        client: []
-      };
-      const perms = match.permissions || rolePerms[match.role] || [];
-      USER = { logged_in:true, name:match.name, role:match.role, username:u, permissions:perms };
-      _saveSession(u);
-      _startSessionTimer();
-      btn.textContent = 'دخول ←';
-      bootApp();
-    } else {
-      showLoginError(u in USERS ? 'كلمة المرور غير صحيحة' : 'اسم المستخدم غير موجود');
-      btn.disabled = false; btn.textContent = 'دخول ←';
-    }
-  }, 320);
+  const match = USERS[u];
+  console.log('[doLogin] user lookup:', u, '→', match ? 'found' : 'not found');
+  if(match && match.password === p){
+    const rolePerms = {
+      admin:  ['all_report_types','web_search','admin_panel'],
+      agency: ['all_report_types','web_search'],
+      client: []
+    };
+    const perms = match.permissions || rolePerms[match.role] || [];
+    USER = { logged_in:true, name:match.name, role:match.role, username:u, permissions:perms };
+    _saveSession(u);
+    _startSessionTimer();
+    btn.textContent = 'دخول ←';
+    bootApp();
+  } else {
+    showLoginError(u in USERS ? 'كلمة المرور غير صحيحة' : 'اسم المستخدم غير موجود');
+    btn.disabled = false; btn.textContent = 'دخول ←';
+  }
 }
 function showLoginError(msg){ const el=document.getElementById('lerr'); el.textContent='❌ '+msg; el.style.display='block'; }
 function doLogout(){ _clearSession(); clearTimeout(_sessionTimer); location.reload(); }
