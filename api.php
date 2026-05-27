@@ -1,5 +1,5 @@
 <?php
-// VERSION: 2026-04-12-v5-proxy
+// VERSION: 2026-05-27-v6-secure
 session_start();
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -24,11 +24,21 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
+// Load API key from gitignored config.php, falling back to environment variable
+$configFile = __DIR__ . '/config.php';
+$API_KEY = file_exists($configFile)
+    ? ((require $configFile)['anthropic_key'] ?? '')
+    : (getenv('ANTHROPIC_API_KEY') ?: '');
+
+if (!$API_KEY) {
+    http_response_code(500);
+    echo json_encode(['error' => 'API key not configured — see config.example.php', 'content' => []]);
+    exit;
+}
+
 // Keep connection alive
 set_time_limit(0);
 ignore_user_abort(false);
-
-$API_KEY = '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';
 
 $raw = file_get_contents('php://input');
 $input = json_decode($raw, true);
@@ -46,8 +56,6 @@ $payload = [
     'messages'   => [['role' => 'user', 'content' => $input['prompt']]]
 ];
 
-// Use file_get_contents with stream context instead of curl
-// This avoids curl timeout issues on shared hosting
 $context = stream_context_create([
     'http' => [
         'method'        => 'POST',
@@ -74,7 +82,6 @@ if ($response === false) {
     exit;
 }
 
-// Get HTTP status from response headers
 $httpCode = 200;
 foreach ($http_response_header as $h) {
     if (preg_match('/HTTP\/\d\.\d\s+(\d+)/', $h, $m)) {
