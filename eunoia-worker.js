@@ -1,4 +1,5 @@
-const GROQ_API_KEY = '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';
+// ── OPENAI API KEY ────────────────────────────────────────────────────────────
+const OPENAI_KEY = 'sk-proj-GYSej4qZcvJQubYIUYiCQNcZtWNmSziowSWwssCHIYycpZrjUTIMbT9TE-1NEdG2eMxoy_0y8LT3BlbkFJOc5N77nvVjDyJ0tLz5rmDQT5UxKMsLw8XTRHl5bKpztXpTX34fSM8G3FDXzankJHXsWVNYA';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -6,20 +7,7 @@ const CORS = {
   'Access-Control-Allow-Headers': '*',
 };
 
-// Limits based on 12000 TPM (llama-3.3-70b new key)
-// Input per request = 2000-4000 tokens → safe output = 6000 for all
-const TOKEN_LIMITS = {
-  preliminary: 6000, executive: 6000, competitor: 6000,
-  campaign: 6000, content: 6000, brand: 6000, clv: 6000,
-  sentiment: 6000, trend: 6000, crisis: 6000,
-  detailed: 6000, full: 6000,
-  pricing: 6000, social_audit: 6000, lead_quality: 6000,
-  market_entry: 6000, ecommerce_growth: 6000, media_mix: 6000,
-  seasonal: 6000, customer_journey: 6000, annual_budget: 6000,
-  rebranding: 6000, b2b_strategy: 6000, product_launch: 6000,
-  digital_readiness: 6000, influencer: 6000,
-};
-
+// ── SCRAPE URL ────────────────────────────────────────────────────────────────
 async function scrapeURL(url) {
   if (!url || !url.startsWith('http')) return null;
   try {
@@ -56,6 +44,51 @@ async function scrapeURL(url) {
   } catch(e) { return null; }
 }
 
+// ── CLEAN JSON ────────────────────────────────────────────────────────────────
+function extractJSON(text) {
+  let s = text.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/g, '').trim();
+  const start = s.indexOf('{');
+  const end   = s.lastIndexOf('}');
+  if (start !== -1 && end > start) s = s.substring(start, end + 1);
+  return s;
+}
+
+// ── OPENAI CALL ───────────────────────────────────────────────────────────────
+async function callOpenAI(prompt, systemPrompt, maxTokens) {
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + OPENAI_KEY,
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o-mini',
+      max_tokens: maxTokens,
+      temperature: 0.3,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user',   content: prompt }
+      ]
+    }),
+    signal: AbortSignal.timeout(55000)
+  });
+
+  const rawText = await res.text();
+  let data;
+  try { data = JSON.parse(rawText); }
+  catch(e) {
+    return { ok: false, error: 'OpenAI parse error', raw: rawText.substring(0, 500) };
+  }
+
+  if (!res.ok) {
+    const errMsg = data.error?.message || 'OpenAI API error ' + res.status;
+    return { ok: false, error: errMsg, error_type: data.error?.type || 'api_error' };
+  }
+
+  return { ok: true, data };
+}
+
+// ── MAIN HANDLER ──────────────────────────────────────────────────────────────
 export default {
   async fetch(request) {
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
@@ -63,82 +96,60 @@ export default {
 
     let body;
     try { body = await request.json(); }
-    catch(e) { return new Response(JSON.stringify({ error: 'Invalid JSON' }), { status: 400, headers: { ...CORS, 'Content-Type': 'application/json' } }); }
+    catch(e) {
+      return new Response(JSON.stringify({ error: 'Invalid JSON' }),
+        { status: 400, headers: { ...CORS, 'Content-Type': 'application/json' } });
+    }
 
-    if (!body.prompt) return new Response(JSON.stringify({ error: 'Missing prompt' }), { status: 400, headers: { ...CORS, 'Content-Type': 'application/json' } });
+    if (!body.prompt) {
+      return new Response(JSON.stringify({ error: 'Missing prompt' }),
+        { status: 400, headers: { ...CORS, 'Content-Type': 'application/json' } });
+    }
 
-    const reportType = body.report_type || 'preliminary';
-    const maxTokens = TOKEN_LIMITS[reportType] || 6000;
-
-    // Scrape links in parallel
+    // Scrape website + Facebook in parallel
     const links = body.social_links || {};
     const urlsToScrape = [
       links.website  && { label: 'Website',  url: links.website },
       links.facebook && { label: 'Facebook', url: links.facebook },
     ].filter(Boolean);
 
-    const scrapedData = [];
-    if (urlsToScrape.length > 0) {
-      const results = await Promise.allSettled(
-        urlsToScrape.map(({ label, url }) =>
-          scrapeURL(url).then(data => data ? `\n=== ${label} (${url}) ===\n${data}` : null)
+    const scrapedResults = urlsToScrape.length > 0
+      ? await Promise.allSettled(
+          urlsToScrape.map(({ label, url }) =>
+            scrapeURL(url).then(data => data ? `\n=== ${label} (${url}) ===\n${data}` : null)
+          )
         )
-      );
-      results.forEach(r => { if (r.status === 'fulfilled' && r.value) scrapedData.push(r.value); });
-    }
+      : [];
 
+    // Build enriched prompt
     let enrichedPrompt = body.prompt;
+
+    const scrapedData = [];
+    scrapedResults.forEach(r => {
+      if (r.status === 'fulfilled' && r.value) scrapedData.push(r.value);
+    });
     if (scrapedData.length > 0) {
       enrichedPrompt += `\n\n=== LIVE DATA SCRAPED FROM CLIENT LINKS ===\n${scrapedData.join('\n')}\n=== END LIVE DATA ===\nUse the above live data to enhance accuracy.`;
     }
 
-    const systemPrompt = `You are an expert marketing strategist at Eunoia Zones Agency, Egypt. Write ALL report content in ENGLISH. Return ONLY valid JSON starting with { and ending with }. No markdown. No \`\`\`json. Every field must have real, specific, actionable content — no placeholders.`;
+    const systemPrompt = `You are an expert marketing strategist at Eunoia Zones Agency, Egypt. Write ALL report content in ENGLISH. Return ONLY valid JSON starting with { and ending with }. Use ONLY double quotes. No markdown. No trailing commas. Every field must have real, specific, actionable content.`;
 
-    try {
-      const apiRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + GROQ_API_KEY,
-        },
-        body: JSON.stringify({
-          model: 'llama-3.3-70b-versatile',
-          max_tokens: maxTokens,
-          temperature: 0.3,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user',   content: enrichedPrompt }
-          ]
-        })
-      });
+    const result = await callOpenAI(enrichedPrompt, systemPrompt, 6000);
 
-      const rawText = await apiRes.text();
-      let groqData;
-      try { groqData = JSON.parse(rawText); }
-      catch(e) {
-        return new Response(JSON.stringify({ error: 'Groq parse error', raw: rawText.substring(0, 500), content: [] }),
-          { status: 500, headers: { ...CORS, 'Content-Type': 'application/json' } });
-      }
-
-      if (!apiRes.ok) {
-        return new Response(JSON.stringify({
-          error: groqData.error?.message || 'Groq API error',
-          error_type: groqData.error?.type || 'unknown',
-          content: []
-        }), { status: 500, headers: { ...CORS, 'Content-Type': 'application/json' } });
-      }
-
-      const text = groqData.choices?.[0]?.message?.content || '';
+    if (!result.ok) {
       return new Response(JSON.stringify({
-        content: [{ type: 'text', text }],
-        model: groqData.model,
-        usage: groqData.usage,
-        scraped_sources: urlsToScrape.map(u => u.label)
-      }), { status: 200, headers: { ...CORS, 'Content-Type': 'application/json' } });
-
-    } catch(e) {
-      return new Response(JSON.stringify({ error: e.message, content: [] }),
-        { status: 500, headers: { ...CORS, 'Content-Type': 'application/json' } });
+        error: result.error,
+        error_type: result.error_type || 'unknown',
+        content: []
+      }), { status: 500, headers: { ...CORS, 'Content-Type': 'application/json' } });
     }
+
+    const text = result.data.choices?.[0]?.message?.content || '';
+    return new Response(JSON.stringify({
+      content: [{ type: 'text', text }],
+      model: result.data.model,
+      usage: result.data.usage,
+      scraped_sources: urlsToScrape.map(u => u.label),
+    }), { status: 200, headers: { ...CORS, 'Content-Type': 'application/json' } });
   }
 };
