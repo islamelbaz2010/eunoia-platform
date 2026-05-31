@@ -1,0 +1,19 @@
+{
+  "name": "eunoia-platform",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/web"
+  ],
+  "dependencies": {
+    "@prisma/client": "^6.19.3",
+    "@upstash/redis": "^1.34.9",
+    "bcryptjs": "^2.4.3",
+    "openai": "^4.96.2"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "prisma": "^6.19.3",
+    "typescript": "^5.8.3"
+  }
+}
