@@ -1,9 +1,7 @@
 {
-  "buildCommand": "cd apps/web && npx prisma generate --schema=../../database/schema.prisma && next build",
-  "outputDirectory": "apps/web/.next",
-  "installCommand": "cd apps/web && npm install",
+  "buildCommand": "npm install && npx prisma generate && npm run build",
+  "outputDirectory": ".next",
+  "installCommand": "npm install",
   "framework": "nextjs",
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/$1" }
-  ]
+  "rootDirectory": "apps/web"
 }
