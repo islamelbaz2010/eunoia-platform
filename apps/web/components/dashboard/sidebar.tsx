@@ -10,6 +10,7 @@ import {
   TrendingUp,
   LogOut,
   ChevronRight,
+  X,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
@@ -22,7 +23,12 @@ const NAV_ITEMS = [
   { href: '/dashboard/settings', label: 'Settings', icon: Settings },
 ]
 
-export function Sidebar() {
+interface SidebarProps {
+  open?: boolean
+  onClose?: () => void
+}
+
+export function Sidebar({ open = false, onClose }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
 
@@ -34,10 +40,15 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="w-64 shrink-0 h-screen flex flex-col bg-surface border-r border-white/8 sticky top-0">
+    <aside className={`
+      fixed lg:relative inset-y-0 left-0 z-50 lg:z-auto
+      w-64 shrink-0 flex flex-col bg-surface border-r border-white/8
+      transition-transform duration-300 ease-in-out
+      ${open ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+    `}>
       {/* Logo */}
-      <div className="px-5 py-5 border-b border-white/8">
-        <Link href="/dashboard" className="flex items-center gap-2.5">
+      <div className="px-5 py-5 border-b border-white/8 flex items-center justify-between">
+        <Link href="/dashboard" className="flex items-center gap-2.5" onClick={onClose}>
           <div className="w-8 h-8 rounded-lg bg-gold flex items-center justify-center shrink-0">
             <span className="text-midnight font-bold text-sm">E</span>
           </div>
@@ -46,6 +57,14 @@ export function Sidebar() {
             <div className="text-cream/40 text-xs">Intelligence Platform</div>
           </div>
         </Link>
+        {/* Close button — mobile only */}
+        <button
+          className="lg:hidden w-7 h-7 flex items-center justify-center text-cream/40 hover:text-cream rounded-lg hover:bg-white/5 transition-colors"
+          onClick={onClose}
+          aria-label="Close sidebar"
+        >
+          <X size={16} />
+        </button>
       </div>
 
       {/* Navigation */}
@@ -57,6 +76,7 @@ export function Sidebar() {
               <li key={href}>
                 <Link
                   href={href}
+                  onClick={onClose}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors group ${
                     isActive
                       ? 'bg-gold/10 text-gold'
