@@ -14,8 +14,7 @@ import type { ReportInput } from '@/types/report.types'
 const REPORT_TYPES = Object.keys(REPORT_TYPE_LABELS) as ReportType[]
 
 const SIZE_OPTIONS = [
-  { value: 'micro', label: 'Micro (1-5 staff)' },
-  { value: 'small', label: 'Small (6-20 staff)' },
+  { value: 'small', label: 'Small (1-20 staff)' },
   { value: 'medium', label: 'Medium (21-50 staff)' },
   { value: 'large', label: 'Large (51-200 staff)' },
   { value: 'enterprise', label: 'Enterprise (200+)' },
@@ -25,7 +24,7 @@ const STAGE_OPTIONS = [
   { value: 'startup', label: 'Startup (0-1 year)' },
   { value: 'growth', label: 'Growth (1-3 years)' },
   { value: 'established', label: 'Established (3-7 years)' },
-  { value: 'mature', label: 'Mature (7+ years)' },
+  { value: 'scaling', label: 'Scaling (7+ years)' },
 ]
 
 function InputField({ label, required, children, hint }: {
