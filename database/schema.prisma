@@ -1,0 +1,94 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../apps/web/lib/prisma/generated"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id           String     @id @default(cuid())
+  email        String     @unique
+  name         String?
+  passwordHash String?
+  role         Role       @default(VIEWER)
+  workspaceId  String
+  workspace    Workspace  @relation(fields: [workspaceId], references: [id])
+  reports      Report[]
+  apiUsages    ApiUsage[]
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model Workspace {
+  id        String   @id @default(cuid())
+  name      String
+  plan      Plan     @default(STARTER)
+  ownerId   String
+  users     User[]
+  reports   Report[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Report {
+  id          String       @id @default(cuid())
+  type        ReportType
+  status      ReportStatus @default(QUEUED)
+  input       Json
+  output      Json?
+  error       String?
+  userId      String
+  workspaceId String
+  user        User         @relation(fields: [userId], references: [id])
+  workspace   Workspace    @relation(fields: [workspaceId], references: [id])
+  createdAt   DateTime     @default(now())
+  completedAt DateTime?
+  updatedAt   DateTime     @updatedAt
+}
+
+model ApiUsage {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  provider    String
+  model       String
+  tokens      Int
+  cost        Float
+  reportId    String?
+  createdAt   DateTime @default(now())
+}
+
+enum Role {
+  ADMIN
+  AGENCY
+  SALES
+  VIEWER
+}
+
+enum Plan {
+  STARTER
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+enum ReportStatus {
+  QUEUED
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum ReportType {
+  COMPETITOR
+  PRICING
+  CAMPAIGN
+  FULL_ANALYSIS
+  CLV_RETENTION
+  TREND_RESEARCH
+  MEDIA_MIX
+  OPPORTUNITY_SCORING
+}
