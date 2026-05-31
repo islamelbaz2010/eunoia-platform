@@ -26,4 +26,5 @@ export const redis = {
   del: (key: string) => getRedis().del(key),
   incr: (key: string) => getRedis().incr(key),
   expire: (key: string, seconds: number) => getRedis().expire(key, seconds),
+  ttl: (key: string) => getRedis().ttl(key),
 }
