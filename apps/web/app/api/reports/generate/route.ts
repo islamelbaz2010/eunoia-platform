@@ -11,15 +11,31 @@ import { getBranch } from '@core/data/branches.data'
 import type { PromptContext } from '@services/ai-engine/prompts/types'
 import type { ReportInput } from '@/types/report.types'
 
+const RATE_LIMIT_MAX = 5
+const RATE_LIMIT_WINDOW = 3600
+
 export async function POST(req: NextRequest) {
   try {
+    // 1. Auth check
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // 2. Prisma user — must have completed onboarding
+    const dbUser = await prisma.user.findUnique({
+      where: { email: user.email! },
+      include: { workspace: true },
+    })
+    if (!dbUser) {
+      return NextResponse.json(
+        { error: 'Please complete onboarding before generating reports.' },
+        { status: 403 }
+      )
+    }
+
+    // 3. Validate body
     const body = await req.json() as { type?: unknown; input?: unknown }
     const { type, input } = body
 
@@ -29,31 +45,50 @@ export async function POST(req: NextRequest) {
 
     const reportInput = input as ReportInput
 
-    if (!reportInput?.companyName || !reportInput?.sectorKey || !reportInput?.cityKey) {
-      return NextResponse.json({ error: 'companyName, sectorKey, and cityKey are required' }, { status: 400 })
+    if (!reportInput?.companyName?.trim() || !reportInput?.sectorKey || !reportInput?.cityKey) {
+      return NextResponse.json(
+        { error: 'companyName, sectorKey, and cityKey are required' },
+        { status: 400 }
+      )
     }
 
     const sector = getSector(reportInput.sectorKey)
     const city = getCity(reportInput.cityKey)
     const branch = getBranch(reportInput.branchKey ?? 'egypt')
 
-    if (!sector || !city || !branch) {
-      return NextResponse.json({ error: 'Invalid sector, city, or branch' }, { status: 400 })
+    if (!branch) {
+      return NextResponse.json({ error: 'Invalid branch' }, { status: 400 })
     }
 
-    // Get or create DB user
-    let dbUser = await prisma.user.findUnique({ where: { email: user.email! } })
-    if (!dbUser) {
-      // Auto-provision workspace for new user
-      const workspace = await prisma.workspace.create({
-        data: { name: `${user.email?.split('@')[0] ?? 'My'} Workspace`, plan: 'STARTER', ownerId: user.id },
-      })
-      dbUser = await prisma.user.create({
-        data: { id: user.id, email: user.email!, name: user.email?.split('@')[0], workspaceId: workspace.id },
-      })
+    // 4. Rate limit check BEFORE creating report record
+    const rateLimitKey = `ratelimit:reports:${dbUser.workspaceId}`
+    let rateLimitResetIn = RATE_LIMIT_WINDOW
+    try {
+      const { getRedis } = await import('@/lib/redis/client')
+      const redisClient = getRedis()
+      const current = await redisClient.get<number>(rateLimitKey)
+      const count = typeof current === 'number' ? current : parseInt(String(current ?? '0'), 10) || 0
+      if (count >= RATE_LIMIT_MAX) {
+        try {
+          const ttl = await redisClient.ttl(rateLimitKey)
+          rateLimitResetIn = ttl > 0 ? ttl : RATE_LIMIT_WINDOW
+        } catch {
+          rateLimitResetIn = RATE_LIMIT_WINDOW
+        }
+        const mins = Math.ceil(rateLimitResetIn / 60)
+        return NextResponse.json(
+          {
+            error: `Rate limit exceeded: ${RATE_LIMIT_MAX} reports per hour. Try again in ${mins} minute${mins !== 1 ? 's' : ''}.`,
+            resetIn: rateLimitResetIn,
+          },
+          { status: 429 }
+        )
+      }
+    } catch {
+      // Redis unavailable — allow through (fail open for availability)
     }
 
-    // Create report record with QUEUED status
+    // 5. Create report with QUEUED status
     const report = await prisma.report.create({
       data: {
         type: type as ReportType,
@@ -64,7 +99,7 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    // Build prompt context
+    // 6. Build prompt context
     const ctx: PromptContext = {
       companyName: reportInput.companyName,
       sector,
@@ -81,7 +116,7 @@ export async function POST(req: NextRequest) {
       sales: reportInput.sales as PromptContext['sales'],
     }
 
-    // Mark as processing
+    // 7. Mark PROCESSING and generate
     await prisma.report.update({ where: { id: report.id }, data: { status: 'PROCESSING' } })
 
     try {
@@ -92,7 +127,7 @@ export async function POST(req: NextRequest) {
         reportId: report.id,
       })
 
-      // Save completed report
+      // 8. Save completed report
       const completed = await prisma.report.update({
         where: { id: report.id },
         data: {
@@ -102,7 +137,6 @@ export async function POST(req: NextRequest) {
         },
       })
 
-      // Track API usage
       await prisma.apiUsage.create({
         data: {
           userId: dbUser.id,
@@ -112,7 +146,7 @@ export async function POST(req: NextRequest) {
           cost: result.usage.totalTokens * 0.0000006,
           reportId: report.id,
         },
-      }).catch(() => {}) // Non-fatal
+      }).catch(() => {})
 
       return NextResponse.json({ id: completed.id, status: 'COMPLETED' })
     } catch (aiError) {
