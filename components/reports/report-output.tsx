@@ -40,38 +40,41 @@ export function ReportOutput({ data, type }: ReportOutputProps) {
   const confidenceScore = asRecord(data.confidence_score)
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {/* Report header */}
-      <div className="bg-surface border border-white/8 rounded-xl p-6">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <div className="text-gold text-xs font-semibold uppercase tracking-wider mb-1">
+      <div className="bg-surface border border-white/10 rounded-2xl p-7">
+        <div className="flex items-start justify-between gap-6">
+          <div className="flex-1 min-w-0">
+            <div className="text-[#c9a962] text-xs font-semibold uppercase tracking-widest mb-2">
               {label?.en ?? asString(data.report_type)}
             </div>
             {asString(execSummary.headline) && (
-              <h2 className="text-cream text-xl font-bold mb-2 leading-snug">
+              <h2 className="text-[#faf9f7] text-2xl font-bold mb-3 leading-snug">
                 {asString(execSummary.headline)}
               </h2>
             )}
             {asString(execSummary.strategic_direction) && (
-              <p className="text-cream/60 text-sm">{asString(execSummary.strategic_direction)}</p>
+              <p className="text-cream/70 text-base leading-relaxed">{asString(execSummary.strategic_direction)}</p>
             )}
             {typeof data.executive_summary === 'string' && (
-              <p className="text-cream/60 text-sm">{data.executive_summary}</p>
+              <p className="text-cream/70 text-base leading-relaxed">{data.executive_summary}</p>
             )}
           </div>
-          <div className="shrink-0 text-center">
-            <div className="text-3xl font-bold text-gold">{asNumber(data.marketing_score)}</div>
-            <div className="text-cream/40 text-xs">Marketing Score</div>
-          </div>
+          {asNumber(data.marketing_score) > 0 && (
+            <div className="shrink-0 text-center bg-[#c9a962]/10 border border-[#c9a962]/20 rounded-xl px-6 py-4">
+              <div className="text-4xl font-bold text-[#c9a962]">{asNumber(data.marketing_score)}</div>
+              <div className="text-cream/50 text-xs mt-1 whitespace-nowrap">Marketing Score</div>
+            </div>
+          )}
         </div>
 
         {/* Key findings */}
-        {Array.isArray(execSummary.key_findings) && (
-          <div className="mt-4 space-y-1.5">
+        {Array.isArray(execSummary.key_findings) && (execSummary.key_findings as string[]).length > 0 && (
+          <div className="mt-5 pt-5 border-t border-white/8 space-y-2">
+            <div className="text-[#c9a962] text-xs font-semibold uppercase tracking-wider mb-3">Key Findings</div>
             {(execSummary.key_findings as string[]).map((f, i) => (
-              <div key={i} className="flex items-start gap-2 text-sm text-cream/70">
-                <span className="text-gold shrink-0">→</span>
+              <div key={i} className="flex items-start gap-3 text-[15px] text-cream/75 leading-relaxed">
+                <span className="text-[#c9a962] shrink-0 font-bold">→</span>
                 {f}
               </div>
             ))}
@@ -86,18 +89,21 @@ export function ReportOutput({ data, type }: ReportOutputProps) {
 
       {/* Confidence score */}
       {asNumber(confidenceScore.pct) > 0 ? (
-        <div className="bg-surface border border-white/8 rounded-xl px-5 py-4 flex items-center gap-4">
+        <div className="bg-surface border border-white/10 rounded-xl px-6 py-5 flex items-center gap-5">
           <div className="flex-1">
-            <div className="text-cream text-sm font-medium">
-              Confidence: {asString(confidenceScore.label)} ({asNumber(confidenceScore.pct)}%)
+            <div className="text-[#faf9f7] text-base font-semibold">
+              Confidence: {asString(confidenceScore.label)} — {asNumber(confidenceScore.pct)}%
             </div>
-            <div className="text-cream/40 text-xs mt-0.5">{asString(confidenceScore.reason)}</div>
+            <div className="text-cream/50 text-sm mt-1">{asString(confidenceScore.reason)}</div>
+            <div className="w-full h-2.5 bg-white/10 rounded-full overflow-hidden mt-3">
+              <div
+                className="h-full bg-[#c9a962] rounded-full transition-all"
+                style={{ width: `${asNumber(confidenceScore.pct)}%` }}
+              />
+            </div>
           </div>
-          <div className="w-24 h-2 bg-white/10 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-gold rounded-full transition-all"
-              style={{ width: `${asNumber(confidenceScore.pct)}%` }}
-            />
+          <div className="shrink-0 text-2xl font-bold text-[#c9a962]">
+            {asNumber(confidenceScore.pct)}%
           </div>
         </div>
       ) : null}
@@ -166,14 +172,14 @@ export function ReportOutput({ data, type }: ReportOutputProps) {
 
       {/* Why us */}
       {Array.isArray(data.why_us) && data.why_us.length > 0 && (
-        <div className="bg-surface border border-white/8 rounded-xl p-5">
-          <h3 className="text-cream/60 text-xs font-semibold uppercase tracking-wider mb-3">
+        <div className="bg-surface border border-white/10 rounded-2xl p-6">
+          <h3 className="text-[#c9a962] text-base font-bold mb-4">
             Why Eunoia
           </h3>
-          <ul className="space-y-2">
+          <ul className="space-y-3">
             {(data.why_us as string[]).map((item, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm text-cream/70">
-                <span className="text-gold shrink-0">✓</span>
+              <li key={i} className="flex items-start gap-3 text-[15px] text-cream/75 leading-relaxed">
+                <span className="text-[#c9a962] shrink-0 font-bold">✓</span>
                 {item}
               </li>
             ))}
@@ -183,7 +189,7 @@ export function ReportOutput({ data, type }: ReportOutputProps) {
 
       {/* Data quality note */}
       {asString(data.data_quality_note) && (
-        <div className="bg-white/3 border border-white/5 rounded-lg px-4 py-3 text-cream/40 text-xs">
+        <div className="bg-white/3 border border-white/8 rounded-xl px-5 py-4 text-cream/50 text-sm">
           📊 {asString(data.data_quality_note)}
         </div>
       )}

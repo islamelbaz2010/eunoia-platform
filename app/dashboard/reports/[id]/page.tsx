@@ -6,7 +6,7 @@ import { Shell } from '@/components/dashboard/shell'
 import { ReportOutput } from '@/components/reports/report-output'
 import { REPORT_TYPE_LABELS } from '@services/ai-engine/prompt-builder'
 import Link from 'next/link'
-import { ArrowLeft, RefreshCw } from 'lucide-react'
+import { ArrowLeft, RefreshCw, Printer } from 'lucide-react'
 
 type ReportData = {
   id: string
@@ -78,17 +78,26 @@ export default function ReportDetailPage() {
 
   return (
     <Shell title={report.input?.companyName ?? 'Report'} subtitle={label?.en ?? report.type}>
-      <div className="p-6">
-        <div className="flex items-center gap-4 mb-6">
-          <Link
-            href="/dashboard/reports"
-            className="flex items-center gap-1.5 text-sm text-cream/40 hover:text-cream transition-colors"
+      <div className="p-6 md:p-8 max-w-6xl mx-auto">
+        <div className="flex items-center justify-between gap-4 mb-8">
+          <div className="flex items-center gap-4">
+            <Link
+              href="/dashboard/reports"
+              className="flex items-center gap-1.5 text-sm text-cream/40 hover:text-cream transition-colors"
+            >
+              <ArrowLeft size={14} />
+              All Reports
+            </Link>
+            <span className="text-cream/20">/</span>
+            <span className="text-cream/60 text-sm">{report.input?.companyName ?? 'Report'}</span>
+          </div>
+          <button
+            onClick={() => window.print()}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gold/30 text-gold text-sm hover:bg-gold/10 transition-colors print:hidden"
           >
-            <ArrowLeft size={14} />
-            All Reports
-          </Link>
-          <span className="text-cream/20">/</span>
-          <span className="text-cream/60 text-sm">{report.input?.companyName ?? 'Report'}</span>
+            <Printer size={14} />
+            Print / Save PDF
+          </button>
         </div>
 
         {report.status === 'FAILED' && report.error && (
