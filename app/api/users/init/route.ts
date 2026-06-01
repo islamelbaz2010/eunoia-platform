@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma/client'
 
 // Called after Supabase signup to create Prisma User + Workspace
@@ -27,7 +28,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Create workspace + user in a transaction
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const workspace = await tx.workspace.create({
         data: {
           name: workspaceName ?? `${name ?? email.split('@')[0]}'s Workspace`,
