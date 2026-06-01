@@ -2,6 +2,9 @@
   "name": "eunoia-intelligence-web",
   "version": "0.1.0",
   "private": true,
+  "prisma": {
+    "schema": "prisma/schema.prisma"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
@@ -32,6 +35,7 @@
     "next": "^16.2.6",
     "next-intl": "^4.1.0",
     "openai": "^4.96.2",
+    "prisma": "^6.19.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "sonner": "^2.0.1",
@@ -45,7 +49,6 @@
     "@types/react-dom": "^19.1.0",
     "eslint": "^9.24.0",
     "eslint-config-next": "15.3.0",
-    "prisma": "^6.19.3",
     "tailwindcss": "^4.1.4",
     "typescript": "^5.8.3"
   }
