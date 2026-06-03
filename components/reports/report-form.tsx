@@ -70,20 +70,20 @@ function InputField({ label, required, children, hint }: {
 }) {
   return (
     <div>
-      <label className="block text-sm text-cream/70 mb-1.5">
+      <label className="block text-sm text-foreground/80 mb-1.5">
         {label}
         {required && <span className="text-gold ml-1">*</span>}
       </label>
       {children}
-      {hint && <p className="text-cream/30 text-xs mt-1">{hint}</p>}
+      {hint && <p className="text-muted-foreground text-xs mt-1">{hint}</p>}
     </div>
   )
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="bg-surface border border-white/8 rounded-xl p-5 space-y-4">
-      <h3 className="text-cream/60 text-xs font-semibold uppercase tracking-wider">{title}</h3>
+    <div className="bg-surface border border-border rounded-xl p-5 space-y-4">
+      <h3 className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">{title}</h3>
       {children}
     </div>
   )
@@ -271,7 +271,7 @@ export function ReportForm() {
             className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors ${
               language === lang
                 ? 'bg-gold/10 text-gold border border-gold/30'
-                : 'text-cream/40 hover:text-cream border border-transparent'
+                : 'text-muted-foreground hover:text-foreground border border-transparent'
             }`}
           >
             {lang === 'ar' ? 'عربي' : 'EN'}
@@ -290,7 +290,7 @@ export function ReportForm() {
               className={`text-left px-3 py-2.5 rounded-lg text-sm transition-colors border ${
                 reportType === type
                   ? 'border-gold/40 bg-gold/5 text-gold'
-                  : 'border-white/8 text-cream/60 hover:text-cream hover:border-white/15'
+                  : 'border-border text-muted-foreground hover:text-foreground hover:border-border'
               }`}
             >
               {isAr ? REPORT_TYPE_LABELS[type].ar : REPORT_TYPE_LABELS[type].en}
@@ -308,7 +308,7 @@ export function ReportForm() {
             onChange={e => setCompanyName(e.target.value)}
             required
             placeholder={isAr ? 'مثال: عيادات أحمد' : 'e.g. Ahmed Clinics'}
-            className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-cream placeholder:text-cream/30 focus:outline-none focus:border-gold/60 focus:ring-1 focus:ring-gold/30 transition-colors"
+            className="w-full bg-muted/30 border border-border rounded-lg px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold/60 focus:ring-1 focus:ring-gold/30 transition-colors"
           />
         </InputField>
 
@@ -327,7 +327,7 @@ export function ReportForm() {
             value={website}
             onChange={e => setWebsite(e.target.value)}
             placeholder="https://yourwebsite.com"
-            className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-cream placeholder:text-cream/30 focus:outline-none focus:border-gold/60 focus:ring-1 focus:ring-gold/30 transition-colors"
+            className="w-full bg-muted/30 border border-border rounded-lg px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold/60 focus:ring-1 focus:ring-gold/30 transition-colors"
           />
         </InputField>
 
@@ -336,10 +336,10 @@ export function ReportForm() {
             <select
               value={size}
               onChange={e => setSize(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-cream focus:outline-none focus:border-gold/60 transition-colors"
+              className="w-full bg-muted/30 border border-border rounded-lg px-4 py-2.5 text-foreground focus:outline-none focus:border-gold/60 transition-colors"
             >
               {SIZE_OPTIONS.map(o => (
-                <option key={o.value} value={o.value} className="bg-[#1a2030]">{o.label}</option>
+                <option key={o.value} value={o.value} className="bg-background">{o.label}</option>
               ))}
             </select>
           </InputField>
@@ -347,10 +347,10 @@ export function ReportForm() {
             <select
               value={stage}
               onChange={e => setStage(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-cream focus:outline-none focus:border-gold/60 transition-colors"
+              className="w-full bg-muted/30 border border-border rounded-lg px-4 py-2.5 text-foreground focus:outline-none focus:border-gold/60 transition-colors"
             >
               {STAGE_OPTIONS.map(o => (
-                <option key={o.value} value={o.value} className="bg-[#1a2030]">{o.label}</option>
+                <option key={o.value} value={o.value} className="bg-background">{o.label}</option>
               ))}
             </select>
           </InputField>
@@ -368,11 +368,11 @@ export function ReportForm() {
             <select
               value={projectType}
               onChange={e => setProjectType(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-cream focus:outline-none focus:border-gold/60 transition-colors"
+              className="w-full bg-muted/30 border border-border rounded-lg px-4 py-2.5 text-foreground focus:outline-none focus:border-gold/60 transition-colors"
             >
-              <option value="" className="bg-[#1a2030]">{isAr ? '— اختر نوع المشروع —' : '— Select project type —'}</option>
+              <option value="" className="bg-background">{isAr ? '— اختر نوع المشروع —' : '— Select project type —'}</option>
               {PROJECT_TYPE_OPTIONS.map(opt => (
-                <option key={opt} value={opt} className="bg-[#1a2030]">{opt}</option>
+                <option key={opt} value={opt} className="bg-background">{opt}</option>
               ))}
             </select>
           </InputField>
@@ -383,7 +383,7 @@ export function ReportForm() {
                 value={projectLocation}
                 onChange={e => setProjectLocation(e.target.value)}
                 placeholder={isAr ? 'الشيخ زايد، أكتوبر' : 'Sheikh Zayed, New Capital'}
-                className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-cream placeholder:text-cream/30 focus:outline-none focus:border-gold/60 transition-colors"
+                className="w-full bg-muted/30 border border-border rounded-lg px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold/60 transition-colors"
               />
             </InputField>
             <InputField label={isAr ? 'حجم المشروع' : 'Project Scale'} hint={isAr ? 'مثال: 200 وحدة، 50 فيلا' : 'e.g. 200 units, 50 villas, 5,000 sqm'}>
@@ -392,7 +392,7 @@ export function ReportForm() {
                 value={projectSize}
                 onChange={e => setProjectSize(e.target.value)}
                 placeholder={isAr ? '200 وحدة سكنية' : '200 residential units'}
-                className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-cream placeholder:text-cream/30 focus:outline-none focus:border-gold/60 transition-colors"
+                className="w-full bg-muted/30 border border-border rounded-lg px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold/60 transition-colors"
               />
             </InputField>
           </div>
@@ -400,49 +400,49 @@ export function ReportForm() {
       )}
 
       {/* Ads data — optional */}
-      <div className="bg-surface border border-white/8 rounded-xl overflow-hidden">
+      <div className="bg-surface border border-border rounded-xl overflow-hidden">
         <button
           type="button"
           onClick={() => setShowAds(v => !v)}
-          className="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-white/3 transition-colors"
+          className="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-muted/20 transition-colors"
         >
           <div>
-            <div className="text-cream text-sm font-medium">
+            <div className="text-foreground text-sm font-medium">
               📊 {isAr ? 'بيانات الإعلانات' : 'Ad Campaign Data'}
             </div>
-            <div className="text-cream/40 text-xs">
+            <div className="text-muted-foreground text-xs">
               {isAr ? 'اختياري — يرفع دقة التحليل إلى 85%+' : 'Optional — improves confidence to 85%+'}
             </div>
           </div>
-          <span className="text-cream/40 text-xs">{showAds ? '▲' : '▼'}</span>
+          <span className="text-muted-foreground text-xs">{showAds ? '▲' : '▼'}</span>
         </button>
 
         {showAds && (
-          <div className="px-5 pb-5 space-y-4 border-t border-white/8">
+          <div className="px-5 pb-5 space-y-4 border-t border-border">
             <div className="grid grid-cols-2 gap-4 pt-4">
               <InputField label={isAr ? 'الميزانية الشهرية (جنيه)' : 'Total Monthly Budget (EGP)'}>
-                <input type="number" value={adsBudget} onChange={e => setAdsBudget(e.target.value)} placeholder="20000" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-cream placeholder:text-cream/30 focus:outline-none focus:border-gold/60 transition-colors" />
+                <input type="number" value={adsBudget} onChange={e => setAdsBudget(e.target.value)} placeholder="20000" className="w-full bg-muted/30 border border-border rounded-lg px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold/60 transition-colors" />
               </InputField>
               <InputField label={isAr ? 'إنفاق ميتا (جنيه)' : 'Meta Spend (EGP)'}>
-                <input type="number" value={adsMetaSpend} onChange={e => setAdsMetaSpend(e.target.value)} placeholder="12000" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-cream placeholder:text-cream/30 focus:outline-none focus:border-gold/60 transition-colors" />
+                <input type="number" value={adsMetaSpend} onChange={e => setAdsMetaSpend(e.target.value)} placeholder="12000" className="w-full bg-muted/30 border border-border rounded-lg px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold/60 transition-colors" />
               </InputField>
               <InputField label={isAr ? 'إنفاق جوجل (جنيه)' : 'Google Spend (EGP)'}>
-                <input type="number" value={adsGoogleSpend} onChange={e => setAdsGoogleSpend(e.target.value)} placeholder="5000" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-cream placeholder:text-cream/30 focus:outline-none focus:border-gold/60 transition-colors" />
+                <input type="number" value={adsGoogleSpend} onChange={e => setAdsGoogleSpend(e.target.value)} placeholder="5000" className="w-full bg-muted/30 border border-border rounded-lg px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold/60 transition-colors" />
               </InputField>
               <InputField label={isAr ? 'إنفاق تيك توك (جنيه)' : 'TikTok Spend (EGP)'}>
-                <input type="number" value={adsTiktokSpend} onChange={e => setAdsTiktokSpend(e.target.value)} placeholder="3000" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-cream placeholder:text-cream/30 focus:outline-none focus:border-gold/60 transition-colors" />
+                <input type="number" value={adsTiktokSpend} onChange={e => setAdsTiktokSpend(e.target.value)} placeholder="3000" className="w-full bg-muted/30 border border-border rounded-lg px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold/60 transition-colors" />
               </InputField>
               <InputField label={isAr ? 'العائد على الإنفاق (ROAS)' : 'Blended ROAS'}>
-                <input type="number" step="0.1" value={adsRoas} onChange={e => setAdsRoas(e.target.value)} placeholder="3.5" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-cream placeholder:text-cream/30 focus:outline-none focus:border-gold/60 transition-colors" />
+                <input type="number" step="0.1" value={adsRoas} onChange={e => setAdsRoas(e.target.value)} placeholder="3.5" className="w-full bg-muted/30 border border-border rounded-lg px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold/60 transition-colors" />
               </InputField>
               <InputField label={isAr ? 'تكلفة اللييد (جنيه)' : 'Cost Per Lead (EGP)'}>
-                <input type="number" value={adsCpl} onChange={e => setAdsCpl(e.target.value)} placeholder="250" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-cream placeholder:text-cream/30 focus:outline-none focus:border-gold/60 transition-colors" />
+                <input type="number" value={adsCpl} onChange={e => setAdsCpl(e.target.value)} placeholder="250" className="w-full bg-muted/30 border border-border rounded-lg px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold/60 transition-colors" />
               </InputField>
               <InputField label={isAr ? 'عدد الليدز شهرياً' : 'Monthly Leads'}>
-                <input type="number" value={adsLeads} onChange={e => setAdsLeads(e.target.value)} placeholder="80" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-cream placeholder:text-cream/30 focus:outline-none focus:border-gold/60 transition-colors" />
+                <input type="number" value={adsLeads} onChange={e => setAdsLeads(e.target.value)} placeholder="80" className="w-full bg-muted/30 border border-border rounded-lg px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold/60 transition-colors" />
               </InputField>
               <InputField label={isAr ? 'نسبة النقر (CTR %)' : 'CTR (%)'}>
-                <input type="number" step="0.01" value={adsCtr} onChange={e => setAdsCtr(e.target.value)} placeholder="1.8" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-cream placeholder:text-cream/30 focus:outline-none focus:border-gold/60 transition-colors" />
+                <input type="number" step="0.01" value={adsCtr} onChange={e => setAdsCtr(e.target.value)} placeholder="1.8" className="w-full bg-muted/30 border border-border rounded-lg px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold/60 transition-colors" />
               </InputField>
             </div>
           </div>
@@ -450,37 +450,37 @@ export function ReportForm() {
       </div>
 
       {/* Social data — optional */}
-      <div className="bg-surface border border-white/8 rounded-xl overflow-hidden">
+      <div className="bg-surface border border-border rounded-xl overflow-hidden">
         <button
           type="button"
           onClick={() => setShowSocial(v => !v)}
-          className="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-white/3 transition-colors"
+          className="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-muted/20 transition-colors"
         >
           <div>
-            <div className="text-cream text-sm font-medium">
+            <div className="text-foreground text-sm font-medium">
               📱 {isAr ? 'بيانات السوشيال ميديا' : 'Social Media Data'}
             </div>
-            <div className="text-cream/40 text-xs">
+            <div className="text-muted-foreground text-xs">
               {isAr ? 'اختياري — يتيح تحليل الحضور الرقمي' : 'Optional — enables social presence analysis'}
             </div>
           </div>
-          <span className="text-cream/40 text-xs">{showSocial ? '▲' : '▼'}</span>
+          <span className="text-muted-foreground text-xs">{showSocial ? '▲' : '▼'}</span>
         </button>
 
         {showSocial && (
-          <div className="px-5 pb-5 space-y-4 border-t border-white/8">
+          <div className="px-5 pb-5 space-y-4 border-t border-border">
             <div className="grid grid-cols-2 gap-4 pt-4">
               <InputField label={isAr ? 'متابعو إنستجرام' : 'Instagram Followers'}>
-                <input type="number" value={igFollowers} onChange={e => setIgFollowers(e.target.value)} placeholder="12000" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-cream placeholder:text-cream/30 focus:outline-none focus:border-gold/60 transition-colors" />
+                <input type="number" value={igFollowers} onChange={e => setIgFollowers(e.target.value)} placeholder="12000" className="w-full bg-muted/30 border border-border rounded-lg px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold/60 transition-colors" />
               </InputField>
               <InputField label={isAr ? 'معدل التفاعل إنستجرام (%)' : 'Instagram Engagement (%)'}>
-                <input type="number" step="0.1" value={igEng} onChange={e => setIgEng(e.target.value)} placeholder="3.2" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-cream placeholder:text-cream/30 focus:outline-none focus:border-gold/60 transition-colors" />
+                <input type="number" step="0.1" value={igEng} onChange={e => setIgEng(e.target.value)} placeholder="3.2" className="w-full bg-muted/30 border border-border rounded-lg px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold/60 transition-colors" />
               </InputField>
               <InputField label={isAr ? 'متابعو فيسبوك' : 'Facebook Followers'}>
-                <input type="number" value={fbFollowers} onChange={e => setFbFollowers(e.target.value)} placeholder="8500" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-cream placeholder:text-cream/30 focus:outline-none focus:border-gold/60 transition-colors" />
+                <input type="number" value={fbFollowers} onChange={e => setFbFollowers(e.target.value)} placeholder="8500" className="w-full bg-muted/30 border border-border rounded-lg px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold/60 transition-colors" />
               </InputField>
               <InputField label={isAr ? 'متابعو تيك توك' : 'TikTok Followers'}>
-                <input type="number" value={ttFollowers} onChange={e => setTtFollowers(e.target.value)} placeholder="5000" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-cream placeholder:text-cream/30 focus:outline-none focus:border-gold/60 transition-colors" />
+                <input type="number" value={ttFollowers} onChange={e => setTtFollowers(e.target.value)} placeholder="5000" className="w-full bg-muted/30 border border-border rounded-lg px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold/60 transition-colors" />
               </InputField>
             </div>
           </div>
@@ -488,40 +488,40 @@ export function ReportForm() {
       </div>
 
       {/* Sales data — optional */}
-      <div className="bg-surface border border-white/8 rounded-xl overflow-hidden">
+      <div className="bg-surface border border-border rounded-xl overflow-hidden">
         <button
           type="button"
           onClick={() => setShowSales(v => !v)}
-          className="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-white/3 transition-colors"
+          className="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-muted/20 transition-colors"
         >
           <div>
-            <div className="text-cream text-sm font-medium">
+            <div className="text-foreground text-sm font-medium">
               💰 {isAr ? 'بيانات المبيعات' : 'Sales Performance Data'}
             </div>
-            <div className="text-cream/40 text-xs">
+            <div className="text-muted-foreground text-xs">
               {isAr ? 'اختياري — يتيح تحليل CLV والإيرادات' : 'Optional — enables CLV and revenue analysis'}
             </div>
           </div>
-          <span className="text-cream/40 text-xs">{showSales ? '▲' : '▼'}</span>
+          <span className="text-muted-foreground text-xs">{showSales ? '▲' : '▼'}</span>
         </button>
 
         {showSales && (
-          <div className="px-5 pb-5 space-y-4 border-t border-white/8">
+          <div className="px-5 pb-5 space-y-4 border-t border-border">
             <div className="grid grid-cols-2 gap-4 pt-4">
               <InputField label={isAr ? 'الإيراد الشهري (جنيه)' : 'Monthly Revenue (EGP)'}>
-                <input type="number" value={revenue} onChange={e => setRevenue(e.target.value)} placeholder="150000" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-cream placeholder:text-cream/30 focus:outline-none focus:border-gold/60 transition-colors" />
+                <input type="number" value={revenue} onChange={e => setRevenue(e.target.value)} placeholder="150000" className="w-full bg-muted/30 border border-border rounded-lg px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold/60 transition-colors" />
               </InputField>
               <InputField label={isAr ? 'معدل التحويل (%)' : 'Conversion Rate (%)'}>
-                <input type="number" step="0.1" value={convRate} onChange={e => setConvRate(e.target.value)} placeholder="12" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-cream placeholder:text-cream/30 focus:outline-none focus:border-gold/60 transition-colors" />
+                <input type="number" step="0.1" value={convRate} onChange={e => setConvRate(e.target.value)} placeholder="12" className="w-full bg-muted/30 border border-border rounded-lg px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold/60 transition-colors" />
               </InputField>
               <InputField label={isAr ? 'متوسط قيمة الطلب (جنيه)' : 'Avg. Order Value (EGP)'}>
-                <input type="number" value={aov} onChange={e => setAov(e.target.value)} placeholder="2500" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-cream placeholder:text-cream/30 focus:outline-none focus:border-gold/60 transition-colors" />
+                <input type="number" value={aov} onChange={e => setAov(e.target.value)} placeholder="2500" className="w-full bg-muted/30 border border-border rounded-lg px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold/60 transition-colors" />
               </InputField>
               <InputField label={isAr ? 'تكلفة اكتساب العميل (جنيه)' : 'Customer Acquisition Cost (EGP)'}>
-                <input type="number" value={cac} onChange={e => setCac(e.target.value)} placeholder="800" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-cream placeholder:text-cream/30 focus:outline-none focus:border-gold/60 transition-colors" />
+                <input type="number" value={cac} onChange={e => setCac(e.target.value)} placeholder="800" className="w-full bg-muted/30 border border-border rounded-lg px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold/60 transition-colors" />
               </InputField>
               <InputField label={isAr ? 'نسبة العملاء العائدين (%)' : 'Returning Customer Rate (%)'}>
-                <input type="number" step="0.1" value={returning} onChange={e => setReturning(e.target.value)} placeholder="35" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-cream placeholder:text-cream/30 focus:outline-none focus:border-gold/60 transition-colors" />
+                <input type="number" step="0.1" value={returning} onChange={e => setReturning(e.target.value)} placeholder="35" className="w-full bg-muted/30 border border-border rounded-lg px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold/60 transition-colors" />
               </InputField>
             </div>
           </div>
@@ -535,7 +535,7 @@ export function ReportForm() {
       )}
 
       {isLoading ? (
-        <div className="w-full bg-surface border border-white/8 rounded-xl p-5 text-center space-y-3">
+        <div className="w-full bg-surface border border-border rounded-xl p-5 text-center space-y-3">
           <div className="flex items-center justify-center gap-3">
             <div className="w-5 h-5 border-2 border-gold/30 border-t-gold rounded-full animate-spin" />
             <span className="text-gold text-sm font-medium">
@@ -547,12 +547,12 @@ export function ReportForm() {
               <div
                 key={i}
                 className={`h-1 rounded-full transition-all duration-500 ${
-                  i <= progressStage ? 'bg-gold w-6' : 'bg-white/10 w-3'
+                  i <= progressStage ? 'bg-gold w-6' : 'bg-muted/30 w-3'
                 }`}
               />
             ))}
           </div>
-          <p className="text-cream/30 text-xs">
+          <p className="text-muted-foreground text-xs">
             {isAr ? 'الرجاء الانتظار، لا تغلق الصفحة' : 'Please wait — do not close this page'}
           </p>
         </div>
