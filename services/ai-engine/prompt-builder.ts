@@ -7,6 +7,9 @@ import { buildPrompt as buildClvRetention } from './prompts/clv-retention.prompt
 import { buildPrompt as buildTrendResearch } from './prompts/trend-research.prompt'
 import { buildPrompt as buildMediaMix } from './prompts/media-mix.prompt'
 import { buildPrompt as buildOpportunityScoring } from './prompts/opportunity-scoring.prompt'
+import { buildPrompt as buildRealEstateLaunch } from './prompts/real-estate-launch.prompt'
+import { buildPrompt as buildRealEstateLeads } from './prompts/real-estate-leads.prompt'
+import { buildPrompt as buildRealEstateFeasibility } from './prompts/real-estate-feasibility.prompt'
 
 export type ReportType =
   | 'COMPETITOR'
@@ -17,6 +20,9 @@ export type ReportType =
   | 'TREND_RESEARCH'
   | 'MEDIA_MIX'
   | 'OPPORTUNITY_SCORING'
+  | 'REAL_ESTATE_LAUNCH'
+  | 'REAL_ESTATE_LEADS'
+  | 'REAL_ESTATE_FEASIBILITY'
 
 const PROMPT_BUILDERS: Record<ReportType, (ctx: PromptContext) => string> = {
   COMPETITOR: buildCompetitor,
@@ -27,6 +33,9 @@ const PROMPT_BUILDERS: Record<ReportType, (ctx: PromptContext) => string> = {
   TREND_RESEARCH: buildTrendResearch,
   MEDIA_MIX: buildMediaMix,
   OPPORTUNITY_SCORING: buildOpportunityScoring,
+  REAL_ESTATE_LAUNCH: buildRealEstateLaunch,
+  REAL_ESTATE_LEADS: buildRealEstateLeads,
+  REAL_ESTATE_FEASIBILITY: buildRealEstateFeasibility,
 }
 
 export function buildPromptForType(type: ReportType, ctx: PromptContext): string {
@@ -50,4 +59,7 @@ export const REPORT_TYPE_LABELS: Record<ReportType, { en: string; ar: string }> 
   TREND_RESEARCH: { en: 'Trend Research', ar: 'بحث الاتجاهات' },
   MEDIA_MIX: { en: 'Media Mix Optimization', ar: 'تحسين مزيج الوسائط' },
   OPPORTUNITY_SCORING: { en: 'Opportunity Scoring', ar: 'تقييم الفرصة' },
+  REAL_ESTATE_LAUNCH: { en: 'Project Launch Strategy', ar: 'استراتيجية إطلاق المشروع' },
+  REAL_ESTATE_LEADS: { en: 'Lead Gen Intelligence', ar: 'تحليل توليد العملاء المحتملين' },
+  REAL_ESTATE_FEASIBILITY: { en: 'Investment Feasibility', ar: 'دراسة الجدوى الاستثمارية' },
 }

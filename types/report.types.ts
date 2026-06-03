@@ -14,6 +14,9 @@ export interface ReportInput {
   website?: string
   language?: 'ar' | 'en'
   competitors?: Array<{ name: string; url?: string }>
+  projectType?: string
+  projectLocation?: string
+  projectSize?: string
   ads?: {
     budget?: string
     metaSpend?: string

@@ -61,6 +61,9 @@ export interface PromptContext {
   competitors?: CompetitorEntry[]
   websiteUrl?: string
   language: Language
+  projectType?: string
+  projectLocation?: string
+  projectSize?: string
 }
 
 export const SIZE_LABELS: Record<BusinessSize, string> = {

@@ -114,6 +114,9 @@ export async function POST(req: NextRequest) {
       ads: reportInput.ads as PromptContext['ads'],
       social: reportInput.social as PromptContext['social'],
       sales: reportInput.sales as PromptContext['sales'],
+      projectType: reportInput.projectType,
+      projectLocation: reportInput.projectLocation,
+      projectSize: reportInput.projectSize,
     }
 
     // 7. Mark PROCESSING and generate

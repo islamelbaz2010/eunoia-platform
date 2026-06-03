@@ -36,8 +36,24 @@ const TYPE_SECTIONS: Record<ReportType, { ads: boolean; social: boolean; sales: 
   CLV_RETENTION:       { ads: false, social: false, sales: true  },
   TREND_RESEARCH:      { ads: false, social: false, sales: false },
   MEDIA_MIX:           { ads: true,  social: true,  sales: false },
-  OPPORTUNITY_SCORING: { ads: false, social: false, sales: false },
+  OPPORTUNITY_SCORING:     { ads: false, social: false, sales: false },
+  REAL_ESTATE_LAUNCH:      { ads: true,  social: true,  sales: false },
+  REAL_ESTATE_LEADS:       { ads: true,  social: true,  sales: false },
+  REAL_ESTATE_FEASIBILITY: { ads: false, social: false, sales: false },
 }
+
+const RE_TYPES: ReportType[] = ['REAL_ESTATE_LAUNCH', 'REAL_ESTATE_LEADS', 'REAL_ESTATE_FEASIBILITY']
+
+const PROJECT_TYPE_OPTIONS = [
+  'Residential — Apartment',
+  'Residential — Villa / Townhouse',
+  'Residential — Compound',
+  'Commercial — Office',
+  'Commercial — Retail',
+  'Mixed Use',
+  'Tourism / Resort',
+  'Administrative',
+]
 
 const PROGRESS_STAGES = [
   'Submitting request…',
@@ -114,6 +130,11 @@ export function ReportForm() {
   const [cac, setCac] = useState('')
   const [returning, setReturning] = useState('')
 
+  // Real estate project details
+  const [projectType, setProjectType] = useState('')
+  const [projectLocation, setProjectLocation] = useState('')
+  const [projectSize, setProjectSize] = useState('')
+
   const [isLoading, setIsLoading] = useState(false)
   const [progressStage, setProgressStage] = useState(0)
   const [error, setError] = useState<string | null>(null)
@@ -172,6 +193,9 @@ export function ReportForm() {
       language,
       website: website.trim() || undefined,
       competitors: competitors.filter(c => c.name.trim()).map(c => ({ name: c.name.trim(), url: c.url })),
+      projectType: projectType || undefined,
+      projectLocation: projectLocation || undefined,
+      projectSize: projectSize || undefined,
       ads: showAds ? {
         budget: adsBudget || undefined,
         metaSpend: adsMetaSpend || undefined,
@@ -229,6 +253,7 @@ export function ReportForm() {
     showAds, adsBudget, adsMetaSpend, adsGoogleSpend, adsTiktokSpend, adsRoas, adsCpl, adsLeads, adsCtr,
     showSocial, igFollowers, igEng, fbFollowers, ttFollowers,
     showSales, revenue, convRate, aov, cac, returning,
+    projectType, projectLocation, projectSize,
     reportType, router,
   ])
 
@@ -335,6 +360,44 @@ export function ReportForm() {
           <CompetitorInput competitors={competitors} onChange={setCompetitors} />
         </InputField>
       </Section>
+
+      {/* Project Details — only for real estate types */}
+      {RE_TYPES.includes(reportType) && (
+        <Section title={isAr ? 'تفاصيل المشروع العقاري' : 'Real Estate Project Details'}>
+          <InputField label={isAr ? 'نوع المشروع' : 'Project Type'}>
+            <select
+              value={projectType}
+              onChange={e => setProjectType(e.target.value)}
+              className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-cream focus:outline-none focus:border-gold/60 transition-colors"
+            >
+              <option value="" className="bg-[#1a2030]">{isAr ? '— اختر نوع المشروع —' : '— Select project type —'}</option>
+              {PROJECT_TYPE_OPTIONS.map(opt => (
+                <option key={opt} value={opt} className="bg-[#1a2030]">{opt}</option>
+              ))}
+            </select>
+          </InputField>
+          <div className="grid grid-cols-2 gap-4">
+            <InputField label={isAr ? 'موقع المشروع' : 'Project Location'} hint={isAr ? 'مثال: الشيخ زايد، أكتوبر، التجمع الخامس' : 'e.g. Sheikh Zayed, New Capital, North Coast'}>
+              <input
+                type="text"
+                value={projectLocation}
+                onChange={e => setProjectLocation(e.target.value)}
+                placeholder={isAr ? 'الشيخ زايد، أكتوبر' : 'Sheikh Zayed, New Capital'}
+                className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-cream placeholder:text-cream/30 focus:outline-none focus:border-gold/60 transition-colors"
+              />
+            </InputField>
+            <InputField label={isAr ? 'حجم المشروع' : 'Project Scale'} hint={isAr ? 'مثال: 200 وحدة، 50 فيلا' : 'e.g. 200 units, 50 villas, 5,000 sqm'}>
+              <input
+                type="text"
+                value={projectSize}
+                onChange={e => setProjectSize(e.target.value)}
+                placeholder={isAr ? '200 وحدة سكنية' : '200 residential units'}
+                className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-cream placeholder:text-cream/30 focus:outline-none focus:border-gold/60 transition-colors"
+              />
+            </InputField>
+          </div>
+        </Section>
+      )}
 
       {/* Ads data — optional */}
       <div className="bg-surface border border-white/8 rounded-xl overflow-hidden">
