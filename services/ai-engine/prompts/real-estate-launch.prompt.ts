@@ -6,163 +6,170 @@ export function buildPrompt(ctx: PromptContext): string {
   const base = buildBasePrompt(ctx)
   const dataBlock = buildDataBlock(ctx)
   const projDesc = [projectType, projectLocation, projectSize].filter(Boolean).join(' | ') || 'Real Estate Project'
+  const hasProjectData = Boolean(projectType || projectLocation || projectSize)
 
   return `${base}\n${dataBlock}
 
 PROJECT DETAILS: ${projDesc}
 TASK: Generate a comprehensive Real Estate Project Launch Strategy for ${companyName}.
-Context: Egypt real estate market 2025 — 18% YoY growth, ticket sizes EGP 2M-20M, CPL EGP 300-800, primary buyers: end-users 35-55 years, investors seeking 8-12% annual yield.
-This is an exhibition-quality report for the Real Estate Developer Exhibition June 2026.
+
+EGYPT RE LAUNCH BENCHMARKS 2025:
+• Pre-sales month 1 target: 30% of total units = strong launch signal
+• Marketing spend: 2–4% of GDV (Gross Development Value)
+• Launch CPL range: EGP 300–500 for mid-range, EGP 500–1,200 for luxury
+• Broker activation: assign 15–25 exclusive brokers before soft launch
+• WhatsApp response SLA: < 5 minutes from lead submission = 3x conversion rate
+• Content must-haves: project vision video (90s), 360 walkthrough, payment plan one-pager, aerial footage
+• Cityscape June 2026: major exhibition — align launch timeline if applicable
+• Location premium: New Cairo +25% CPL, New Capital +20%, 6th Oct -10% vs Cairo benchmark
 
 Return ONLY valid JSON (no markdown, no backticks, start directly with {):
 {
   "report_type": "Real Estate Project Launch Strategy",
+  "data_disclaimer": "AI-generated analysis using Egypt RE market benchmarks Q2 2025. Financial projections are estimates — validate with actual project financials.",
   "project_overview": {
     "project_type": "${projectType || 'Residential Development'}",
     "location": "${projectLocation || city.en}",
     "size": "${projectSize || 'To be confirmed'}",
-    "target_segment": "specific buyer profile with income bracket and lifestyle description",
-    "unique_value_proposition": "2 sentences on what makes this project stand out in ${city.en} 2025"
+    "target_segment": "specific buyer profile — income bracket, age, lifestyle, motivation (investor vs end-user)",
+    "unique_value_proposition": "2 sentences — what makes this project win in ${projectLocation || city.en} against current competition",
+    "location_premium_applied": "state which CPL multiplier used for this location and why"
   },
   "launch_readiness_score": {
     "total": 0,
     "grade": "A/B/C",
     "dimensions": {
-      "product_readiness": {"score": 0, "note": "renders, model unit, pricing readiness"},
-      "market_timing": {"score": 0, "note": "market cycle position for ${city.en}"},
-      "brand_positioning": {"score": 0, "note": "developer brand strength for this project"},
-      "sales_infrastructure": {"score": 0, "note": "CRM, call center, broker network"},
-      "marketing_assets": {"score": 0, "note": "content, ads creative, landing page"}
+      "product_readiness": {"score": 0, "note": "renders, model unit, pricing table ready?"},
+      "market_timing": {"score": 0, "note": "market cycle assessment for ${projectLocation || city.en} Q2-Q3 2025"},
+      "brand_positioning": {"score": 0, "note": "developer brand recognition in this location"},
+      "sales_infrastructure": {"score": 0, "note": "CRM, call center, broker network activated?"},
+      "marketing_assets": {"score": 0, "note": "content production, ads creative, landing page ready?"}
     }
   },
   "market_timing": {
     "verdict": "Optimal / Good / Acceptable / Challenging",
-    "rationale": "2 sentences specific to ${projectLocation || city.en} real estate conditions Q2-Q3 2025",
-    "demand_signals": ["specific demand signal 1 for this location", "specific demand signal 2", "specific demand signal 3"],
-    "risk_window": "specific time-sensitive risk — e.g. competitors launching, seasonality, interest rate change"
+    "rationale": "2 specific sentences on ${projectLocation || city.en} market conditions Q2 2025",
+    "demand_signals": ["signal 1 — specific to this location", "signal 2", "signal 3"],
+    "risk_window": "specific time risk — competitor launches, seasonality, rate environment",
+    "cityscape_opportunity": "Should this project exhibit at Cityscape June 2026? Yes/No with rationale"
   },
   "target_segments": [
     {
-      "segment": "Primary Buyer Persona name",
-      "profile": "age range, income, job type, family status",
-      "motivation": "primary purchase motivation — investment or lifestyle",
+      "segment": "Primary Buyer — name this persona",
+      "profile": "age range, income bracket EGP/month, job type, family status",
+      "motivation": "investment yield OR lifestyle OR future appreciation — be specific",
       "budget_range": "EGP X–X million",
       "preferred_channels": ["channel 1", "channel 2", "channel 3"],
-      "messaging_hook": "the one sentence that converts this segment"
+      "messaging_hook": "the one sentence that converts this exact segment",
+      "estimated_segment_size": "% of total buyers in ${projectLocation || city.en}"
     },
     {
-      "segment": "Secondary Buyer Persona name",
-      "profile": "age range, income, job type",
-      "motivation": "motivation specific to this segment",
+      "segment": "Secondary Buyer — name this persona",
+      "profile": "demographics",
+      "motivation": "specific motivation",
       "budget_range": "EGP X–X million",
       "preferred_channels": ["channel 1", "channel 2"],
-      "messaging_hook": "the one sentence that converts this segment"
+      "messaging_hook": "conversion sentence"
     },
     {
-      "segment": "Broker/Investor Channel",
+      "segment": "Broker / Investor Channel",
       "profile": "real estate brokers and institutional investors",
-      "motivation": "commission structure, yield, exclusive access",
+      "motivation": "commission 2–3% + exclusive access + developer reputation",
       "budget_range": "bulk or portfolio purchases",
-      "preferred_channels": ["WhatsApp", "broker events", "direct outreach"],
-      "messaging_hook": "the one sentence that motivates brokers to prioritize this project"
+      "preferred_channels": ["WhatsApp broker groups", "broker events", "direct outreach"],
+      "messaging_hook": "the sentence that motivates brokers to prioritize this project over competitors"
     }
   ],
   "channel_strategy": {
-    "meta_ads": {
-      "priority": "High",
-      "budget_share": "40%",
-      "campaign_types": ["lead generation", "video views", "retargeting"],
-      "targeting": "specific audience parameters for ${projectType || 'residential'} buyers in Egypt",
-      "expected_cpl": "EGP X–X range",
-      "creative_direction": "specific creative concept — emotional angle, visual style"
+    "pre_launch_phase": {
+      "duration": "4–6 weeks before launch day",
+      "objective": "Build awareness and broker network — no direct sales",
+      "channels": ["broker WhatsApp activation", "teaser video on Meta/YouTube", "landing page with early registration"],
+      "budget_allocation": "20% of launch budget",
+      "kpi": "X broker registrations + Y email leads before launch day",
+      "reasoning": "Why this timeline and channel mix for ${projectLocation || city.en}"
     },
-    "google_ads": {
-      "priority": "High",
-      "budget_share": "25%",
-      "campaign_types": ["search — project name + competitor", "display retargeting", "YouTube pre-roll"],
-      "keywords": ["specific keyword 1", "specific keyword 2", "specific keyword 3"],
-      "expected_cpl": "EGP X–X range",
-      "creative_direction": "specific creative approach for Google"
+    "soft_launch_phase": {
+      "duration": "Week 1–2 of launch",
+      "objective": "Hit 30% pre-sales target with qualified buyers",
+      "channels": ["Meta Lead Ads (primary)", "Google Search (branded + location)", "WhatsApp broadcast to pre-registered leads", "broker activation events"],
+      "budget_allocation": "50% of launch budget",
+      "expected_cpl": "EGP X–X (benchmark for ${projectLocation || city.en} ${projectType || 'residential'})",
+      "cpl_reasoning": "benchmark CPL × location premium × project tier = calculated range"
     },
-    "tiktok": {
-      "priority": "Medium",
-      "budget_share": "15%",
-      "campaign_types": ["awareness", "tour/walkthrough content"],
-      "targeting": "younger investors and future buyers 28-40",
-      "expected_cpl": "EGP X–X range",
-      "creative_direction": "specific TikTok creative concept — lifestyle or behind-the-scenes"
-    },
-    "broker_network": {
-      "priority": "High",
-      "budget_share": "15%",
-      "activities": ["broker launch event", "WhatsApp broadcast", "commission structure"],
-      "expected_contribution": "X% of total sales via broker channel"
-    },
-    "pr_and_influencers": {
-      "priority": "Medium",
-      "budget_share": "5%",
-      "activities": ["real estate influencer tours", "media coverage for launch event", "lifestyle content partnerships"]
+    "full_launch_phase": {
+      "duration": "Month 2–3",
+      "objective": "Scale to 50–70% absorption",
+      "channels": ["Meta + Google at scale", "TikTok retargeting", "PR + influencer compound visit", "Cityscape if applicable"],
+      "budget_allocation": "30% of launch budget",
+      "optimization_focus": "retargeting the 97% who visited but didn't convert"
     }
   },
-  "content_calendar_30days": [
-    {"week": 1, "theme": "Teaser & Anticipation", "content_pieces": ["teaser video 30s — location reveal", "countdown social post series", "broker WhatsApp announcement"], "platforms": ["Meta", "TikTok", "WhatsApp"]},
-    {"week": 2, "theme": "Project Reveal", "content_pieces": ["launch video 2-3 min", "renders gallery carousel", "developer credibility post"], "platforms": ["Meta", "TikTok", "YouTube"]},
-    {"week": 3, "theme": "Social Proof & Investment Case", "content_pieces": ["ROI calculator post/infographic", "testimonial from past buyer", "location advantages documentary-style content"], "platforms": ["Meta", "Google Display"]},
-    {"week": 4, "theme": "Urgency & Conversion", "content_pieces": ["limited units countdown", "payment plan explainer", "call center CTA campaign"], "platforms": ["Meta", "Google Search", "WhatsApp retargeting"]}
-  ],
-  "media_budget_recommendation": {
-    "launch_phase_3months": {
-      "total": "EGP X,000–X,000",
-      "monthly_breakdown": {"meta": "EGP X,000", "google": "EGP X,000", "tiktok": "EGP X,000", "broker_events": "EGP X,000", "content_production": "EGP X,000"},
-      "expected_leads": "X–X qualified leads",
-      "expected_cpl": "EGP X–X",
-      "expected_sales_conversion": "X% of leads to site visit, X% to reservation"
+  "media_budget": {
+    "total_recommended": "EGP X million (X% of estimated GDV)",
+    "reasoning": "GDV estimate × 3% marketing benchmark = total launch budget justification",
+    "breakdown": {
+      "meta_ads_pct": 40,
+      "google_ads_pct": 25,
+      "broker_activation_pct": 15,
+      "content_production_pct": 10,
+      "events_pr_pct": 10
     },
-    "scale_phase_months4_6": {
-      "total": "EGP X,000–X,000/month",
-      "rationale": "scale channels proving <EGP X CPL, cut underperformers"
-    }
+    "monthly_phasing": "Month 1: 40%, Month 2: 35%, Month 3: 25%"
   },
-  "kpis": [
-    {"metric": "CPL (Cost Per Lead)", "target": "EGP X–X", "measurement": "CRM + ad platform attribution"},
-    {"metric": "Lead-to-Site-Visit Rate", "target": "X%", "measurement": "sales team CRM tracking"},
-    {"metric": "Site-Visit-to-Reservation Rate", "target": "X%", "measurement": "sales CRM conversion funnel"},
-    {"metric": "Broker-Generated Leads %", "target": "X%", "measurement": "CRM source tagging"},
-    {"metric": "Cost Per Reservation", "target": "EGP X,000–X,000", "measurement": "total spend / reservations"},
-    {"metric": "Social Media Reach", "target": "X,000/month", "measurement": "platform analytics"},
-    {"metric": "Website Conversion Rate", "target": "X%", "measurement": "Google Analytics events"}
-  ],
+  "content_requirements": {
+    "must_have": ["Project vision film 90s (aerial + walkthrough + lifestyle)", "Payment plan one-pager PDF", "360° virtual tour", "WhatsApp sales kit for brokers"],
+    "high_impact": ["Influencer compound visit video", "Investor ROI calculator (interactive)", "Time-lapse construction updates"],
+    "ad_creative_priority": "first 3 ad creatives to test — format + hook + CTA for each"
+  },
+  "kpis": {
+    "launch_month_target": "30% units pre-sold = X units = EGP X million",
+    "cpl_target": "EGP X–X per qualified lead",
+    "site_visit_rate": "X% of leads book site visit (benchmark: 15%)",
+    "lead_to_reservation": "X% funnel conversion (benchmark: 3%)",
+    "broker_activation": "X brokers activated with exclusive inventory",
+    "whatsapp_response_sla": "< 5 minutes — critical for conversion"
+  },
   "risk_factors": [
-    {"risk": "specific market risk for ${projectLocation || city.en}", "probability": "medium/high", "impact": "high", "mitigation": "specific mitigation strategy"},
-    {"risk": "competitive launch by rival developer", "probability": "medium", "impact": "medium", "mitigation": "accelerate early reservations with launch incentives"},
-    {"risk": "lead quality drop — high volume, low seriousness", "probability": "high", "impact": "medium", "mitigation": "lead scoring system + pre-qualification script for call center"},
-    {"risk": "content production delays", "probability": "medium", "impact": "high", "mitigation": "brief creative agency 6 weeks before launch with phased delivery"}
+    {"risk": "specific risk 1 for this location/project type", "likelihood": "High/Medium/Low", "impact": "EGP X million revenue at risk", "mitigation": "specific action"},
+    {"risk": "competitor project launching in same area", "likelihood": "Medium", "impact": "15–25% slower absorption", "mitigation": "pre-launch exclusivity offers and broker lock-in"},
+    {"risk": "payment plan competitiveness — if < 8 years", "likelihood": "High if short plan", "impact": "lose 40% of potential buyers", "mitigation": "extend to 8–10 years minimum"}
   ],
   "quick_wins": [
-    {"action": "Launch WhatsApp broadcast to broker network with teaser + floor plan PDF", "timeline": "48 hours", "expected_result": "50-100 broker inquiries"},
-    {"action": "Set up Meta Lead Ads with project teaser — collect pre-launch interest", "timeline": "3 days", "expected_result": "200-500 pre-launch leads at EGP 15-30 CPL"},
-    {"action": "Register on Aqarmap and Property Finder with full project listing", "timeline": "5 days", "expected_result": "organic leads from property portals immediately"},
-    {"action": "Secure 3-5 real estate influencer partnerships for launch week", "timeline": "1 week", "expected_result": "500K-1M reach for launch reveal"}
+    {"action": "specific 7-day action", "timeline": "7 days", "money_impact": "EGP estimate", "expected_result": "measurable outcome", "reasoning": "why this action first"},
+    {"action": "action 2", "timeline": "7 days", "money_impact": "EGP estimate", "expected_result": "outcome", "reasoning": "rationale"},
+    {"action": "action 3", "timeline": "14 days", "money_impact": "EGP estimate", "expected_result": "outcome", "reasoning": "rationale"}
   ],
-  "agency_proposal": [
-    {
-      "title": "Launch Sprint — 3 Month Package",
-      "desc": "Complete project launch execution: campaign setup across Meta + Google + TikTok, 30-day content calendar production, broker network activation, weekly reporting, CRM integration, and real-time optimization",
-      "price": "EGP 35,000–55,000/month",
-      "best_for": "Developers launching within 60 days needing full-service execution"
-    },
-    {
-      "title": "Strategic Launch — 6 Month Partnership",
-      "desc": "Full launch + scale: everything in Sprint plus video production, influencer management, PR coordination, monthly strategy review, competitive intelligence updates, and lead nurturing automation",
-      "price": "EGP 55,000–85,000/month",
-      "best_for": "Large projects EGP 500M+ needing sustained pre-sales velocity"
-    },
-    {
-      "title": "Advisory & Setup",
-      "desc": "Strategy document, channel setup, campaign templates, content brief, team training — delivered in 2 weeks. Client executes internally.",
-      "price": "EGP 25,000 one-time",
-      "best_for": "Developers with in-house marketing teams needing expert strategy direction"
-    }
+  "confidence_score": {"pct": ${hasProjectData ? 72 : 62}, "label": "${hasProjectData ? 'Medium-High' : 'Medium'}", "reason": "${hasProjectData ? 'Project details provided + Egypt RE benchmarks 2025' : 'Egypt RE benchmarks only — project financials and location details would increase confidence to 80%+'}"},
+  "marketing_score": 0,
+  "score_dimensions": {"digital_presence": 0, "content_quality": 0, "paid_performance": 0, "brand_strength": 0, "competitive_position": 0},
+  "sector_rank": "Assessment based on project details and market position",
+  "plan_90_days": {
+    "month1": ["Week 1–2: broker activation (target X brokers) — specific action", "Week 3–4: soft launch with Meta Lead Ads — specific targeting", "End of month: 30% pre-sales target review"],
+    "month2": ["Scale winning ad sets — specific optimization", "Launch TikTok retargeting", "PR + influencer visit execution"],
+    "month3": ["Push to 60% absorption — specific channel adjustments", "Referral program activation", "Cityscape preparation if applicable"]
+  },
+  "audit_checklist": [
+    {"item": "Landing page live with lead capture form + Facebook Pixel", "status": false},
+    {"item": "WhatsApp Business API connected with < 5 min auto-response", "status": false},
+    {"item": "CRM configured for lead source attribution", "status": false},
+    {"item": "15+ brokers activated with WhatsApp kit", "status": false},
+    {"item": "Project vision video produced (90s minimum)", "status": false},
+    {"item": "Payment plan one-pager designed and ready for WhatsApp", "status": false},
+    {"item": "Google Analytics 4 + conversion tracking live", "status": false},
+    {"item": "Competitor price monitoring system in place", "status": false}
+  ],
+  "data_quality_note": "${hasProjectData ? 'Medium-high confidence — project details provided. Adding GDV, unit mix, and actual payment plan would enable precise financial projections.' : 'Medium confidence — sector benchmarks applied. Share project financials, GDV, and unit mix for precise recommendations.'}",
+  "proposal": [
+    {"title": "Full Project Launch Management", "desc": "End-to-end launch: strategy, content production, Meta + Google + broker activation, weekly reporting, WhatsApp CRM setup", "price": "EGP 25,000–45,000/month + % of sales milestone bonus", "best_for": "Developer wanting turnkey launch execution", "reasoning": "Covers 3 specialists (strategist + media buyer + content) + production budget"},
+    {"title": "Launch Strategy + Media Only", "desc": "Paid campaigns (Meta + Google) + monthly strategy — developer handles content and broker activation", "price": "EGP 15,000–25,000/month", "best_for": "Developer with internal sales team and content capacity"},
+    {"title": "Launch Intelligence Report (One-time)", "desc": "Full launch strategy document + channel plan + content brief — for developer to execute internally", "price": "EGP 8,000–15,000 one-time", "best_for": "Developer wanting strategy without ongoing retainer"}
+  ],
+  "why_us": [
+    "Eunoia ${ctx.branch.name}: launched 20+ real estate projects in Egypt and Gulf — we know pre-sales conversion patterns",
+    "Egypt RE specialists: our media buyers run active campaigns for developers — real CPL data, not benchmarks",
+    "Broker network: active relationships with top real estate brokers in ${projectLocation || city.en}",
+    "WhatsApp CRM setup: we configure the full lead-to-close funnel including automated follow-up sequences"
   ]
 }`
 }

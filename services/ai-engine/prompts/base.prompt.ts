@@ -15,6 +15,22 @@ export const EGYPT_MACRO = `
 • Consumer insight: inflation squeezing discretionary spend — value messaging critical
 • Digital ad costs: +40% in EGP terms YoY — factor into all budget recommendations
 • Key 2025 opportunities: solar energy, fintech, e-commerce, health-tech, edtech
+
+EGYPT REAL ESTATE INTELLIGENCE Q2 2025:
+• Market size: EGP 600B+ | YoY Growth: 18% | New launches: 200+ projects
+• New Capital: absorption 65%, avg price EGP 12,000–18,000/sqm, buyer mix: 55% investor / 45% end-user
+• New Cairo: absorption 80%, avg price EGP 18,000–35,000/sqm, premium zone, highest demand
+• 6th October / Sheikh Zayed: absorption 70%, avg price EGP 8,000–15,000/sqm, value zone
+• Mostakbal City: fastest growing, EGP 10,000–16,000/sqm, young family buyers
+• Payment plans: 10-year plans now STANDARD — shorter plans uncompetitive
+• Broker channel: 60–70% of sales go through brokers — broker commission 2–3% non-negotiable
+• WhatsApp leads: 40% of qualified RE leads close via WhatsApp — response within 5 min = 3x conversion
+• Top developers: SODIC, Palm Hills, Ora, Mountain View, Tatweer Misr — benchmarks for quality
+• Cityscape Egypt 2026: peak exhibition season — major launches expected June 2026
+• Mortgage penetration: only 8% — most buyers use developer installment plans
+• Price appreciation: 15–25% YoY in prime locations (2024–2025)
+• Pre-sales target: 30% of units in launch month = strong launch indicator
+• Marketing budget benchmark: 2–4% of GDV (Gross Development Value)
 ═══════════════════════════════════════`
 
 const LANG_INSTRUCTION =
@@ -41,6 +57,9 @@ ${LANG_INSTRUCTION}${EGYPT_MACRO}
 • Numbers: sector-specific projections (benchmark CPL x budget = realistic leads estimate)
 • Every action item: include channel + content type + budget allocation + expected outcome in 30/60/90 days
 • Quality mandate: A McKinsey analyst reviewing this report must find it specific, data-driven, and immediately actionable
+• REASONING MANDATE: Every number/budget/CPL in your output MUST include a reasoning field showing: formula used, benchmark applied, city multiplier used — e.g. "reasoning": "60 leads × EGP 600 CPL benchmark (New Cairo 1.2x) = EGP 36,000 ads + 20% buffer = EGP 43,200"
+• CONFIDENCE HONESTY: competitor names and market shares are AI-estimated — always add "source": "AI-estimated based on market knowledge — verify before client presentation" to competitor objects
+• DYNAMIC CONFIDENCE: calculate confidence_score.pct dynamically: base 55 + (hasAds?15:0) + (hasSocial?8:0) + (hasSales?10:0) + (hasCompetitors?5:0) + (hasWebsite?4:0) + (hasProjectDetails?3:0) — never exceed 90
 
 ════ REALITY CHECK LAYER — RUN INTERNALLY BEFORE WRITING ════
 Validate all client data before generating report sections:

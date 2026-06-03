@@ -1,64 +1,26 @@
 'use client'
-
-import { useEffect, useState } from 'react'
-import { Menu, Zap } from 'lucide-react'
 import Link from 'next/link'
+import { Menu, Plus } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-
-interface HeaderProps {
-  title: string
-  subtitle?: string
-  onMenuClick?: () => void
-}
-
-export function Header({ title, subtitle, onMenuClick }: HeaderProps) {
-  const [initials, setInitials] = useState<string>('U')
-  const [userEmail, setUserEmail] = useState<string>('')
-
-  useEffect(() => {
-    const supabase = createClient()
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user?.email) {
-        setUserEmail(user.email)
-        setInitials(user.email[0].toUpperCase())
-      }
-    })
-  }, [])
-
+export function Header({ title, subtitle, onMenuClick }: { title: string; subtitle?: string; onMenuClick?: () => void }) {
+  const [email, setEmail] = useState<string | null>(null)
+  useEffect(() => { createClient().auth.getUser().then(({ data }) => setEmail(data.user?.email ?? null)) }, [])
+  const initials = email ? email.charAt(0).toUpperCase() : '?'
   return (
-    <header className="h-14 border-b border-white/6 flex items-center justify-between px-4 lg:px-6 backdrop-blur sticky top-0 z-10" style={{backgroundColor:'rgba(9,9,15,0.95)'}}>
-      <div className="flex items-center gap-3">
-        <button
-          className="lg:hidden w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
-          style={{color:'rgba(245,240,232,0.4)'}}
-          onClick={onMenuClick}
-          aria-label="Open menu"
-        >
-          <Menu size={20} />
-        </button>
+    <header style={{height:56,borderBottom:'1px solid #e8e0d4',display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 24px',background:'rgba(248,246,241,0.95)',backdropFilter:'blur(12px)',position:'sticky',top:0,zIndex:10}}>
+      <div style={{display:'flex',alignItems:'center',gap:12}}>
+        <button onClick={onMenuClick} className="lg:hidden" style={{width:32,height:32,display:'flex',alignItems:'center',justifyContent:'center',color:'#9e8e7e',border:'none',background:'transparent',cursor:'pointer',borderRadius:8}}><Menu size={18} /></button>
         <div>
-          <h1 className="font-semibold text-base leading-tight" style={{color:'#f5f0e8'}}>{title}</h1>
-          {subtitle && <p className="text-xs" style={{color:'rgba(245,240,232,0.4)'}}>{subtitle}</p>}
+          <h1 style={{fontSize:14,fontWeight:600,color:'#1a1612',lineHeight:1.2}}>{title}</h1>
+          {subtitle && <p style={{fontSize:11,color:'#9e8e7e'}}>{subtitle}</p>}
         </div>
       </div>
-
-      <div className="flex items-center gap-3">
-        <Link
-          href="/dashboard/intelligence"
-          className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:opacity-90"
-          style={{background:'linear-gradient(135deg,#c9a455,#e2bc6e)', color:'#09090f'}}
-        >
-          <Zap size={12} />
-          Generate Report
+      <div style={{display:'flex',alignItems:'center',gap:10}}>
+        <Link href="/dashboard/intelligence" style={{display:'flex',alignItems:'center',gap:6,background:'linear-gradient(135deg,#b8922a,#d4aa45)',color:'#fff',fontSize:12,fontWeight:700,padding:'7px 14px',borderRadius:10,textDecoration:'none'}}>
+          <Plus size={13} strokeWidth={2.5} />New Report
         </Link>
-
-        <div
-          className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 cursor-default select-none"
-          style={{background:'linear-gradient(135deg,#c9a455,#e2bc6e)', color:'#09090f'}}
-          title={userEmail}
-        >
-          {initials}
-        </div>
+        <div style={{width:34,height:34,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:700,background:'linear-gradient(135deg,#b8922a,#d4aa45)',color:'#fff',cursor:'default'}}>{initials}</div>
       </div>
     </header>
   )

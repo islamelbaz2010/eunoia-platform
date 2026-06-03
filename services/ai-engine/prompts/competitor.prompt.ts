@@ -33,6 +33,7 @@ Return ONLY valid JSON (no markdown, no backticks, start directly with {):
   "report_type": "Competitor Intelligence",
   "confidence": "medium",
   "executive_summary": "3 sentences on competitive landscape for ${companyName} in ${city.en} ${sector.en} market",
+  "data_disclaimer": "All competitor intelligence is AI-estimated based on market knowledge and digital footprint analysis. Company names are real businesses but financial estimates (ad spend, market share) are approximations — verify with Facebook Ads Library and direct research before using in client presentations.",
   "marketing_score": 0,
   "score_dimensions": {"digital_presence": 0, "content_quality": 0, "paid_performance": 0, "brand_strength": 0, "competitive_position": 0},
   "competitors": [
