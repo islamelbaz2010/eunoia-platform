@@ -1,4 +1,9 @@
-import { Bell, Menu } from 'lucide-react'
+'use client'
+
+import { useEffect, useState } from 'react'
+import { Menu, Zap } from 'lucide-react'
+import Link from 'next/link'
+import { createClient } from '@/lib/supabase/client'
 
 interface HeaderProps {
   title: string
@@ -7,31 +12,53 @@ interface HeaderProps {
 }
 
 export function Header({ title, subtitle, onMenuClick }: HeaderProps) {
+  const [initials, setInitials] = useState<string>('U')
+  const [userEmail, setUserEmail] = useState<string>('')
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user?.email) {
+        setUserEmail(user.email)
+        setInitials(user.email[0].toUpperCase())
+      }
+    })
+  }, [])
+
   return (
-    <header className="h-14 border-b border-white/8 flex items-center justify-between px-4 lg:px-6 bg-midnight/95 backdrop-blur sticky top-0 z-10">
+    <header className="h-14 border-b border-white/6 flex items-center justify-between px-4 lg:px-6 backdrop-blur sticky top-0 z-10" style={{backgroundColor:'rgba(9,9,15,0.95)'}}>
       <div className="flex items-center gap-3">
-        {/* Hamburger — mobile only */}
         <button
-          className="lg:hidden w-8 h-8 rounded-lg text-cream/40 hover:text-cream hover:bg-white/5 flex items-center justify-center transition-colors"
+          className="lg:hidden w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
+          style={{color:'rgba(245,240,232,0.4)'}}
           onClick={onMenuClick}
           aria-label="Open menu"
         >
           <Menu size={20} />
         </button>
         <div>
-          <h1 className="text-cream font-semibold text-base leading-tight">{title}</h1>
-          {subtitle && <p className="text-cream/40 text-xs">{subtitle}</p>}
+          <h1 className="font-semibold text-base leading-tight" style={{color:'#f5f0e8'}}>{title}</h1>
+          {subtitle && <p className="text-xs" style={{color:'rgba(245,240,232,0.4)'}}>{subtitle}</p>}
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
-        <button
-          aria-label="Notifications"
-          className="w-8 h-8 rounded-lg text-cream/40 hover:text-cream hover:bg-white/5 flex items-center justify-center transition-colors relative"
+      <div className="flex items-center gap-3">
+        <Link
+          href="/dashboard/intelligence"
+          className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:opacity-90"
+          style={{background:'linear-gradient(135deg,#c9a455,#e2bc6e)', color:'#09090f'}}
         >
-          <Bell size={16} />
-          <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-gold" />
-        </button>
+          <Zap size={12} />
+          Generate Report
+        </Link>
+
+        <div
+          className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 cursor-default select-none"
+          style={{background:'linear-gradient(135deg,#c9a455,#e2bc6e)', color:'#09090f'}}
+          title={userEmail}
+        >
+          {initials}
+        </div>
       </div>
     </header>
   )

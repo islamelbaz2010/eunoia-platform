@@ -164,7 +164,8 @@ export default async function DashboardPage() {
             <p className="text-cream/40 text-sm mb-5">Generate your first AI marketing intelligence report</p>
             <Link
               href="/dashboard/intelligence"
-              className="inline-flex items-center gap-2 bg-gold hover:bg-gold-light text-midnight text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors"
+              className="inline-flex items-center gap-2 text-sm font-bold px-5 py-2.5 rounded-xl transition-all hover:opacity-90"
+              style={{background:'linear-gradient(135deg,#c9a455,#e2bc6e)', color:'#09090f'}}
             >
               Generate Report
             </Link>

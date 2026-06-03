@@ -97,9 +97,13 @@ export default function MarketIntelligencePage() {
             <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse" />
             Real Estate Developer Exhibition — June 2026
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold leading-tight">
-            AI-Powered Marketing Intelligence<br />
-            <span className="text-gradient-gold">for Egyptian Real Estate</span>
+          <h1 className="text-4xl sm:text-5xl font-extrabold leading-tight" style={{color: '#f5f0e8'}}>
+            AI-Powered{' '}
+            <span style={{background: 'linear-gradient(135deg, #c9a455, #e2bc6e)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text'}}>
+              Marketing Intelligence
+            </span>
+            <br />
+            <span style={{color: '#f5f0e8'}}>for Egyptian Real Estate</span>
           </h1>
           <p className="text-cream/50 text-lg max-w-2xl mx-auto leading-relaxed">
             Generate institutional-quality market analysis, launch strategies, and investment feasibility reports in under 60 seconds.
@@ -134,7 +138,7 @@ export default function MarketIntelligencePage() {
                 <div className={`${color} mb-3 relative`}>
                   <Icon size={20} />
                 </div>
-                <div className="text-cream text-xl font-bold relative">{value}</div>
+                <div className="relative" style={{color:'#f5f0e8', fontSize:'1.1rem', fontWeight:700, lineHeight:1.2, wordBreak:'break-word'}}>{value}</div>
                 <div className="text-cream/70 text-xs font-medium mt-1 relative">{label}</div>
                 <div className="text-cream/30 text-[10px] mt-0.5 relative">{sub}</div>
               </div>
