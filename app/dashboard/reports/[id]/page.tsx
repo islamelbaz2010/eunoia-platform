@@ -55,7 +55,7 @@ export default function ReportDetailPage() {
     return (
       <Shell title="Not Found" subtitle="This report doesn't exist">
         <div className="p-6">
-          <Link href="/dashboard/reports" className="text-sm text-gold/60 hover:text-gold transition-colors">
+          <Link href="/dashboard/reports" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
             ← Back to reports
           </Link>
         </div>
@@ -66,7 +66,7 @@ export default function ReportDetailPage() {
   if (!report) {
     return (
       <Shell title="Loading…" subtitle="">
-        <div className="p-6 flex items-center gap-3 text-cream/40">
+        <div className="p-6 flex items-center gap-3 text-muted-foreground">
           <RefreshCw size={16} className="animate-spin" />
           Loading report…
         </div>
@@ -78,43 +78,43 @@ export default function ReportDetailPage() {
 
   return (
     <Shell title={report.input?.companyName ?? 'Report'} subtitle={label?.en ?? report.type}>
-      <div className="p-6 md:p-8 max-w-6xl mx-auto">
-        <div className="flex items-center justify-between gap-4 mb-8">
-          <div className="flex items-center gap-4">
+      <div className="p-6 lg:p-8 max-w-4xl mx-auto">
+        <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
+          <div className="flex items-center gap-3">
             <Link
               href="/dashboard/reports"
-              className="flex items-center gap-1.5 text-sm text-cream/40 hover:text-cream transition-colors"
+              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               <ArrowLeft size={14} />
               All Reports
             </Link>
-            <span className="text-cream/20">/</span>
-            <span className="text-cream/60 text-sm">{report.input?.companyName ?? 'Report'}</span>
+            <span className="text-border">/</span>
+            <span className="text-foreground text-sm font-medium">{report.input?.companyName ?? 'Report'}</span>
           </div>
           <button
             onClick={() => window.print()}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gold/30 text-gold text-sm hover:bg-gold/10 transition-colors print:hidden"
+            className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:border-gold/40 transition-colors print:hidden"
           >
-            <Printer size={14} />
+            <Printer size={13} />
             Print / Save PDF
           </button>
         </div>
 
         {report.status === 'FAILED' && report.error && (
-          <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-5 mb-6 text-red-400">
+          <div className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl p-5 mb-6 text-red-700 dark:text-red-400">
             <strong className="font-semibold">Generation failed:</strong> {report.error}
           </div>
         )}
 
         {report.status === 'PROCESSING' && (
-          <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-5 mb-6 text-blue-400 flex items-center gap-3">
+          <div className="bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 rounded-xl p-5 mb-6 text-blue-700 dark:text-blue-400 flex items-center gap-3">
             <RefreshCw size={16} className={isPolling ? 'animate-spin' : ''} />
             <span>Generating report… this takes 30–60 seconds. This page updates automatically.</span>
           </div>
         )}
 
         {report.status === 'QUEUED' && (
-          <div className="bg-white/5 border border-white/8 rounded-xl p-5 mb-6 text-cream/60 flex items-center gap-3">
+          <div className="bg-muted border border-border rounded-xl p-5 mb-6 text-muted-foreground flex items-center gap-3">
             <RefreshCw size={16} className="animate-spin" />
             <span>Report is queued for processing…</span>
           </div>

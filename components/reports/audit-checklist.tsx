@@ -1,7 +1,5 @@
 'use client'
-
 import { useState } from 'react'
-import { CheckSquare, Square } from 'lucide-react'
 
 interface ChecklistItem {
   item: string
@@ -13,54 +11,46 @@ interface AuditChecklistProps {
 }
 
 export function AuditChecklist({ items }: AuditChecklistProps) {
-  const [checked, setChecked] = useState<Record<number, boolean>>(() =>
-    Object.fromEntries(items.map((it, i) => [i, it.status]))
-  )
-
-  const doneCount = Object.values(checked).filter(Boolean).length
-
-  function toggle(i: number) {
-    setChecked(prev => ({ ...prev, [i]: !prev[i] }))
-  }
+  const [checked, setChecked] = useState<boolean[]>(items.map(i => i.status))
+  const done = checked.filter(Boolean).length
+  const pct = Math.round((done / items.length) * 100)
 
   return (
-    <div className="bg-surface border border-white/8 rounded-xl p-5">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-cream/60 text-xs font-semibold uppercase tracking-wider">
-          Audit Checklist
-        </h3>
-        <span className="text-xs text-cream/40">
-          {doneCount}/{items.length} done
-        </span>
-      </div>
-
-      <div className="mb-3">
-        <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-gold rounded-full transition-all"
-            style={{ width: `${(doneCount / items.length) * 100}%` }}
-          />
+    <div className="bg-card border border-border rounded-2xl p-6">
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-2">
+          <span className="text-lg">✅</span>
+          <h3 className="text-sm font-bold uppercase tracking-wider" style={{color:'var(--gold)'}}>Launch Checklist</h3>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="text-xs text-muted-foreground">{done}/{items.length}</div>
+          <div className="w-20 h-1.5 bg-border rounded-full overflow-hidden">
+            <div className="h-full rounded-full transition-all" style={{width:`${pct}%`,background:'var(--gold)'}} />
+          </div>
+          <div className="text-xs font-bold" style={{color:'var(--gold)'}}>{pct}%</div>
         </div>
       </div>
-
-      <ul className="space-y-2">
+      <div className="space-y-2">
         {items.map((item, i) => (
-          <li
+          <button
             key={i}
-            onClick={() => toggle(i)}
-            className="flex items-start gap-3 cursor-pointer group"
+            type="button"
+            onClick={() => setChecked(prev => { const n = [...prev]; n[i] = !n[i]; return n })}
+            className="w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all hover:bg-muted/40"
           >
-            {checked[i] ? (
-              <CheckSquare size={16} className="text-gold shrink-0 mt-0.5" />
-            ) : (
-              <Square size={16} className="text-cream/20 group-hover:text-cream/40 shrink-0 mt-0.5 transition-colors" />
-            )}
-            <span className={`text-sm transition-colors ${checked[i] ? 'text-cream/40 line-through' : 'text-cream/70'}`}>
+            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
+              checked[i] ? 'border-emerald-500 bg-emerald-500' : 'border-border'
+            }`}>
+              {checked[i] && <span className="text-white text-xs">✓</span>}
+            </div>
+            <span className={`text-sm leading-snug transition-colors ${
+              checked[i] ? 'line-through text-muted-foreground' : 'text-foreground/80'
+            }`}>
               {item.item}
             </span>
-          </li>
+          </button>
         ))}
-      </ul>
+      </div>
     </div>
   )
 }

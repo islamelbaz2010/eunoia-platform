@@ -86,3 +86,29 @@ body { background-color: var(--background); color: var(--foreground); font-famil
   transform: translateY(-2px);
   border-color: #d4c4aa;
 }
+
+.dark {
+  --background:            #0f1117;
+  --foreground:            #f0ece4;
+  --card:                  #171b24;
+  --card-foreground:       #f0ece4;
+  --popover:               #171b24;
+  --popover-foreground:    #f0ece4;
+  --primary:               #f0ece4;
+  --primary-foreground:    #0f1117;
+  --secondary:             #1e2330;
+  --secondary-foreground:  #f0ece4;
+  --muted:                 #1e2330;
+  --muted-foreground:      rgba(240,236,228,0.5);
+  --accent:                #1e2330;
+  --accent-foreground:     #f0ece4;
+  --destructive:           oklch(0.704 0.191 22.216);
+  --border:                rgba(255,255,255,0.08);
+  --input:                 rgba(255,255,255,0.08);
+  --ring:                  rgba(184,146,42,0.5);
+  --gold:                  #d4aa45;
+  --gold-light:            #e2bc6e;
+  --gold-bg:               rgba(212,170,69,0.1);
+  --gold-border:           rgba(212,170,69,0.25);
+  --surface:               #171b24;
+}

@@ -1,52 +1,57 @@
 'use client'
 
-import { AlertTriangle, AlertCircle, Info } from 'lucide-react'
-
-interface RiskAlert {
-  type: string
-  message: string
-  severity: 'high' | 'medium' | 'low'
-  fix: string
+interface RiskItem {
+  type?: string
+  risk?: string
+  message?: string
+  severity?: string
+  likelihood?: string
+  fix?: string
+  mitigation?: string
+  impact?: string
 }
 
 interface RiskAlertsProps {
-  items: RiskAlert[]
-}
-
-const SEVERITY_CONFIG = {
-  high: { icon: AlertTriangle, bg: 'bg-red-500/10', border: 'border-red-500/20', text: 'text-red-400', badge: 'bg-red-500/20 text-red-400' },
-  medium: { icon: AlertCircle, bg: 'bg-amber-500/10', border: 'border-amber-500/20', text: 'text-amber-400', badge: 'bg-amber-500/20 text-amber-400' },
-  low: { icon: Info, bg: 'bg-blue-500/10', border: 'border-blue-500/20', text: 'text-blue-400', badge: 'bg-blue-500/20 text-blue-400' },
+  items: RiskItem[]
 }
 
 export function RiskAlerts({ items }: RiskAlertsProps) {
   return (
-    <div className="bg-surface border border-white/8 rounded-xl p-5">
-      <h3 className="text-cream/60 text-xs font-semibold uppercase tracking-wider mb-4">
-        Risk Alerts
-      </h3>
+    <div className="bg-card border border-border rounded-2xl p-6">
+      <div className="flex items-center gap-2 mb-5">
+        <span className="text-lg">⚠️</span>
+        <h3 className="text-sm font-bold uppercase tracking-wider" style={{color:'var(--gold)'}}>Risk Factors</h3>
+      </div>
       <div className="space-y-3">
-        {items.map((alert, i) => {
-          const severity = (alert.severity ?? 'medium') as keyof typeof SEVERITY_CONFIG
-          const config = SEVERITY_CONFIG[severity] ?? SEVERITY_CONFIG.medium
-          const Icon = config.icon
+        {items.map((item, i) => {
+          const severity = (item.severity ?? item.likelihood ?? 'medium').toLowerCase()
+          const isHigh = severity === 'high'
+          const isMed = severity === 'medium' || severity === 'med'
+          const color = isHigh ? '#dc2626' : isMed ? 'var(--gold)' : '#16a34a'
+          const bg = isHigh ? 'rgba(220,38,38,0.06)' : isMed ? 'var(--gold-bg)' : 'rgba(22,163,74,0.06)'
+          const border = isHigh ? 'rgba(220,38,38,0.2)' : isMed ? 'var(--gold-border)' : 'rgba(22,163,74,0.2)'
 
           return (
-            <div key={i} className={`${config.bg} ${config.border} border rounded-lg p-4`}>
-              <div className="flex items-start gap-3">
-                <Icon size={16} className={`${config.text} shrink-0 mt-0.5`} />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-cream text-sm font-medium">{alert.message}</span>
-                    <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium shrink-0 ${config.badge}`}>
-                      {severity}
-                    </span>
-                  </div>
-                  <div className="text-cream/50 text-xs">
-                    <span className="font-medium text-cream/70">Fix: </span>{alert.fix}
-                  </div>
-                </div>
+            <div key={i} className="rounded-xl p-4 border" style={{background: bg, borderColor: border}}>
+              <div className="flex items-start justify-between gap-3 mb-2">
+                <p className="text-sm font-medium text-foreground leading-snug">
+                  {item.risk ?? item.message ?? `Risk ${i + 1}`}
+                </p>
+                <span className="text-xs px-2 py-0.5 rounded-full font-bold shrink-0 capitalize"
+                      style={{background: bg, color, border: `1px solid ${border}`}}>
+                  {severity}
+                </span>
               </div>
+              {(item.fix ?? item.mitigation) && (
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  <span className="font-semibold">Fix: </span>{item.fix ?? item.mitigation}
+                </p>
+              )}
+              {item.impact && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  <span className="font-semibold">Impact: </span>{item.impact}
+                </p>
+              )}
             </div>
           )
         })}
