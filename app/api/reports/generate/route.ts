@@ -117,6 +117,7 @@ export async function POST(req: NextRequest) {
       projectType: reportInput.projectType,
       projectLocation: reportInput.projectLocation,
       projectSize: reportInput.projectSize,
+      extra: reportInput.extra,
     }
 
     // 7. Mark PROCESSING and generate

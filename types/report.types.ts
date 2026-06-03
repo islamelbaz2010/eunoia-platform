@@ -17,6 +17,7 @@ export interface ReportInput {
   projectType?: string
   projectLocation?: string
   projectSize?: string
+  extra?: string
   ads?: {
     budget?: string
     metaSpend?: string

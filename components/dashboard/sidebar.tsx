@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { BarChart3, Brain, FileText, Settings, TrendingUp, LogOut, X, Building2 } from 'lucide-react'
+import { BarChart3, Brain, Calculator, FileText, Settings, TrendingUp, LogOut, X, Building2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 
@@ -9,6 +9,7 @@ const NAV = [
   { href: '/dashboard',             label: 'Dashboard',  icon: BarChart3,   exact: true },
   { href: '/dashboard/intelligence', label: 'New Report', icon: Brain },
   { href: '/dashboard/reports',      label: 'Reports',    icon: FileText },
+  { href: '/dashboard/feasibility',  label: 'Feasibility', icon: Calculator },
   { href: '/dashboard/analytics',    label: 'Analytics',  icon: TrendingUp },
   { href: '/dashboard/settings',     label: 'Settings',   icon: Settings },
 ]
