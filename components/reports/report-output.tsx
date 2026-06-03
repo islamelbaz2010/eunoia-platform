@@ -8,6 +8,8 @@ import { QuickWins } from './quick-wins'
 import { RiskAlerts } from './risk-alerts'
 import { AuditChecklist } from './audit-checklist'
 import { ProposalCards } from './proposal-cards'
+import { PainPoints } from './pain-points'
+import { KpiCards } from './kpi-cards'
 
 interface ReportOutputProps {
   data: Record<string, unknown>
@@ -132,6 +134,184 @@ export function ReportOutput({ data, type }: ReportOutputProps) {
         </div>
       )}
 
+      {/* ── KPI Cards (Feasibility) ── */}
+      {Boolean(data.kpis) && (() => {
+        const k = asRecord(data.kpis)
+        const kpiItems = [
+          k.total_investment && { label: 'إجمالي الاستثمار', value: `${Number(k.total_investment).toLocaleString('ar-EG')} ج`, variant: 'accent' as const },
+          k.monthly_revenue_y1 && { label: 'إيرادات شهرية (س1)', value: `${Number(k.monthly_revenue_y1).toLocaleString('ar-EG')} ج`, variant: 'default' as const },
+          k.monthly_profit_y1 !== undefined && { label: 'صافي ربح شهري', value: `${Number(k.monthly_profit_y1).toLocaleString('ar-EG')} ج`, variant: Number(k.monthly_profit_y1) > 0 ? 'good' as const : 'alert' as const },
+          k.roi_pct && { label: 'ROI الإجمالي', value: `${k.roi_pct}%`, variant: Number(k.roi_pct) >= 20 ? 'good' as const : 'accent' as const },
+          k.npv !== undefined && { label: 'صافي القيمة الحالية', value: `${Number(k.npv).toLocaleString('ar-EG')} ج`, variant: Number(k.npv) > 0 ? 'good' as const : 'alert' as const },
+          k.irr_pct && { label: 'معدل العائد الداخلي', value: `${k.irr_pct}%`, variant: 'highlight' as const },
+          k.payback_months && { label: 'فترة الاسترداد', value: `${k.payback_months} شهر`, variant: 'default' as const },
+          k.net_margin_pct && { label: 'هامش الربح الصافي', value: `${k.net_margin_pct}%`, variant: 'default' as const },
+        ].filter(Boolean) as { label: string; value: string; variant: 'highlight' | 'accent' | 'good' | 'alert' | 'default' }[]
+
+        return kpiItems.length > 0 ? <KpiCards items={kpiItems} title="المؤشرات المالية الرئيسية" /> : null
+      })()}
+
+      {/* ── Scenarios (Feasibility) ── */}
+      {Boolean(data.scenarios) && (() => {
+        const sc = asRecord(data.scenarios)
+        const scenarios = [
+          { key: 'pessimist', label: '😟 سيناريو متشائم', cls: 'rgba(220,38,38,0.06)', border: 'rgba(220,38,38,0.2)', color: '#dc2626' },
+          { key: 'base', label: '⚖ السيناريو المتوازن', cls: 'var(--gold-bg)', border: 'var(--gold-border)', color: 'var(--gold)' },
+          { key: 'optimist', label: '😊 سيناريو متفائل', cls: 'rgba(22,163,74,0.06)', border: 'rgba(22,163,74,0.2)', color: '#16a34a' },
+        ]
+        const hasScenarios = scenarios.some(s => sc[s.key])
+        if (!hasScenarios) return null
+        return (
+          <div className="bg-card border border-border rounded-2xl p-6">
+            <div className="flex items-center gap-2 mb-5">
+              <span className="text-lg">📊</span>
+              <h3 className="text-sm font-bold uppercase tracking-wider" style={{color:'var(--gold)'}}>السيناريوهات الثلاثة</h3>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-3">
+              {scenarios.map(sc_item => {
+                const s = asRecord(sc[sc_item.key])
+                if (!s || Object.keys(s).length === 0) return null
+                return (
+                  <div key={sc_item.key} className="rounded-xl p-4 border" style={{background: sc_item.cls, borderColor: sc_item.border}}>
+                    <div className="text-xs font-bold mb-3" style={{color: sc_item.color}}>{sc_item.label}</div>
+                    {s.monthly_profit !== undefined && (
+                      <div>
+                        <div className="text-xl font-bold" style={{color: sc_item.color}}>
+                          {Number(s.monthly_profit).toLocaleString('ar-EG')} ج
+                        </div>
+                        <div className="text-xs text-muted-foreground">صافي ربح شهري</div>
+                      </div>
+                    )}
+                    <div className="mt-3 space-y-1 text-xs text-muted-foreground">
+                      {Boolean(s.roi_pct) && <div>ROI: <span className="font-bold" style={{color: sc_item.color}}>{String(s.roi_pct)}%</span></div>}
+                      {Boolean(s.payback_months) && <div>استرداد: <span className="font-bold">{String(s.payback_months)} شهر</span></div>}
+                      {Boolean(s.assumption) && <div className="mt-2 italic">{String(s.assumption)}</div>}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )
+      })()}
+
+      {/* ── Income Statement Table ── */}
+      {Array.isArray(data.income_statement) && data.income_statement.length > 0 && (
+        <div className="bg-card border border-border rounded-2xl overflow-hidden">
+          <div className="flex items-center gap-2 px-6 py-4 border-b border-border bg-muted/20">
+            <span className="text-lg">📋</span>
+            <h3 className="text-sm font-bold text-foreground">قائمة الدخل (EGP)</h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-muted/10">
+                  <th className="text-right px-5 py-3 text-xs font-bold text-muted-foreground uppercase">البند</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">السنة 1</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">السنة 2</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">السنة 3</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">%</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(data.income_statement as Array<{item:string;year1:number;year2:number;year3:number;pct:string}>).map((row, i) => {
+                  const isTotal = (row.item||'').includes('صافي') || (row.item||'').includes('إجمالي') || (row.item||'').includes('EBITDA')
+                  return (
+                    <tr key={i} className={`border-b border-border/50 last:border-0 ${isTotal ? 'bg-gold/5 font-bold' : 'hover:bg-muted/20'}`}>
+                      <td className="px-5 py-3 text-foreground">{row.item}</td>
+                      <td className={`px-4 py-3 text-left font-mono text-sm ${Number(row.year1)<0?'text-red-500':'text-foreground'}`}>{Number(row.year1||0).toLocaleString('ar-EG')}</td>
+                      <td className={`px-4 py-3 text-left font-mono text-sm ${Number(row.year2)<0?'text-red-500':'text-foreground'}`}>{Number(row.year2||0).toLocaleString('ar-EG')}</td>
+                      <td className={`px-4 py-3 text-left font-mono text-sm ${Number(row.year3)<0?'text-red-500':'text-foreground'}`}>{Number(row.year3||0).toLocaleString('ar-EG')}</td>
+                      <td className="px-4 py-3 text-left text-muted-foreground text-xs">{row.pct||''}</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* ── Cash Flow Table ── */}
+      {Array.isArray(data.cash_flow) && data.cash_flow.length > 0 && (
+        <div className="bg-card border border-border rounded-2xl overflow-hidden">
+          <div className="flex items-center gap-2 px-6 py-4 border-b border-border bg-muted/20">
+            <span className="text-lg">💰</span>
+            <h3 className="text-sm font-bold text-foreground">التدفقات النقدية (EGP)</h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-muted/10">
+                  <th className="text-right px-5 py-3 text-xs font-bold text-muted-foreground uppercase">السنة</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">الإيرادات</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">المصاريف</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">صافي الربح</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">التراكمي</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(data.cash_flow as Array<{year:string;revenue:number;opex:number;net_profit:number;cumulative:number}>).map((row, i) => {
+                  const cumPositive = Number(row.cumulative||0) >= 0
+                  return (
+                    <tr key={i} className="border-b border-border/50 last:border-0 hover:bg-muted/20">
+                      <td className="px-5 py-3 font-semibold text-foreground">{row.year}</td>
+                      <td className="px-4 py-3 text-left font-mono text-sm text-foreground">{Number(row.revenue||0).toLocaleString('ar-EG')}</td>
+                      <td className="px-4 py-3 text-left font-mono text-sm text-muted-foreground">{Number(row.opex||0).toLocaleString('ar-EG')}</td>
+                      <td className={`px-4 py-3 text-left font-mono text-sm font-bold ${Number(row.net_profit||0)>0?'text-emerald-600 dark:text-emerald-400':'text-red-500'}`}>{Number(row.net_profit||0).toLocaleString('ar-EG')}</td>
+                      <td className={`px-4 py-3 text-left font-mono text-sm font-bold ${cumPositive?'text-emerald-600 dark:text-emerald-400':'text-red-500'}`}>{Number(row.cumulative||0).toLocaleString('ar-EG')}</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* ── Reality Check Table ── */}
+      {Array.isArray(data.reality_check) && data.reality_check.length > 0 && (
+        <div className="bg-card border border-border rounded-2xl overflow-hidden">
+          <div className="flex items-center gap-2 px-6 py-4 border-b border-border bg-muted/20">
+            <span className="text-lg">🔍</span>
+            <h3 className="text-sm font-bold text-foreground">صدمة الواقع — مقارنة افتراضاتك بالسوق</h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-muted/10">
+                  <th className="text-right px-5 py-3 text-xs font-bold text-muted-foreground uppercase">المدخل</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">افتراضك</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">البنشمارك</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">الفجوة</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">التقييم</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(data.reality_check as Array<{input:string;client_assumption:string;market_benchmark:string;gap_pct:number;assessment:string;comment:string}>).map((row, i) => {
+                  const isOk = row.assessment === 'realistic'
+                  const isWarn = row.assessment === 'optimistic'
+                  const color = isOk ? '#16a34a' : isWarn ? 'var(--gold)' : '#dc2626'
+                  const label = isOk ? 'واقعي ✅' : isWarn ? 'متفائل ⚠️' : 'غير واقعي ❌'
+                  return (
+                    <tr key={i} className="border-b border-border/50 last:border-0 hover:bg-muted/20">
+                      <td className="px-5 py-3">
+                        <div className="font-semibold text-foreground">{row.input}</div>
+                        {row.comment && <div className="text-xs text-muted-foreground mt-0.5">{row.comment}</div>}
+                      </td>
+                      <td className="px-4 py-3 text-left text-foreground">{row.client_assumption||'—'}</td>
+                      <td className="px-4 py-3 text-left text-muted-foreground">{row.market_benchmark||'—'}</td>
+                      <td className="px-4 py-3 text-left font-bold text-sm" style={{color}}>{row.gap_pct!==undefined?`${row.gap_pct}%`:'—'}</td>
+                      <td className="px-4 py-3 text-left text-xs font-bold" style={{color}}>{label}</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
       {/* ── Sections ── */}
       {Boolean(data.market_overview) && <SectionCard title="Market Overview" data={asRecord(data.market_overview)} icon="📊" />}
       {Boolean(data.s2_market_overview) && <SectionCard title="Market Overview" data={asRecord(data.s2_market_overview)} icon="📊" />}
@@ -146,7 +326,6 @@ export function ReportOutput({ data, type }: ReportOutputProps) {
       {Boolean(data.channel_strategy) && <SectionCard title="Channel Strategy" data={asRecord(data.channel_strategy)} icon="📡" />}
       {Boolean(data.content_requirements) && <SectionCard title="Content Requirements" data={asRecord(data.content_requirements)} icon="📝" />}
       {Boolean(data.media_budget) && <SectionCard title="Media Budget" data={asRecord(data.media_budget)} icon="💵" />}
-      {Boolean(data.kpis) && <SectionCard title="KPIs" data={asRecord(data.kpis)} icon="📐" />}
       {Boolean(data.market_timing) && <SectionCard title="Market Timing" data={asRecord(data.market_timing)} icon="⏱" />}
       {Boolean(data.target_segments) && <SectionCard title="Target Segments" data={{ segments: data.target_segments }} icon="🎯" />}
       {Boolean(data.funnel_analysis) && <SectionCard title="Funnel Analysis" data={asRecord(data.funnel_analysis)} icon="🔽" />}
@@ -168,6 +347,11 @@ export function ReportOutput({ data, type }: ReportOutputProps) {
       {/* ── Risk Alerts ── */}
       {Array.isArray(data.risk_alerts) && data.risk_alerts.length > 0 && <RiskAlerts items={asArray(data.risk_alerts)} />}
       {Array.isArray(data.risk_factors) && data.risk_factors.length > 0 && <RiskAlerts items={asArray(data.risk_factors)} />}
+
+      {/* ── Pain Points ── */}
+      {Array.isArray(data.pain_points) && data.pain_points.length > 0 && (
+        <PainPoints items={asArray(data.pain_points)} />
+      )}
 
       {/* ── 90-Day Plan ── */}
       {Boolean(data.plan_90_days) && <SectionCard title="90-Day Action Plan" data={asRecord(data.plan_90_days)} icon="📅" />}
