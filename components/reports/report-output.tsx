@@ -32,6 +32,7 @@ export function ReportOutput({ data, type }: ReportOutputProps) {
   const execSummary = asRecord(data.executive_summary)
   const confidenceScore = asRecord(data.confidence_score)
   const score = asNumber(data.marketing_score)
+  const isAr = asString(data.report_type).includes('تقرير') || asString(data.report_type).includes('تحليل') || asString(data.report_type).includes('دراسة') || asString(data.report_type).includes('استراتيجية') || asString(data.report_type).includes('تدقيق')
 
   return (
     <div className="space-y-5 max-w-4xl">
@@ -48,7 +49,9 @@ export function ReportOutput({ data, type }: ReportOutputProps) {
             <div className="inline-flex items-center gap-2 mb-3 px-3 py-1 rounded-full border text-xs font-semibold uppercase tracking-wider"
                  style={{borderColor:'var(--gold-border)',background:'var(--gold-bg)',color:'var(--gold)'}}>
               <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{background:'var(--gold)'}} />
-              {label?.en ?? asString(data.report_type)}
+              {label?.ar && label?.en ? (
+                <span>{label.ar} — {label.en}</span>
+              ) : (label?.en ?? asString(data.report_type))}
             </div>
 
             {/* Headline */}
@@ -313,32 +316,45 @@ export function ReportOutput({ data, type }: ReportOutputProps) {
       )}
 
       {/* ── Sections ── */}
-      {Boolean(data.market_overview) && <SectionCard title="Market Overview" data={asRecord(data.market_overview)} icon="📊" />}
-      {Boolean(data.s2_market_overview) && <SectionCard title="Market Overview" data={asRecord(data.s2_market_overview)} icon="📊" />}
-      {Boolean(data.competitor_analysis) && <SectionCard title="Competitor Analysis" data={asRecord(data.competitor_analysis)} icon="🎯" />}
+      {Boolean(data.market_overview) && <SectionCard title={isAr ? 'نظرة على السوق' : 'Market Overview'} data={asRecord(data.market_overview)} icon="📊" />}
+      {Boolean(data.competitor_analysis) && <SectionCard title={isAr ? 'تحليل المنافسين' : 'Competitor Analysis'} data={asRecord(data.competitor_analysis)} icon="🎯" />}
       {Boolean(data.competitors) && data.competitors !== undefined && (
-        <SectionCard title="Competitor Analysis" data={{ competitors: data.competitors }} icon="🎯" />
+        <SectionCard title={isAr ? 'المنافسون' : 'Competitor Analysis'} data={{ competitors: data.competitors }} icon="🎯" />
       )}
       {Boolean(data.swot) && <SectionCard title="SWOT Analysis" data={asRecord(data.swot)} icon="🔲" />}
-      {Boolean(data.target_audience) && <SectionCard title="Target Audience" data={asRecord(data.target_audience)} icon="👥" />}
-      {Boolean(data.budget_allocation) && <SectionCard title="Budget Allocation" data={asRecord(data.budget_allocation)} icon="💰" />}
-      {Boolean(data.clv_analysis) && <SectionCard title="CLV Analysis" data={asRecord(data.clv_analysis)} icon="📈" />}
-      {Boolean(data.channel_strategy) && <SectionCard title="Channel Strategy" data={asRecord(data.channel_strategy)} icon="📡" />}
-      {Boolean(data.content_requirements) && <SectionCard title="Content Requirements" data={asRecord(data.content_requirements)} icon="📝" />}
-      {Boolean(data.media_budget) && <SectionCard title="Media Budget" data={asRecord(data.media_budget)} icon="💵" />}
-      {Boolean(data.market_timing) && <SectionCard title="Market Timing" data={asRecord(data.market_timing)} icon="⏱" />}
-      {Boolean(data.target_segments) && <SectionCard title="Target Segments" data={{ segments: data.target_segments }} icon="🎯" />}
-      {Boolean(data.funnel_analysis) && <SectionCard title="Funnel Analysis" data={asRecord(data.funnel_analysis)} icon="🔽" />}
-      {Boolean(data.channel_performance) && <SectionCard title="Channel Performance" data={{ channels: data.channel_performance }} icon="📊" />}
-      {Boolean(data.financial_projections) && <SectionCard title="Financial Projections" data={asRecord(data.financial_projections)} icon="💹" />}
-      {Boolean(data.opportunity_score) && <SectionCard title="Opportunity Score" data={asRecord(data.opportunity_score)} icon="⭐" />}
-      {Boolean(data.s6_investment_recommendation) && <SectionCard title="Investment Recommendation" data={asRecord(data.s6_investment_recommendation)} icon="💡" />}
-      {Boolean(data.go_nogo_recommendation) && <SectionCard title="Go / No-Go Recommendation" data={asRecord(data.go_nogo_recommendation)} icon="✅" />}
-      {Boolean(data.launch_readiness_score) && <SectionCard title="Launch Readiness" data={asRecord(data.launch_readiness_score)} icon="🚀" />}
-      {Boolean(data.positioning_matrix) && <SectionCard title="Positioning Matrix" data={asRecord(data.positioning_matrix)} icon="🗺" />}
-      {Boolean(data.differentiation_strategy) && <SectionCard title="Differentiation Strategy" data={asRecord(data.differentiation_strategy)} icon="💎" />}
-      {Boolean(data.current_performance) && <SectionCard title="Current Performance" data={asRecord(data.current_performance)} icon="📉" />}
-      {Boolean(data.optimization_opportunities) && <SectionCard title="Optimization Opportunities" data={asRecord(data.optimization_opportunities)} icon="⚡" />}
+      {Boolean(data.target_audience) && <SectionCard title={isAr ? 'الجمهور المستهدف' : 'Target Audience'} data={asRecord(data.target_audience)} icon="👥" />}
+      {Boolean(data.budget_allocation) && <SectionCard title={isAr ? 'توزيع الميزانية' : 'Budget Allocation'} data={asRecord(data.budget_allocation)} icon="💰" />}
+      {Boolean(data.clv_analysis) && <SectionCard title={isAr ? 'تحليل CLV' : 'CLV Analysis'} data={asRecord(data.clv_analysis)} icon="📈" />}
+      {Boolean(data.channel_strategy) && <SectionCard title={isAr ? 'استراتيجية القنوات' : 'Channel Strategy'} data={asRecord(data.channel_strategy)} icon="📡" />}
+      {Boolean(data.content_requirements) && <SectionCard title={isAr ? 'متطلبات المحتوى' : 'Content Requirements'} data={asRecord(data.content_requirements)} icon="📝" />}
+      {Boolean(data.media_budget) && <SectionCard title={isAr ? 'ميزانية الوسائط' : 'Media Budget'} data={asRecord(data.media_budget)} icon="💵" />}
+      {Boolean(data.market_timing) && <SectionCard title={isAr ? 'توقيت السوق' : 'Market Timing'} data={asRecord(data.market_timing)} icon="⏱" />}
+      {Boolean(data.target_segments) && <SectionCard title={isAr ? 'الشرائح المستهدفة' : 'Target Segments'} data={{ segments: data.target_segments }} icon="🎯" />}
+      {Boolean(data.funnel_analysis) && <SectionCard title={isAr ? 'تحليل القمع' : 'Funnel Analysis'} data={asRecord(data.funnel_analysis)} icon="🔽" />}
+      {Boolean(data.channel_performance) && <SectionCard title={isAr ? 'أداء القنوات' : 'Channel Performance'} data={{ channels: data.channel_performance }} icon="📊" />}
+      {Boolean(data.financial_projections) && <SectionCard title={isAr ? 'التوقعات المالية' : 'Financial Projections'} data={asRecord(data.financial_projections)} icon="💹" />}
+      {Boolean(data.opportunity_score) && <SectionCard title={isAr ? 'تقييم الفرصة' : 'Opportunity Score'} data={asRecord(data.opportunity_score)} icon="⭐" />}
+      {Boolean(data.s6_investment_recommendation) && <SectionCard title={isAr ? 'توصية الاستثمار' : 'Investment Recommendation'} data={asRecord(data.s6_investment_recommendation)} icon="💡" />}
+      {Boolean(data.go_nogo_recommendation) && <SectionCard title={isAr ? 'توصية الإطلاق' : 'Go / No-Go Recommendation'} data={asRecord(data.go_nogo_recommendation)} icon="✅" />}
+      {Boolean(data.launch_readiness_score) && <SectionCard title={isAr ? 'جاهزية الإطلاق' : 'Launch Readiness'} data={asRecord(data.launch_readiness_score)} icon="🚀" />}
+      {Boolean(data.positioning_matrix) && <SectionCard title={isAr ? 'مصفوفة التموضع' : 'Positioning Matrix'} data={asRecord(data.positioning_matrix)} icon="🗺" />}
+      {Boolean(data.differentiation_strategy) && <SectionCard title={isAr ? 'استراتيجية التميّز' : 'Differentiation Strategy'} data={asRecord(data.differentiation_strategy)} icon="💎" />}
+      {Boolean(data.current_performance) && <SectionCard title={isAr ? 'الأداء الحالي' : 'Current Performance'} data={asRecord(data.current_performance)} icon="📉" />}
+      {Boolean(data.optimization_opportunities) && <SectionCard title={isAr ? 'فرص التحسين' : 'Optimization Opportunities'} data={asRecord(data.optimization_opportunities)} icon="⚡" />}
+      {Boolean(data.s1_overview) && <SectionCard title={isAr ? 'نظرة عامة' : 'Overview'} data={asRecord(data.s1_overview)} icon="🔎" />}
+      {Boolean(data.s2_market_overview) && <SectionCard title={isAr ? 'السوق' : 'Market Overview'} data={asRecord(data.s2_market_overview)} icon="📊" />}
+      {Boolean(data.s3_competitor_analysis) && <SectionCard title={isAr ? 'المنافسون' : 'Competitors'} data={asRecord(data.s3_competitor_analysis)} icon="🎯" />}
+      {Boolean(data.s4_brand_awareness) && <SectionCard title={isAr ? 'الوعي بالعلامة' : 'Brand Awareness'} data={asRecord(data.s4_brand_awareness)} icon="💡" />}
+      {Boolean(data.s5_brand_positioning) && <SectionCard title={isAr ? 'التموضع' : 'Brand Positioning'} data={asRecord(data.s5_brand_positioning)} icon="🗺" />}
+      {Boolean(data.s6_content_seo) && <SectionCard title={isAr ? 'المحتوى والـ SEO' : 'Content & SEO'} data={asRecord(data.s6_content_seo)} icon="✍️" />}
+      {Boolean(data.s7_paid_ads) && <SectionCard title={isAr ? 'الإعلانات المدفوعة' : 'Paid Ads'} data={asRecord(data.s7_paid_ads)} icon="📣" />}
+      {Boolean(data.s8_audience) && <SectionCard title={isAr ? 'الجمهور المستهدف' : 'Target Audience'} data={asRecord(data.s8_audience)} icon="👥" />}
+      {Boolean(data.s9_strategy) && <SectionCard title={isAr ? 'الاستراتيجية' : 'Strategy'} data={asRecord(data.s9_strategy)} icon="📅" />}
+      {Boolean(data.audience) && <SectionCard title={isAr ? 'الجمهور' : 'Audience'} data={asRecord(data.audience)} icon="👥" />}
+      {Boolean(data.strategy) && <SectionCard title={isAr ? 'الاستراتيجية' : 'Strategy'} data={asRecord(data.strategy)} icon="📅" />}
+      {Boolean(data.channels) && !Array.isArray(data.channels) && <SectionCard title={isAr ? 'القنوات' : 'Channels'} data={asRecord(data.channels)} icon="📡" />}
+      {Boolean(data.projections) && <SectionCard title={isAr ? 'التوقعات' : 'Projections'} data={{projections: data.projections}} icon="📈" />}
+      {Boolean(data.budget_breakdown) && !Array.isArray(data.budget_breakdown) && <SectionCard title={isAr ? 'توزيع الميزانية' : 'Budget Breakdown'} data={asRecord(data.budget_breakdown)} icon="💰" />}
 
       {/* ── Quick Wins ── */}
       {Array.isArray(data.quick_wins) && data.quick_wins.length > 0 && <QuickWins items={asArray(data.quick_wins)} />}

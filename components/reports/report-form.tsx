@@ -11,8 +11,6 @@ import { BRANCHES } from '@core/data/branches.data'
 import { getCity } from '@core/data/cities.data'
 import type { ReportInput } from '@/types/report.types'
 
-const REPORT_TYPES = Object.keys(REPORT_TYPE_LABELS) as ReportType[]
-
 const SIZE_OPTIONS = [
   { value: 'small', label: 'Small (1-20 staff)' },
   { value: 'medium', label: 'Medium (21-50 staff)' },
@@ -26,6 +24,39 @@ const STAGE_OPTIONS = [
   { value: 'established', label: 'Established (3-7 years)' },
   { value: 'scaling', label: 'Scaling (7+ years)' },
 ]
+
+const REPORT_GROUPS = [
+  {
+    label: { ar: 'التقارير الأساسية', en: 'Core Reports' },
+    icon: '📊',
+    types: ['PRELIMINARY', 'DETAILED', 'FULL_ANALYSIS', 'EXECUTIVE_SUMMARY'] as const,
+  },
+  {
+    label: { ar: 'تحليل تنافسي وسوق', en: 'Competitive & Market' },
+    icon: '🎯',
+    types: ['COMPETITOR', 'PRICING', 'TREND_RESEARCH', 'MARKET_ENTRY', 'OPPORTUNITY_SCORING'] as const,
+  },
+  {
+    label: { ar: 'أداء الحملات والمحتوى', en: 'Campaigns & Content' },
+    icon: '📣',
+    types: ['CAMPAIGN', 'MEDIA_MIX', 'CONTENT_SEO', 'SOCIAL_AUDIT', 'SEASONAL'] as const,
+  },
+  {
+    label: { ar: 'العملاء والنمو', en: 'Customers & Growth' },
+    icon: '📈',
+    types: ['CLV_RETENTION', 'LEAD_QUALITY', 'ECOMMERCE_GROWTH', 'CUSTOMER_JOURNEY', 'SENTIMENT'] as const,
+  },
+  {
+    label: { ar: 'استراتيجية وتخطيط', en: 'Strategy & Planning' },
+    icon: '💡',
+    types: ['BRAND_AWARENESS', 'REBRANDING', 'B2B_STRATEGY', 'PRODUCT_LAUNCH', 'DIGITAL_READINESS', 'INFLUENCER', 'ANNUAL_BUDGET', 'CRISIS'] as const,
+  },
+  {
+    label: { ar: 'العقارات', en: 'Real Estate' },
+    icon: '🏢',
+    types: ['REAL_ESTATE_LAUNCH', 'REAL_ESTATE_LEADS', 'REAL_ESTATE_FEASIBILITY'] as const,
+  },
+] as const
 
 // Auto-show data sections per report type
 const TYPE_SECTIONS: Record<ReportType, { ads: boolean; social: boolean; sales: boolean }> = {
@@ -300,20 +331,33 @@ export function ReportForm() {
 
       {/* Report type */}
       <Section title={isAr ? 'نوع التقرير' : 'Report Type'}>
-        <div className="grid grid-cols-2 gap-2">
-          {REPORT_TYPES.map(type => (
-            <button
-              key={type}
-              type="button"
-              onClick={() => setReportType(type)}
-              className={`text-left px-3 py-2.5 rounded-lg text-sm transition-colors border ${
-                reportType === type
-                  ? 'border-gold/40 bg-gold/5 text-gold'
-                  : 'border-border text-muted-foreground hover:text-foreground hover:border-border'
-              }`}
-            >
-              {isAr ? REPORT_TYPE_LABELS[type].ar : REPORT_TYPE_LABELS[type].en}
-            </button>
+        <div className="space-y-4">
+          {REPORT_GROUPS.map(group => (
+            <div key={group.icon}>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-sm">{group.icon}</span>
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  {isAr ? group.label.ar : group.label.en}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-1.5">
+                {group.types.map(type => (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => setReportType(type)}
+                    className={`text-right px-3 py-2 rounded-lg text-xs font-medium transition-all border ${
+                      reportType === type
+                        ? 'border-gold/50 bg-gold/8 text-gold shadow-sm'
+                        : 'border-border/60 text-foreground/70 hover:text-foreground hover:border-border hover:bg-muted/30'
+                    }`}
+                    style={reportType === type ? {background: 'var(--gold-bg)'} : {}}
+                  >
+                    {isAr ? REPORT_TYPE_LABELS[type].ar : REPORT_TYPE_LABELS[type].en}
+                  </button>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       </Section>
