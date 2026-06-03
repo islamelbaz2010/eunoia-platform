@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { Prisma } from '@prisma/client'
+import { Prisma } from '@/lib/prisma/generated'
 import { prisma } from '@/lib/prisma/client'
 
 // Called after Supabase signup to create Prisma User + Workspace
