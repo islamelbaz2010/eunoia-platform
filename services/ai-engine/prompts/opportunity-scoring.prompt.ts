@@ -67,6 +67,11 @@ Return ONLY valid JSON (no markdown, no backticks, start directly with {):
     {"action": "second quick win with specific channel and content", "timeline": "7 days", "money_impact": "estimate", "expected_result": "outcome"},
     {"action": "third quick win — content or ad change", "timeline": "7 days", "money_impact": "estimate", "expected_result": "outcome"}
   ],
+  "quick_wins": [
+    {"action": "specific 7-day action", "timeline": "7 days", "money_impact": "EGP estimate"},
+    {"action": "second quick win", "timeline": "7 days", "money_impact": "EGP estimate"},
+    {"action": "third quick win", "timeline": "7 days", "money_impact": "EGP estimate"}
+  ],
   "s6_investment_recommendation": {
     "verdict": "✅ Strong GO / ⚠️ GO with caveats / 🔴 High Risk",
     "minimum_monthly_budget": "EGP X/month minimum to be competitive in ${sector.en} in ${city.en}",

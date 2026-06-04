@@ -66,6 +66,11 @@ Return ONLY valid JSON (no markdown, no backticks, start directly with {):
     "messaging_angle": "specific headline/hook that will resonate vs competitors",
     "proof_points": ["proof 1", "proof 2", "proof 3"]
   },
+  "pain_points": [
+    {"level": "high", "title": "specific competitive pain point for ${companyName}", "detail": "2 sentences on impact and how Eunoia solves it"},
+    {"level": "high", "title": "second pain point related to competition", "detail": "specific context"},
+    {"level": "med", "title": "third pain point", "detail": "explanation"}
+  ],
   "quick_wins": [
     {"action": "specific 7-day competitive action", "timeline": "7 days", "money_impact": "EGP estimate", "expected_result": "measurable outcome"},
     {"action": "second quick win", "timeline": "7 days", "money_impact": "EGP estimate", "expected_result": "measurable outcome"},

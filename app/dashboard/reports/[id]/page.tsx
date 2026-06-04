@@ -76,6 +76,42 @@ export default function ReportDetailPage() {
 
   const label = REPORT_TYPE_LABELS[report.type as keyof typeof REPORT_TYPE_LABELS]
 
+  function downloadPDF() {
+    window.print()
+  }
+
+  function downloadExcel(reportData: Record<string, unknown>, reportTitle: string) {
+    const rows: string[][] = [['Field', 'Value']]
+
+    function flatten(obj: unknown, prefix = '') {
+      if (obj === null || obj === undefined) return
+      if (typeof obj === 'string' || typeof obj === 'number' || typeof obj === 'boolean') {
+        rows.push([prefix, String(obj)])
+      } else if (Array.isArray(obj)) {
+        obj.forEach((item, i) => flatten(item, `${prefix}[${i + 1}]`))
+      } else if (typeof obj === 'object') {
+        Object.entries(obj as Record<string, unknown>).forEach(([k, v]) => {
+          flatten(v, prefix ? `${prefix} > ${k}` : k)
+        })
+      }
+    }
+
+    flatten(reportData)
+
+    const csv = rows
+      .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+      .join('\n')
+
+    const BOM = '﻿'
+    const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${reportTitle.replace(/\s+/g, '_')}_eunoia.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <Shell title={report.input?.companyName ?? 'Report'} subtitle={label?.en ?? report.type}>
       <div className="p-6 lg:p-8 max-w-4xl mx-auto">
@@ -91,13 +127,23 @@ export default function ReportDetailPage() {
             <span className="text-border">/</span>
             <span className="text-foreground text-sm font-medium">{report.input?.companyName ?? 'Report'}</span>
           </div>
-          <button
-            onClick={() => window.print()}
-            className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:border-gold/40 transition-colors print:hidden"
-          >
-            <Printer size={13} />
-            Print / Save PDF
-          </button>
+            <div className="flex items-center gap-2 print:hidden">
+              <button
+                onClick={downloadPDF}
+                className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:border-border/80 transition-colors"
+              >
+                <Printer size={13} />
+                PDF
+              </button>
+              <button
+                onClick={() => downloadExcel(report.output ?? {}, report.input?.companyName ?? 'report')}
+                className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg transition-all hover:opacity-90"
+                style={{background:'linear-gradient(135deg,#16a34a,#15803d)', color:'#fff'}}
+              >
+                <span>📊</span>
+                Excel
+              </button>
+            </div>
         </div>
 
         {report.status === 'FAILED' && report.error && (

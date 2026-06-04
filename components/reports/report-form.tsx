@@ -29,30 +29,30 @@ const REPORT_GROUPS = [
   {
     label: { ar: 'التقارير الأساسية', en: 'Core Reports' },
     icon: '📊',
-    types: ['PRELIMINARY', 'DETAILED', 'FULL_ANALYSIS', 'EXECUTIVE_SUMMARY'] as const,
+    types: ['PRELIMINARY', 'FULL_ANALYSIS', 'OPPORTUNITY_SCORING', 'EXECUTIVE_SUMMARY'] as const,
   },
   {
-    label: { ar: 'تحليل تنافسي وسوق', en: 'Competitive & Market' },
+    label: { ar: 'تنافسي وسوق', en: 'Competitive & Market' },
     icon: '🎯',
-    types: ['COMPETITOR', 'PRICING', 'TREND_RESEARCH', 'MARKET_ENTRY', 'OPPORTUNITY_SCORING'] as const,
+    types: ['COMPETITOR', 'PRICING', 'TREND_RESEARCH', 'MARKET_ENTRY'] as const,
   },
   {
-    label: { ar: 'أداء الحملات والمحتوى', en: 'Campaigns & Content' },
+    label: { ar: 'حملات ومحتوى', en: 'Campaigns & Content' },
     icon: '📣',
-    types: ['CAMPAIGN', 'MEDIA_MIX', 'CONTENT_SEO', 'SOCIAL_AUDIT', 'SEASONAL'] as const,
+    types: ['CAMPAIGN', 'MEDIA_MIX', 'CONTENT_SEO', 'SOCIAL_AUDIT'] as const,
   },
   {
-    label: { ar: 'العملاء والنمو', en: 'Customers & Growth' },
+    label: { ar: 'عملاء ونمو', en: 'Customers & Growth' },
     icon: '📈',
-    types: ['CLV_RETENTION', 'LEAD_QUALITY', 'ECOMMERCE_GROWTH', 'CUSTOMER_JOURNEY', 'SENTIMENT'] as const,
+    types: ['CLV_RETENTION', 'LEAD_QUALITY', 'CUSTOMER_JOURNEY'] as const,
   },
   {
-    label: { ar: 'استراتيجية وتخطيط', en: 'Strategy & Planning' },
+    label: { ar: 'استراتيجية', en: 'Strategy' },
     icon: '💡',
-    types: ['BRAND_AWARENESS', 'REBRANDING', 'B2B_STRATEGY', 'PRODUCT_LAUNCH', 'DIGITAL_READINESS', 'INFLUENCER', 'ANNUAL_BUDGET', 'CRISIS'] as const,
+    types: ['BRAND_AWARENESS', 'B2B_STRATEGY', 'PRODUCT_LAUNCH', 'DIGITAL_READINESS'] as const,
   },
   {
-    label: { ar: 'العقارات', en: 'Real Estate' },
+    label: { ar: 'العقارات 🏢', en: 'Real Estate 🏢' },
     icon: '🏢',
     types: ['REAL_ESTATE_LAUNCH', 'REAL_ESTATE_LEADS', 'REAL_ESTATE_FEASIBILITY'] as const,
   },
@@ -130,10 +130,13 @@ function InputField({ label, required, children, hint }: {
   )
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
   return (
-    <div className="bg-surface border border-border rounded-xl p-5 space-y-4">
-      <h3 className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">{title}</h3>
+    <div className="bg-card border border-border rounded-xl p-5 space-y-4">
+      <div>
+        <h3 className="text-foreground text-xs font-bold uppercase tracking-wider">{title}</h3>
+        {subtitle && <p className="text-muted-foreground text-xs mt-0.5">{subtitle}</p>}
+      </div>
       {children}
     </div>
   )
@@ -144,7 +147,8 @@ export function ReportForm() {
   const searchParams = useSearchParams()
   const defaultType = (searchParams.get('type') as ReportType) ?? 'OPPORTUNITY_SCORING'
 
-  const [reportType, setReportType] = useState<ReportType>(defaultType)
+  const [selectedTypes, setSelectedTypes] = useState<ReportType[]>([defaultType])
+  const reportType = selectedTypes[0] // keep for backward compat with TYPE_SECTIONS
   const [language, setLanguage] = useState<'ar' | 'en'>('ar')
   const [companyName, setCompanyName] = useState('')
   const [sectorKey, setSectorKey] = useState('')
@@ -190,13 +194,21 @@ export function ReportForm() {
   const [error, setError] = useState<string | null>(null)
   const progressTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
+  const toggleType = useCallback((type: ReportType) => {
+    setSelectedTypes(prev =>
+      prev.includes(type)
+        ? prev.length > 1 ? prev.filter(t => t !== type) : prev
+        : [...prev, type]
+    )
+  }, [])
+
   // Auto-show sections when report type changes
   useEffect(() => {
-    const config = TYPE_SECTIONS[reportType]
+    const config = TYPE_SECTIONS[selectedTypes[0]]
     if (config.ads) setShowAds(true)
     if (config.social) setShowSocial(true)
     if (config.sales) setShowSales(true)
-  }, [reportType])
+  }, [selectedTypes])
 
   // Advance progress stages while loading
   useEffect(() => {
@@ -271,29 +283,33 @@ export function ReportForm() {
       } : undefined,
     }
 
+    const generatedIds: string[] = []
+
     try {
-      const res = await fetch('/api/reports/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: reportType, input }),
-      })
+      for (const type of selectedTypes) {
+        const res = await fetch('/api/reports/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type, input }),
+        })
 
-      const data = await res.json() as { id?: string; error?: string; resetIn?: number }
+        const data = await res.json() as { id?: string; error?: string; resetIn?: number }
 
-      if (res.status === 429) {
-        const mins = data.resetIn ? Math.ceil(data.resetIn / 60) : 60
-        throw new Error(
-          language === 'ar'
-            ? `لقد وصلت للحد الأقصى (5 تقارير/ساعة). حاول مرة أخرى خلال ${mins} دقيقة.`
-            : `Rate limit reached (5 reports/hour). Try again in ${mins} minute${mins !== 1 ? 's' : ''}.`
-        )
+        if (res.status === 429) {
+          const mins = data.resetIn ? Math.ceil(data.resetIn / 60) : 60
+          throw new Error(
+            language === 'ar'
+              ? `لقد وصلت للحد الأقصى. حاول مرة أخرى خلال ${mins} دقيقة.`
+              : `Rate limit reached. Try again in ${mins} minute${mins !== 1 ? 's' : ''}.`
+          )
+        }
+
+        if (!res.ok || !data.id) throw new Error(data.error ?? 'Failed to generate report')
+        generatedIds.push(data.id)
       }
 
-      if (!res.ok || !data.id) {
-        throw new Error(data.error ?? 'Failed to generate report')
-      }
-
-      router.push(`/dashboard/reports/${data.id}`)
+      // Navigate to first report (others visible in reports list)
+      router.push(`/dashboard/reports/${generatedIds[0]}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
       setIsLoading(false)
@@ -304,7 +320,7 @@ export function ReportForm() {
     showSocial, igFollowers, igEng, fbFollowers, ttFollowers,
     showSales, revenue, convRate, aov, cac, returning,
     projectType, projectLocation, projectSize,
-    reportType, router,
+    selectedTypes, router,
   ])
 
   const isAr = language === 'ar'
@@ -330,36 +346,52 @@ export function ReportForm() {
       </div>
 
       {/* Report type */}
-      <Section title={isAr ? 'نوع التقرير' : 'Report Type'}>
-        <div className="space-y-4">
+      <Section title={isAr ? 'نوع التقرير' : 'Report Type'} subtitle={isAr ? 'اختر واحد أو أكثر' : 'Select one or more'}>
+        <div className="space-y-5">
           {REPORT_GROUPS.map(group => (
             <div key={group.icon}>
-              <div className="flex items-center gap-2 mb-2">
+              <div className="flex items-center gap-2 mb-2.5">
                 <span className="text-sm">{group.icon}</span>
-                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                   {isAr ? group.label.ar : group.label.en}
                 </span>
               </div>
               <div className="grid grid-cols-2 gap-1.5">
-                {group.types.map(type => (
-                  <button
-                    key={type}
-                    type="button"
-                    onClick={() => setReportType(type)}
-                    className={`text-right px-3 py-2 rounded-lg text-xs font-medium transition-all border ${
-                      reportType === type
-                        ? 'border-gold/50 bg-gold/8 text-gold shadow-sm'
-                        : 'border-border/60 text-foreground/70 hover:text-foreground hover:border-border hover:bg-muted/30'
-                    }`}
-                    style={reportType === type ? {background: 'var(--gold-bg)'} : {}}
-                  >
-                    {isAr ? REPORT_TYPE_LABELS[type].ar : REPORT_TYPE_LABELS[type].en}
-                  </button>
-                ))}
+                {group.types.map(type => {
+                  const active = selectedTypes.includes(type as ReportType)
+                  return (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => toggleType(type as ReportType)}
+                      className={`relative text-right px-3 py-2.5 rounded-xl text-xs font-medium transition-all border ${
+                        active
+                          ? 'border-gold/50 shadow-sm'
+                          : 'border-border/60 text-foreground/70 hover:text-foreground hover:border-border hover:bg-muted/30'
+                      }`}
+                      style={active ? {background:'var(--gold-bg)', color:'var(--gold)', borderColor:'var(--gold-border)'} : {}}
+                    >
+                      {active && (
+                        <span className="absolute top-1.5 left-1.5 w-3.5 h-3.5 rounded-full flex items-center justify-center text-[8px] font-bold"
+                              style={{background:'var(--gold)', color:'#fff'}}>
+                          {selectedTypes.indexOf(type as ReportType) + 1}
+                        </span>
+                      )}
+                      {isAr ? REPORT_TYPE_LABELS[type as ReportType].ar : REPORT_TYPE_LABELS[type as ReportType].en}
+                    </button>
+                  )
+                })}
               </div>
             </div>
           ))}
         </div>
+        {selectedTypes.length > 1 && (
+          <div className="mt-3 flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium"
+               style={{background:'var(--gold-bg)', color:'var(--gold)', border:'1px solid var(--gold-border)'}}>
+            <span>⚡</span>
+            <span>{isAr ? `سيتم توليد ${selectedTypes.length} تقارير بنفس البيانات` : `${selectedTypes.length} reports will be generated with same data`}</span>
+          </div>
+        )}
       </Section>
 
       {/* Company info */}
@@ -625,7 +657,9 @@ export function ReportForm() {
           disabled={!companyName || !sectorKey || !cityKey}
           className="w-full bg-gold hover:bg-gold-light text-midnight font-semibold py-3 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
         >
-          {isAr ? '✨ توليد تقرير الذكاء التسويقي' : '✨ Generate Intelligence Report'}
+          {selectedTypes.length > 1
+            ? (isAr ? `⚡ توليد ${selectedTypes.length} تقارير الآن` : `⚡ Generate ${selectedTypes.length} Reports`)
+            : (isAr ? '⚡ توليد التقرير الآن' : '⚡ Generate Report')}
         </button>
       )}
     </form>

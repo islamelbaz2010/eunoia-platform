@@ -123,6 +123,12 @@ Return ONLY valid JSON (no markdown, no backticks, start directly with {):
     "ad_creative_priority": "first 3 ad creatives to test — format + hook + CTA for each"
   },
   "kpis": {
+    "total_investment": 0,
+    "monthly_revenue_y1": 0,
+    "monthly_profit_y1": 0,
+    "roi_pct": 0,
+    "npv": 0,
+    "payback_months": 0,
     "launch_month_target": "30% units pre-sold = X units = EGP X million",
     "cpl_target": "EGP X–X per qualified lead",
     "site_visit_rate": "X% of leads book site visit (benchmark: 15%)",
@@ -134,6 +140,11 @@ Return ONLY valid JSON (no markdown, no backticks, start directly with {):
     {"risk": "specific risk 1 for this location/project type", "likelihood": "High/Medium/Low", "impact": "EGP X million revenue at risk", "mitigation": "specific action"},
     {"risk": "competitor project launching in same area", "likelihood": "Medium", "impact": "15–25% slower absorption", "mitigation": "pre-launch exclusivity offers and broker lock-in"},
     {"risk": "payment plan competitiveness — if < 8 years", "likelihood": "High if short plan", "impact": "lose 40% of potential buyers", "mitigation": "extend to 8–10 years minimum"}
+  ],
+  "pain_points": [
+    {"level": "high", "title": "primary pain point for this RE project/developer", "detail": "specific impact and Eunoia solution for ${companyName}"},
+    {"level": "high", "title": "second pain point — launch execution risk", "detail": "specific context"},
+    {"level": "med", "title": "third pain point — market or competitive", "detail": "explanation"}
   ],
   "quick_wins": [
     {"action": "specific 7-day action", "timeline": "7 days", "money_impact": "EGP estimate", "expected_result": "measurable outcome", "reasoning": "why this action first"},

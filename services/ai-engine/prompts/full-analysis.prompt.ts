@@ -32,6 +32,14 @@ Return ONLY valid JSON (no markdown, no backticks, start directly with {):
     "strategic_direction": "The overarching strategic recommendation",
     "urgency": "Immediate/Short-term/Long-term with rationale"
   },
+  "kpis": {
+    "total_investment": 0,
+    "monthly_revenue_y1": 0,
+    "monthly_profit_y1": 0,
+    "roi_pct": 0,
+    "npv": 0,
+    "payback_months": 0
+  },
   "marketing_score": 0,
   "score_dimensions": {
     "digital_presence": 0,
