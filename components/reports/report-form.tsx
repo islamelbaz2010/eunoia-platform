@@ -150,9 +150,13 @@ export function ReportForm() {
 
   const [selectedTypes, setSelectedTypes] = useState<ReportType[]>([defaultType])
   const reportType = selectedTypes[0] // keep for backward compat with TYPE_SECTIONS
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(REPORT_GROUPS.map(g => [g.icon, g.types.includes(defaultType as never)]))
-  )
+  const [openGroups, setOpenGroups] = React.useState<Record<string, boolean>>(() => {
+    const init: Record<string, boolean> = {}
+    REPORT_GROUPS.forEach(g => {
+      init[g.icon] = g.types.some(t => (t as string) === defaultType)
+    })
+    return init
+  })
   const [language, setLanguage] = useState<'ar' | 'en'>('ar')
   const [companyName, setCompanyName] = useState('')
   const [sectorKey, setSectorKey] = useState('')
@@ -364,8 +368,10 @@ export function ReportForm() {
                 <button
                   type="button"
                   onClick={() => setOpenGroups(prev => ({...prev, [group.icon]: !prev[group.icon]}))}
-                  className={`w-full flex items-center justify-between px-4 py-3 text-sm font-semibold transition-colors ${
-                    groupActive ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
+                  className={`w-full flex items-center justify-between px-4 py-3 text-sm font-semibold transition-all ${
+                    groupActive
+                      ? 'text-foreground bg-gold/5'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'
                   }`}
                   style={groupActive ? {background:'var(--gold-bg)'} : {}}
                 >
