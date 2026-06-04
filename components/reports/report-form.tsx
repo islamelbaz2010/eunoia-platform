@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useCallback, useEffect, useRef } from 'react'
+import React, { useState, useCallback, useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { ChevronDown } from 'lucide-react'
 import { SectorSelector } from '@/components/intelligence/sector-selector'
 import { CitySelector } from '@/components/intelligence/city-selector'
 import { CompetitorInput } from '@/components/intelligence/competitor-input'
@@ -149,6 +150,9 @@ export function ReportForm() {
 
   const [selectedTypes, setSelectedTypes] = useState<ReportType[]>([defaultType])
   const reportType = selectedTypes[0] // keep for backward compat with TYPE_SECTIONS
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(REPORT_GROUPS.map(g => [g.icon, g.types.includes(defaultType as never)]))
+  )
   const [language, setLanguage] = useState<'ar' | 'en'>('ar')
   const [companyName, setCompanyName] = useState('')
   const [sectorKey, setSectorKey] = useState('')
@@ -346,70 +350,84 @@ export function ReportForm() {
       </div>
 
       {/* Report type */}
-      <Section title={isAr ? 'نوع التقرير' : 'Report Type'} subtitle={isAr ? 'اختر واحد أو أكثر' : 'Select one or more'}>
-        <div className="space-y-4">
-          {REPORT_GROUPS.map(group => (
-            <div key={group.icon}>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-base">{group.icon}</span>
-                <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
-                  {isAr ? group.label.ar : group.label.en}
-                </span>
-                <div className="flex-1 h-px bg-border/60" />
-              </div>
-              <div className="grid grid-cols-2 gap-1.5">
-                {group.types.map(type => {
-                  const active = selectedTypes.includes(type as ReportType)
-                  const idx = selectedTypes.indexOf(type as ReportType)
-                  return (
-                    <button
-                      key={type}
-                      type="button"
-                      onClick={() => toggleType(type as ReportType)}
-                      className={`relative text-right px-3 py-2.5 rounded-xl text-xs font-medium transition-all border ${
-                        active
-                          ? 'shadow-sm font-bold'
-                          : 'border-border/50 text-foreground/60 hover:text-foreground hover:border-border hover:bg-muted/20'
-                      }`}
-                      style={active ? {
-                        background: 'var(--gold-bg)',
-                        color: 'var(--gold)',
-                        borderColor: 'var(--gold-border)',
-                        boxShadow: '0 0 0 1px var(--gold-border)'
-                      } : {}}
-                    >
-                      {active && (
-                        <span
-                          className="absolute top-1 left-1 w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-black"
-                          style={{background:'var(--gold)', color:'#fff'}}
-                        >
-                          {idx + 1}
-                        </span>
-                      )}
-                      <span className="block truncate pr-1">
-                        {isAr ? REPORT_TYPE_LABELS[type as ReportType].ar : REPORT_TYPE_LABELS[type as ReportType].en}
+      <div className="bg-card border border-border rounded-xl p-5 space-y-3">
+        <div>
+          <h3 className="text-foreground text-xs font-bold uppercase tracking-wider">نوع التقرير</h3>
+          <p className="text-muted-foreground text-xs mt-0.5">اختر واحد أو أكثر</p>
+        </div>
+        <div className="space-y-2">
+          {REPORT_GROUPS.map(group => {
+            const groupActive = group.types.some(t => selectedTypes.includes(t as ReportType))
+            const groupOpen = openGroups[group.icon] ?? false
+            return (
+              <div key={group.icon} className="border border-border rounded-xl overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setOpenGroups(prev => ({...prev, [group.icon]: !prev[group.icon]}))}
+                  className={`w-full flex items-center justify-between px-4 py-3 text-sm font-semibold transition-colors ${
+                    groupActive ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                  style={groupActive ? {background:'var(--gold-bg)'} : {}}
+                >
+                  <div className="flex items-center gap-2">
+                    <span>{group.icon}</span>
+                    <span>{isAr ? group.label.ar : group.label.en}</span>
+                    {groupActive && (
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+                            style={{background:'var(--gold)', color:'#fff'}}>
+                        {group.types.filter(t => selectedTypes.includes(t as ReportType)).length}
                       </span>
-                    </button>
-                  )
-                })}
+                    )}
+                  </div>
+                  <ChevronDown size={14} className={`transition-transform duration-200 ${groupOpen ? 'rotate-180' : ''}`} />
+                </button>
+                {groupOpen && (
+                  <div className="border-t border-border p-2 grid grid-cols-2 gap-1.5">
+                    {group.types.map(type => {
+                      const active = selectedTypes.includes(type as ReportType)
+                      const idx = selectedTypes.indexOf(type as ReportType)
+                      return (
+                        <button
+                          key={type}
+                          type="button"
+                          onClick={() => toggleType(type as ReportType)}
+                          className={`relative text-right px-3 py-2 rounded-lg text-xs font-medium transition-all border ${
+                            active
+                              ? 'font-bold shadow-sm'
+                              : 'border-border/40 text-foreground/60 hover:text-foreground hover:bg-muted/20 hover:border-border'
+                          }`}
+                          style={active ? {
+                            background:'var(--gold-bg)',
+                            color:'var(--gold)',
+                            borderColor:'var(--gold-border)'
+                          } : {}}
+                        >
+                          {active && (
+                            <span className="absolute top-1 left-1 w-3.5 h-3.5 rounded-full flex items-center justify-center text-[8px] font-black"
+                                  style={{background:'var(--gold)', color:'#fff'}}>
+                              {idx + 1}
+                            </span>
+                          )}
+                          <span className="block truncate">
+                            {isAr ? REPORT_TYPE_LABELS[type as ReportType].ar : REPORT_TYPE_LABELS[type as ReportType].en}
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
         {selectedTypes.length > 1 && (
-          <div
-            className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold mt-2"
-            style={{background:'var(--gold-bg)', color:'var(--gold)', border:'1px solid var(--gold-border)'}}
-          >
-            <span className="text-base">⚡</span>
-            <span>
-              {isAr
-                ? `سيتم توليد ${selectedTypes.length} تقارير بنفس البيانات`
-                : `${selectedTypes.length} reports will be generated with the same data`}
-            </span>
+          <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold"
+               style={{background:'var(--gold-bg)', color:'var(--gold)', border:'1px solid var(--gold-border)'}}>
+            <span>⚡</span>
+            <span>{isAr ? `سيتم توليد ${selectedTypes.length} تقارير بنفس البيانات` : `${selectedTypes.length} reports will be generated`}</span>
           </div>
         )}
-      </Section>
+      </div>
 
       {/* Company info */}
       <Section title={isAr ? 'معلومات الشركة' : 'Company Information'}>
