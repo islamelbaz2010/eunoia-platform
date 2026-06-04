@@ -42,7 +42,7 @@ export default function DemoPage() {
     setLoading(true)
     setError('')
     try {
-      const res = await fetch('/api/demo/generate', {
+      const res = await fetch('/api/demo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, phone, email, company, sector, city, competitor1, competitor2, website }),
