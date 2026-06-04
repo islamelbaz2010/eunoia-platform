@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
-
 const SECTOR_LABELS: Record<string, string> = {
   real_estate: 'Real Estate',
   restaurant: 'Restaurant / Cafe',
@@ -175,6 +173,7 @@ function buildEmailHtml(
 }
 
 export async function POST(req: NextRequest) {
+  const resend = new Resend(process.env.RESEND_API_KEY)
   try {
     const body = await req.json()
     const { name, phone, email, company, sector, city, competitor1, competitor2, website } = body
