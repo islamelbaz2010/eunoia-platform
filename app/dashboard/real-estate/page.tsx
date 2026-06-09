@@ -485,7 +485,12 @@ function ReportView({ report, onBack, onRegen }: {
       <div className="bg-gradient-to-br from-purple-950 to-purple-700 rounded-2xl p-5 text-white">
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <div className="text-xs font-bold tracking-widest text-white/40 mb-1">EUNOIA ZONES · INTELLIGENCE PLATFORM</div>
+            <div className="flex items-center gap-2 mb-1">
+              <div className="text-xs font-bold tracking-widest text-white/40">EUNOIA ZONES · INTELLIGENCE PLATFORM</div>
+              <span className="text-xs font-black px-2 py-0.5 rounded-full bg-white/15 text-white/80">
+                {confPct >= 80 ? '🎯 دقة عالية' : confPct >= 65 ? '📊 دقة جيدة' : '⚠️ بيانات محدودة'}
+              </span>
+            </div>
             <h2 className="text-xl font-black leading-snug">{report.report_type as string}</h2>
             <div className="text-white/60 text-sm mt-1">
               {(report.company || report.project_name || report.target_market || '') as string}
@@ -921,7 +926,7 @@ export default function RealEstateIntelligencePage() {
         <div className="max-w-2xl mx-auto px-5 py-6">
           <div className="text-xs font-black tracking-widest text-white/30 mb-1">EUNOIA ZONES</div>
           <h1 className="text-2xl font-black">محرك الاستخبارات العقارية</h1>
-          <p className="text-sm text-white/50 mt-1">5 تقارير متخصصة · معايير السوق المصري 2026</p>
+          <p className="text-sm text-white/50 mt-1">5 تقارير متخصصة · معايير السوق المصري 2026 · حسابات مالية دقيقة</p>
         </div>
       </div>
 
@@ -972,12 +977,35 @@ export default function RealEstateIntelligencePage() {
               </button>
             </div>
             <div className="p-5">
-              {selected === 'feasibility'   && <FeasibilityForm   onSubmit={handleSubmit} loading={loading} />}
-              {selected === 'campaign_roi'  && <CampaignROIForm   onSubmit={handleSubmit} loading={loading} />}
-              {selected === 'market_entry'  && <MarketEntryForm   onSubmit={handleSubmit} loading={loading} />}
-              {selected === 'lead_gen'      && <LeadGenForm       onSubmit={handleSubmit} loading={loading} />}
-              {selected === 'full_analysis' && <FullAnalysisForm  onSubmit={handleSubmit} loading={loading} />}
-              {error && (
+              {loading ? (
+                <div className="space-y-4">
+                  <div className="animate-pulse space-y-4">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="h-12 bg-gray-100 rounded-lg" />
+                      <div className="h-12 bg-gray-100 rounded-lg" />
+                      <div className="h-12 bg-gray-100 rounded-lg" />
+                      <div className="h-12 bg-gray-100 rounded-lg" />
+                    </div>
+                    <div className="h-px bg-gray-100" />
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="h-12 bg-gray-100 rounded-lg" />
+                      <div className="h-12 bg-gray-100 rounded-lg" />
+                      <div className="h-12 bg-gray-100 rounded-lg" />
+                    </div>
+                    <div className="h-14 bg-purple-100 rounded-xl" />
+                  </div>
+                  <div className="text-center text-xs text-purple-600 font-bold tracking-wide mt-2">⚡ جاري تحليل البيانات وتوليد التقرير...</div>
+                </div>
+              ) : (
+                <>
+                  {selected === 'feasibility'   && <FeasibilityForm   onSubmit={handleSubmit} loading={loading} />}
+                  {selected === 'campaign_roi'  && <CampaignROIForm   onSubmit={handleSubmit} loading={loading} />}
+                  {selected === 'market_entry'  && <MarketEntryForm   onSubmit={handleSubmit} loading={loading} />}
+                  {selected === 'lead_gen'      && <LeadGenForm       onSubmit={handleSubmit} loading={loading} />}
+                  {selected === 'full_analysis' && <FullAnalysisForm  onSubmit={handleSubmit} loading={loading} />}
+                </>
+              )}
+              {!loading && error && (
                 <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 flex gap-2 items-start">
                   <span className="flex-shrink-0">❌</span><span>{error}</span>
                 </div>
