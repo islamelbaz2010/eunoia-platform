@@ -42,113 +42,371 @@ const RE_BENCHMARKS = {
   },
 }
 
+// ══════════════════════════════════════════════════════════════════
+// CASHFLOW ENGINE — calculates real numbers before calling AI
+// Based on Egyptian real estate project structure
+// ══════════════════════════════════════════════════════════════════
+
+interface CashflowResult {
+  totalBUA: number
+  totalLandArea: number
+  totalRevenue: number
+  revenueSalesComm: number
+  revenueMarketing: number
+  netRevenue: number
+  landCostTotal: number
+  constructionCost: number
+  constructionInflation: number
+  totalConstructionCost: number
+  engineeringFees: number
+  adminOfficeCost: number
+  totalOperatingCost: number
+  salesAndMarketingCost: number
+  totalCost: number
+  grossProfit: number
+  taxAmount: number
+  netProfit: number
+  roi: number
+  roiAnnual: number
+  npv: number
+  paybackYears: number
+  annualCashflows: number[]
+  isViable: boolean
+  viabilityReason: string
+}
+
+function calculateCashflow(data: Record<string, string>): CashflowResult {
+  const units = parseFloat(data.units) || 0
+  const unitArea = parseFloat(data.unitArea) || 0
+  const landArea = parseFloat(data.landArea) || units * unitArea * 1.3
+  const sellPriceSqm = parseFloat(data.sellPriceSqm) || 0
+  const buildCostSqm = parseFloat(data.buildCostSqm) || 0
+  const landCostTotal = parseFloat(data.landCost) || 0
+  const buildMonths = parseFloat(data.buildMonths) || 24
+  const salesMonths = parseFloat(data.salesMonths) || 18
+  const downPaymentPct = (parseFloat(data.downPaymentPct) || 20) / 100
+  const cashSalesPct = (parseFloat(data.cashSalesPct) || 30) / 100
+
+  const buildYears = buildMonths / 12
+  const salesYears = salesMonths / 12
+  const projectYears = Math.ceil(buildYears + salesYears + 2)
+
+  const totalBUA = units * unitArea
+
+  // Revenue — mid-point price appreciation during sales period
+  const avgSellPrice = sellPriceSqm * (1 + 0.05 * salesYears)
+  const totalRevenue = totalBUA * avgSellPrice
+  const revenueSalesComm = totalRevenue * 0.12
+  const revenueMarketing = totalRevenue * 0.025
+  const netRevenue = totalRevenue - revenueSalesComm - revenueMarketing
+
+  // Construction
+  const baseConstructionCost = totalBUA * buildCostSqm
+  const inflationFactor = buildYears > 0 ? (buildYears - 1) * 0.15 * 0.5 : 0
+  const constructionInflation = baseConstructionCost * inflationFactor
+  const totalConstructionCost = baseConstructionCost + constructionInflation
+
+  // Operating
+  const engineeringFees = totalConstructionCost * 0.03
+  const annualAdminCost = Math.max(3_000_000, totalConstructionCost * 0.003)
+  const adminOfficeCost = annualAdminCost * projectYears
+  const adminOverhead = (engineeringFees + adminOfficeCost) * 0.05
+  const totalOperatingCost = engineeringFees + adminOfficeCost + adminOverhead
+
+  const salesAndMarketingCost = revenueSalesComm + revenueMarketing
+  const totalCost = landCostTotal + totalConstructionCost + totalOperatingCost + salesAndMarketingCost
+
+  // P&L
+  const grossProfit = totalRevenue - totalCost
+  const taxAmount = Math.max(0, grossProfit) * 0.225
+  const netProfit = grossProfit - taxAmount
+
+  const roi = totalCost > 0 ? netProfit / totalCost : 0
+  const roiAnnual = projectYears > 0 ? roi / projectYears : 0
+
+  // Annual cashflows
+  const annualCashflows: number[] = []
+  const annualConstruction = totalConstructionCost / (buildYears || 1)
+  const annualRevenue = totalRevenue / (salesYears + 2)
+  const landAnnualInstallment = (landCostTotal * 0.75) / Math.min(6, projectYears)
+
+  for (let y = 0; y <= projectYears; y++) {
+    let inflow = 0
+    let outflow = 0
+
+    if (y === 0) {
+      outflow += landCostTotal * 0.25
+    } else if (y <= 6) {
+      outflow += landAnnualInstallment
+    }
+
+    if (y < buildYears) outflow += annualConstruction
+    outflow += totalOperatingCost / projectYears
+
+    if (y >= 1) {
+      const salesYear = y - 1
+      if (salesYear < salesYears) {
+        if (y <= buildYears) inflow += totalRevenue * cashSalesPct / (buildYears || 1)
+        if (y > buildYears * 0.5) inflow += annualRevenue * 0.7
+      } else if (salesYear < salesYears + 2) {
+        inflow += totalRevenue * (1 - downPaymentPct) * 0.3 / 2
+      }
+    }
+
+    annualCashflows.push(inflow - outflow)
+  }
+
+  // NPV at 20%
+  let npv = 0
+  annualCashflows.forEach((cf, year) => {
+    npv += cf / Math.pow(1.20, year)
+  })
+
+  // Payback
+  let cumulative = 0
+  let paybackYears = projectYears
+  for (let y = 0; y < annualCashflows.length; y++) {
+    cumulative += annualCashflows[y]
+    if (cumulative >= 0 && paybackYears === projectYears) paybackYears = y
+  }
+
+  const isViable = netProfit > 0 && npv > 0 && roiAnnual > 0.08
+  let viabilityReason = ''
+  if (!isViable) {
+    if (netProfit <= 0) viabilityReason = 'صافي الربح سالب — التكاليف تتجاوز الإيرادات'
+    else if (npv <= 0) viabilityReason = 'NPV سالب — المشروع لا يغطي تكلفة رأس المال (20%)'
+    else viabilityReason = 'العائد السنوي أقل من الحد الأدنى المقبول (8%)'
+  } else {
+    if (roiAnnual > 0.15) viabilityReason = 'عائد ممتاز يتجاوز معيار السوق المصري (8-15% سنوي)'
+    else if (roiAnnual > 0.10) viabilityReason = 'عائد جيد ضمن معيار السوق المصري'
+    else viabilityReason = 'عائد مقبول — ضمن الحد الأدنى لمعيار السوق'
+  }
+
+  return {
+    totalBUA, totalLandArea: landArea,
+    totalRevenue, revenueSalesComm, revenueMarketing, netRevenue,
+    landCostTotal, constructionCost: baseConstructionCost,
+    constructionInflation, totalConstructionCost,
+    engineeringFees, adminOfficeCost, totalOperatingCost,
+    salesAndMarketingCost, totalCost,
+    grossProfit, taxAmount, netProfit,
+    roi, roiAnnual, npv, paybackYears,
+    annualCashflows, isViable, viabilityReason,
+  }
+}
+
+function formatEGP(amount: number): string {
+  if (Math.abs(amount) >= 1_000_000_000) return `${(amount / 1_000_000_000).toFixed(2)} مليار EGP`
+  if (Math.abs(amount) >= 1_000_000) return `${(amount / 1_000_000).toFixed(1)} مليون EGP`
+  if (Math.abs(amount) >= 1_000) return `${(amount / 1_000).toFixed(0)} ألف EGP`
+  return `${amount.toFixed(0)} EGP`
+}
+
+function formatPct(ratio: number): string {
+  return `${(ratio * 100).toFixed(1)}%`
+}
+
+// ══════════════════════════════════════════════════════════════════
+// END CASHFLOW ENGINE
+// ══════════════════════════════════════════════════════════════════
+
 // ── PROMPTS ─────────────────────────────────────────────────────────
 
 function buildFeasibilityPrompt(data: Record<string, string>): string {
-  const {
-    projectName, city, projectType, units, unitArea, sellPriceSqm,
-    buildCostSqm, landCost, buildMonths, salesMonths, adminPct,
-    downPaymentPct, finishLevel, cashSalesPct, landCostSqm,
-    realSellSqm, realBuildSqm, realSalesPace,
-  } = data
-
+  const cf = calculateCashflow(data)
   const bench = RE_BENCHMARKS.developer
-  const cityMult = bench.city_multipliers[city] ?? 1.0
+  const cityMult = bench.city_multipliers[data.city] ?? 1.0
 
-  return `You are Egypt's top real estate financial analyst. Generate a comprehensive feasibility study.
+  const verdictValue = cf.isViable ? 'مجدي' : cf.roi > 0 ? 'مجدي مشروط' : 'غير مجدي'
+  const confPct = data.realSellSqm && data.realBuildSqm && data.realSalesPace ? 85
+    : (data.realSellSqm || data.realBuildSqm) ? 75 : 65
+  const confReason = data.realSellSqm && data.realBuildSqm
+    ? 'أرقام محسوبة رياضياً مع مقارنة بالسوق الفعلي'
+    : 'أرقام محسوبة رياضياً — أضف بيانات السوق لرفع الدقة'
 
-PROJECT DATA:
-- Name: ${projectName}
-- City: ${city} (CPL multiplier: ${cityMult}x vs Cairo benchmark)
-- Type: ${projectType}
-- Units: ${units} units × ${unitArea}m² average
-- Sell price: EGP ${sellPriceSqm}/m² (market benchmark ${city}: EGP ${realSellSqm || 'not provided'}/m²)
-- Build cost: EGP ${buildCostSqm}/m² (market benchmark: EGP ${realBuildSqm || 'not provided'}/m²)
-- Land cost: EGP ${landCost} total (EGP ${landCostSqm}/m²)
-- Build timeline: ${buildMonths} months
-- Sales timeline: ${salesMonths} months
-- Admin & marketing: ${adminPct}% of revenue
-- Down payment: ${downPaymentPct}% of unit price
-- Finish level: ${finishLevel}
-- Cash vs installment: ${cashSalesPct}% cash
-- Market absorption rate: ${realSalesPace || 'not provided'} units/month for similar projects
+  const riskOverall = cf.roiAnnual < 0.05 ? 'High' : cf.roiAnnual < 0.10 ? 'Medium' : 'Low'
+  const riskScore = Math.round(Math.max(20, Math.min(85, 80 - cf.roiAnnual * 200)))
+  const financeRisk = Math.round(Math.min(90, (cf.landCostTotal / cf.totalCost) * 120))
+  const marketRisk = Math.round(Math.min(80, Math.max(20, 50 - (cf.roi - 0.5) * 30)))
+  const execRisk = Math.round(Math.min(75, 35 + (parseFloat(data.buildMonths) || 24) * 0.5))
+  const liquidityRisk = Math.round(Math.min(80, Math.max(25, 60 - (parseFloat(data.downPaymentPct) || 20) * 1.5)))
+
+  const irrLabel = cf.roiAnnual > 0.20 ? 'أعلى من 25%'
+    : cf.roiAnnual > 0.15 ? '18-25%'
+    : cf.roiAnnual > 0.10 ? '12-18%'
+    : cf.roiAnnual > 0 ? '5-12%' : 'سالب'
+
+  return `You are Egypt's top real estate financial analyst.
+The cashflow has already been CALCULATED. Your job is to INTERPRET and EXPLAIN — do NOT recalculate numbers.
+
+PROJECT: ${data.projectName} | City: ${data.city} (price multiplier: ${cityMult}x)
+Type: ${data.projectType} | Units: ${data.units} × ${data.unitArea}m² = ${cf.totalBUA.toFixed(0)}m² BUA
+Land: ${data.landArea || 'estimated'}m² | Finish: ${data.finishLevel}
+
+CALCULATED FINANCIALS (use these exact numbers):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+REVENUE:
+  Total Revenue:          ${formatEGP(cf.totalRevenue)}
+  Sales Commission 12%:   ${formatEGP(cf.revenueSalesComm)}
+  Marketing 2.5%:         ${formatEGP(cf.revenueMarketing)}
+  Net Revenue:            ${formatEGP(cf.netRevenue)}
+
+COSTS:
+  Land Cost:              ${formatEGP(cf.landCostTotal)}
+  Construction (base):    ${formatEGP(cf.constructionCost)}
+  Construction Inflation: ${formatEGP(cf.constructionInflation)}
+  Total Construction:     ${formatEGP(cf.totalConstructionCost)}
+  Engineering Fees 3%:    ${formatEGP(cf.engineeringFees)}
+  Admin & Office:         ${formatEGP(cf.adminOfficeCost)}
+  Sales & Marketing:      ${formatEGP(cf.salesAndMarketingCost)}
+  TOTAL COST:             ${formatEGP(cf.totalCost)}
+
+P&L:
+  Gross Profit:           ${formatEGP(cf.grossProfit)}
+  Tax 22.5%:              ${formatEGP(cf.taxAmount)}
+  NET PROFIT:             ${formatEGP(cf.netProfit)}
+
+RETURNS:
+  ROI (total):            ${formatPct(cf.roi)}
+  ROI (annual):           ${formatPct(cf.roiAnnual)}
+  NPV at 20%:             ${formatEGP(cf.npv)} (${cf.npv > 0 ? 'POSITIVE ✅' : 'NEGATIVE ❌'})
+  Payback:                ${cf.paybackYears} years
+  Viability:              ${cf.isViable ? 'VIABLE' : 'NOT VIABLE'}
+  Reason:                 ${cf.viabilityReason}
+
+ANNUAL CASHFLOWS: ${cf.annualCashflows.map((v, i) => `Year ${i}: ${formatEGP(v)}`).join(' | ')}
 
 EGYPT BENCHMARKS 2026:
-- Developer net margin benchmark: ${bench.net_margin}
-- Recovery period benchmark: 36-120 months
-- New Capital premium: +30% vs Cairo
-- Construction inflation: 20-25% YoY risk
+  Annual ROI benchmark: 8-15% (this project: ${formatPct(cf.roiAnnual)})
+  Build cost benchmark: 18,000–25,000 EGP/m² (2026)
+  Construction inflation: 15-20% annual
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+MARKET COMPARISON:
+  User sell price: ${data.sellPriceSqm} EGP/m² | Market: ${data.realSellSqm || 'not provided'}
+  User build cost: ${data.buildCostSqm} EGP/m² | Market: ${data.realBuildSqm || 'not provided'}
+  Sales pace: ${data.realSalesPace || 'not provided'} units/month
+
+INSTRUCTIONS:
+1. Use the EXACT calculated numbers above — do NOT change them
+2. Verdict must be "${verdictValue}"
+3. Write executive_summary in Arabic — explain WHY based on the numbers
+4. For reality_check assessments write: منطقي OR متفائل OR متحفظ
+5. For risk dimension details: write specific risks for THIS project
 
 Return ONLY valid JSON (no markdown, start with {):
 {
   "report_type": "دراسة الجدوى العقارية",
-  "project_name": "${projectName}",
-  "city": "${city}",
-  "executive_summary": "3 sentences: overall viability verdict, key strength, key risk",
-  "verdict": "مجدي / مجدي مشروط / غير مجدي",
-  "verdict_reason": "2 sentences explaining the verdict",
+  "project_name": "${data.projectName}",
+  "city": "${data.city}",
+  "executive_summary": "3 sentences in Arabic: verdict with specific numbers, key strength, key risk",
+  "verdict": "${verdictValue}",
+  "verdict_reason": "${cf.viabilityReason}",
   "financials": {
-    "total_revenue": "EGP amount (units × area × sell price)",
-    "total_cost": "EGP amount (land + build + admin)",
-    "gross_profit": "EGP amount",
-    "net_profit": "EGP amount after all costs",
-    "gross_margin_pct": "% calculated",
-    "net_margin_pct": "% vs benchmark ${bench.net_margin}",
-    "total_investment": "EGP amount",
-    "roi_pct": "% return on investment",
-    "payback_months": "calculated months",
-    "npv_assessment": "positive/negative assessment with reasoning",
-    "irr_estimate": "% estimated IRR range"
+    "total_revenue": "${formatEGP(cf.totalRevenue)}",
+    "total_cost": "${formatEGP(cf.totalCost)}",
+    "gross_profit": "${formatEGP(cf.grossProfit)}",
+    "net_profit": "${formatEGP(cf.netProfit)}",
+    "gross_margin_pct": "${formatPct(cf.grossProfit / cf.totalRevenue)}",
+    "net_margin_pct": "${formatPct(cf.netProfit / cf.totalRevenue)}",
+    "total_investment": "${formatEGP(cf.totalCost)}",
+    "roi_pct": "${formatPct(cf.roi)} (${formatPct(cf.roiAnnual)} سنوياً)",
+    "payback_months": "${(cf.paybackYears * 12).toFixed(0)} شهر (${cf.paybackYears.toFixed(1)} سنة)",
+    "npv_assessment": "${formatEGP(cf.npv)} — ${cf.npv > 0 ? 'موجب، المشروع يغطي تكلفة رأس المال' : 'سالب، المشروع لا يغطي تكلفة رأس المال'}",
+    "irr_estimate": "${irrLabel}"
+  },
+  "cost_breakdown": {
+    "land": "${formatEGP(cf.landCostTotal)} (${formatPct(cf.landCostTotal / cf.totalCost)} من التكلفة)",
+    "construction": "${formatEGP(cf.totalConstructionCost)} (${formatPct(cf.totalConstructionCost / cf.totalCost)} من التكلفة)",
+    "operating": "${formatEGP(cf.totalOperatingCost)} (${formatPct(cf.totalOperatingCost / cf.totalCost)} من التكلفة)",
+    "sales_marketing": "${formatEGP(cf.salesAndMarketingCost)} (${formatPct(cf.salesAndMarketingCost / cf.totalCost)} من التكلفة)"
   },
   "scenarios": {
     "pessimistic": {
-      "assumption": "20% slower sales, 15% higher costs",
-      "net_profit": "EGP amount",
-      "roi_pct": "%",
-      "payback_months": "months",
-      "verdict": "مجدي / غير مجدي"
+      "assumption": "انخفاض سعر البيع 15%، زيادة التكاليف 10%",
+      "net_profit": "${formatEGP(cf.netProfit * 0.55)}",
+      "roi_pct": "${formatPct(cf.roi * 0.55)}",
+      "roi_annual_pct": "${formatPct(cf.roiAnnual * 0.55)}",
+      "payback_months": "${((cf.paybackYears * 1.4) * 12).toFixed(0)} شهر",
+      "verdict": "${cf.roi * 0.55 > 0.3 ? 'مجدي' : cf.roi * 0.55 > 0 ? 'مجدي مشروط' : 'غير مجدي'}"
     },
     "base": {
-      "assumption": "As provided",
-      "net_profit": "EGP amount",
-      "roi_pct": "%",
-      "payback_months": "months",
-      "verdict": "مجدي / غير مجدي"
+      "assumption": "الافتراضات المُدخلة",
+      "net_profit": "${formatEGP(cf.netProfit)}",
+      "roi_pct": "${formatPct(cf.roi)}",
+      "roi_annual_pct": "${formatPct(cf.roiAnnual)}",
+      "payback_months": "${(cf.paybackYears * 12).toFixed(0)} شهر",
+      "verdict": "${verdictValue}"
     },
     "optimistic": {
-      "assumption": "20% faster sales, 10% price premium",
-      "net_profit": "EGP amount",
-      "roi_pct": "%",
-      "payback_months": "months",
+      "assumption": "ارتفاع سعر البيع 15%، توفير 5% في التكاليف",
+      "net_profit": "${formatEGP(cf.netProfit * 1.45)}",
+      "roi_pct": "${formatPct(cf.roi * 1.45)}",
+      "roi_annual_pct": "${formatPct(cf.roiAnnual * 1.45)}",
+      "payback_months": "${((cf.paybackYears * 0.75) * 12).toFixed(0)} شهر",
       "verdict": "مجدي"
     }
   },
   "reality_check": [
-    {"item": "سعر البيع/م²", "your_value": "${sellPriceSqm} EGP", "market_benchmark": "${realSellSqm || 'غير محدد'} EGP", "gap_pct": "% difference", "assessment": "منطقي/متفائل/متحفظ"},
-    {"item": "تكلفة البناء/م²", "your_value": "${buildCostSqm} EGP", "market_benchmark": "${realBuildSqm || 'غير محدد'} EGP", "gap_pct": "% difference", "assessment": "منطقي/متفائل/متحفظ"},
-    {"item": "معدل البيع الشهري", "your_value": "based on ${salesMonths} months", "market_benchmark": "${realSalesPace || 'غير محدد'} وحدة/شهر", "gap_pct": "% difference", "assessment": "منطقي/متفائل/متحفظ"}
+    {
+      "item": "سعر البيع/م²",
+      "your_value": "${data.sellPriceSqm} EGP",
+      "market_benchmark": "${data.realSellSqm ? data.realSellSqm + ' EGP' : 'غير محدد'}",
+      "assessment": "write: منطقي OR متفائل OR متحفظ based on comparison"
+    },
+    {
+      "item": "تكلفة البناء/م²",
+      "your_value": "${data.buildCostSqm} EGP",
+      "market_benchmark": "${data.realBuildSqm ? data.realBuildSqm + ' EGP' : 'غير محدد'}",
+      "assessment": "write: منطقي OR متفائل OR متحفظ"
+    },
+    {
+      "item": "هامش الربح الإجمالي",
+      "your_value": "${formatPct(cf.grossProfit / cf.totalRevenue)}",
+      "market_benchmark": "30-50% للمطورين المصريين",
+      "assessment": "write: منطقي OR متفائل OR متحفظ"
+    }
   ],
   "sensitivity_analysis": [
-    {"variable": "سعر البيع/م²", "impact_10pct_up": "EGP impact on profit", "impact_10pct_down": "EGP impact on profit", "sensitivity": "عالية/متوسطة/منخفضة"},
-    {"variable": "تكلفة البناء", "impact_10pct_up": "EGP impact", "impact_10pct_down": "EGP impact", "sensitivity": "عالية/متوسطة/منخفضة"},
-    {"variable": "مدة البيع", "impact_3months_more": "EGP carrying cost impact", "impact_3months_less": "EGP benefit", "sensitivity": "عالية/متوسطة/منخفضة"}
+    {
+      "variable": "سعر البيع/م²",
+      "impact_10pct_up": "${formatEGP(cf.totalRevenue * 0.1 * 0.775)} إضافية للربح",
+      "impact_10pct_down": "${formatEGP(cf.totalRevenue * 0.1 * 0.775)} خسارة من الربح",
+      "sensitivity": "${cf.totalRevenue > cf.totalCost * 1.5 ? 'متوسطة' : 'عالية'}"
+    },
+    {
+      "variable": "تكلفة البناء/م²",
+      "impact_10pct_up": "${formatEGP(cf.constructionCost * 0.1)} زيادة في التكاليف",
+      "impact_10pct_down": "${formatEGP(cf.constructionCost * 0.1)} توفير في التكاليف",
+      "sensitivity": "${cf.constructionCost / cf.totalCost > 0.45 ? 'عالية' : 'متوسطة'}"
+    },
+    {
+      "variable": "مدة البيع",
+      "impact_3months_more": "زيادة تكاليف التشغيل ${formatEGP(cf.totalOperatingCost * 0.08)}",
+      "impact_3months_less": "توفير ${formatEGP(cf.totalOperatingCost * 0.08)} وتحسن cashflow",
+      "sensitivity": "متوسطة"
+    }
   ],
   "risk_scorecard": {
-    "overall_risk": "Low/Medium/High",
-    "overall_score": 0,
+    "overall_risk": "${riskOverall}",
+    "overall_score": ${riskScore},
     "dimensions": [
-      {"name": "مخاطر التمويل", "score": 0, "detail": "specific risk factor"},
-      {"name": "مخاطر السوق والتسعير", "score": 0, "detail": "specific risk factor"},
-      {"name": "مخاطر الموقع", "score": 0, "detail": "specific risk factor"},
-      {"name": "مخاطر التنفيذ والتأخير", "score": 0, "detail": "specific risk factor"}
+      {"name": "مخاطر التمويل", "score": ${financeRisk}, "detail": "write specific financing risk for this project"},
+      {"name": "مخاطر السوق والتسعير", "score": ${marketRisk}, "detail": "write specific market/pricing risk"},
+      {"name": "مخاطر التنفيذ والتأخير", "score": ${execRisk}, "detail": "write specific execution risk"},
+      {"name": "مخاطر السيولة", "score": ${liquidityRisk}, "detail": "write specific liquidity risk based on payment structure"}
     ]
   },
   "immediate_actions": [
-    {"action": "specific action 1", "timeline": "خلال 7 أيام", "impact": "specific financial or risk impact"},
-    {"action": "specific action 2", "timeline": "خلال 30 يوم", "impact": "impact"},
-    {"action": "specific action 3", "timeline": "خلال 60 يوم", "impact": "impact"}
+    {"action": "specific action 1 based on calculated numbers", "timeline": "خلال 7 أيام", "impact": "specific financial impact"},
+    {"action": "specific action 2", "timeline": "خلال 30 يوم", "impact": "specific impact"},
+    {"action": "specific action 3", "timeline": "خلال 60 يوم", "impact": "specific impact"}
   ],
-  "confidence_score": {"pct": 0, "label": "High/Medium/Low", "reason": "based on data provided"}
+  "confidence_score": {
+    "pct": ${confPct},
+    "label": "${confPct >= 80 ? 'High' : 'Medium'}",
+    "reason": "${confReason}"
+  }
 }`
 }
 
