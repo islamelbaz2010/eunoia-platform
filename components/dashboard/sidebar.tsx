@@ -10,6 +10,7 @@ const NAV = [
   { href: '/dashboard/intelligence', label: 'New Report', icon: Brain },
   { href: '/dashboard/reports',      label: 'Reports',    icon: FileText },
   { href: '/dashboard/feasibility',  label: 'Feasibility', icon: Calculator },
+  { href: '/dashboard/real-estate',  label: 'Real Estate', icon: Building2 },
   { href: '/dashboard/analytics',    label: 'Analytics',  icon: TrendingUp },
   { href: '/dashboard/settings',     label: 'Settings',   icon: Settings },
 ]
