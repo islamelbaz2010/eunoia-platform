@@ -3,6 +3,223 @@ import { useState } from 'react'
 
 type ReportType = 'feasibility' | 'campaign_roi' | 'market_entry' | 'lead_gen' | 'full_analysis'
 
+// ── DESIGN TOKENS (matching halannews.com) ────────────────────────
+const styles = `
+  .ei-page { background: #FAF5EF; min-height: 100vh; font-family: 'Inter','Cairo','Segoe UI',sans-serif; }
+  .ei-topbar { background: linear-gradient(135deg, #2D0A3E 0%, #4A1042 50%, #1A0520 100%); padding: 20px 24px; }
+  .ei-topbar-inner { max-width: 860px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+  .ei-brand { color: #fff; }
+  .ei-brand-tag { font-size: 10px; font-weight: 800; letter-spacing: 3px; color: rgba(255,255,255,0.35); text-transform: uppercase; margin-bottom: 4px; }
+  .ei-brand-title { font-size: 22px; font-weight: 900; line-height: 1; }
+  .ei-brand-sub { font-size: 12px; color: rgba(255,255,255,0.45); margin-top: 4px; }
+  .ei-lang-toggle { display: flex; gap: 6px; }
+  .ei-lang-btn { padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; cursor: pointer; border: 1.5px solid rgba(255,255,255,0.2); background: transparent; color: rgba(255,255,255,0.5); transition: all 0.15s; }
+  .ei-lang-btn.active { background: rgba(255,255,255,0.15); color: #fff; border-color: rgba(255,255,255,0.4); }
+
+  .ei-body { max-width: 860px; margin: 0 auto; padding: 24px 16px; }
+
+  .ei-section-label { font-size: 10px; font-weight: 800; letter-spacing: 2px; color: #9A9090; text-transform: uppercase; margin-bottom: 12px; padding-right: 4px; }
+
+  .ei-card-grid { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
+  .ei-report-card { background: #fff; border: 1.5px solid #E8E2DA; border-radius: 12px; padding: 14px 16px; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 14px; position: relative; }
+  .ei-report-card:hover { border-color: #7C3AED; box-shadow: 0 2px 8px rgba(124,58,237,0.08); transform: translateY(-1px); }
+  .ei-report-card.selected { border-color: #7C3AED; background: #FAF5FF; box-shadow: 0 0 0 3px rgba(124,58,237,0.08); }
+  .ei-card-icon { font-size: 26px; flex-shrink: 0; width: 44px; height: 44px; background: #F8F6F3; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+  .ei-card-content { flex: 1; min-width: 0; }
+  .ei-card-title-ar { font-size: 14px; font-weight: 800; color: #1A1018; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .ei-card-title-en { font-size: 11px; color: #9A9090; font-weight: 500; margin-top: 1px; }
+  .ei-card-desc { font-size: 11px; color: #6B6560; margin-top: 4px; line-height: 1.5; }
+  .ei-card-time { font-size: 10px; color: #9A9090; flex-shrink: 0; white-space: nowrap; }
+  .ei-badge { font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 20px; color: #fff; }
+
+  .ei-form-panel { background: #fff; border: 1.5px solid #E8E2DA; border-radius: 14px; overflow: hidden; margin-bottom: 24px; }
+  .ei-form-header { background: linear-gradient(135deg, #FAF5FF 0%, #F8F6F3 100%); border-bottom: 1px solid #E8E2DA; padding: 14px 18px; display: flex; align-items: center; gap: 12px; }
+  .ei-form-header-icon { font-size: 22px; }
+  .ei-form-header-title { font-weight: 800; font-size: 15px; color: #1A1018; }
+  .ei-form-header-sub { font-size: 11px; color: #9A9090; margin-top: 1px; }
+  .ei-form-close { margin-right: auto; width: 28px; height: 28px; border-radius: 50%; border: none; background: #F0E8DF; cursor: pointer; color: #6B6560; font-size: 16px; display: flex; align-items: center; justify-content: center; }
+  .ei-form-body { padding: 18px; }
+
+  .ei-section-title { font-size: 10px; font-weight: 800; letter-spacing: 2px; color: #7C3AED; text-transform: uppercase; border-bottom: 1px solid #E8E2DA; padding-bottom: 6px; margin-bottom: 12px; margin-top: 16px; }
+  .ei-section-title:first-child { margin-top: 0; }
+
+  .ei-field-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .ei-field-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+  .ei-field { display: flex; flex-direction: column; gap: 4px; }
+  .ei-label { font-size: 11px; font-weight: 700; color: #6B6560; }
+  .ei-label-hint { font-size: 10px; color: #9A9090; font-weight: 400; }
+  .ei-input { background: #FAF5EF; border: 1.5px solid #E8E2DA; border-radius: 8px; padding: 9px 12px; font-size: 13px; color: #1A1018; outline: none; transition: all 0.15s; font-family: inherit; width: 100%; box-sizing: border-box; }
+  .ei-input:focus { border-color: #7C3AED; background: #fff; box-shadow: 0 0 0 3px rgba(124,58,237,0.08); }
+  .ei-input::placeholder { color: #B0A9A2; }
+
+  .ei-optional-box { border: 1.5px dashed #D5CCBF; border-radius: 10px; padding: 14px; background: #FAF8F5; margin-top: 12px; }
+  .ei-optional-label { font-size: 10px; font-weight: 800; color: #9A9090; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px; }
+  .ei-optional-label span { font-weight: 400; color: #B0A9A2; }
+
+  .ei-submit-btn { width: 100%; padding: 13px; background: linear-gradient(135deg, #4A1042 0%, #7C3AED 100%); color: #fff; border: none; border-radius: 10px; font-size: 14px; font-weight: 800; cursor: pointer; transition: all 0.15s; margin-top: 16px; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(74,16,66,0.25); }
+  .ei-submit-btn:hover:not(:disabled) { opacity: 0.92; transform: translateY(-1px); box-shadow: 0 6px 16px rgba(74,16,66,0.3); }
+  .ei-submit-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .ei-spin { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .ei-skeleton { background: #fff; border: 1.5px solid #E8E2DA; border-radius: 14px; padding: 20px; }
+  .ei-skel-bar { background: linear-gradient(90deg, #F0E8DF 25%, #FAF5EF 50%, #F0E8DF 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 6px; }
+  @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+  .ei-error { background: #FCE8EC; border: 1.5px solid #D4183D; border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #A01030; margin-top: 12px; display: flex; gap: 8px; }
+
+  .ei-report { }
+  .ei-report-actions { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .ei-action-btn { flex: 1; min-width: 80px; padding: 10px 12px; border-radius: 9px; font-size: 12px; font-weight: 700; cursor: pointer; border: 1.5px solid #E8E2DA; background: #fff; color: #6B6560; transition: all 0.15s; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 5px; }
+  .ei-action-btn:hover { border-color: #7C3AED; color: #7C3AED; background: #FAF5FF; }
+  .ei-action-btn.green { background: #0D9488; color: #fff; border-color: #0D9488; }
+  .ei-action-btn.green:hover { opacity: 0.9; }
+  .ei-action-btn.red { background: #D4183D; color: #fff; border-color: #D4183D; }
+  .ei-action-btn.red:hover { opacity: 0.9; }
+
+  .ei-report-header { background: linear-gradient(135deg, #2D0A3E 0%, #4A1042 60%, #6B1060 100%); border-radius: 14px; padding: 20px; color: #fff; margin-bottom: 12px; }
+  .ei-rh-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .ei-rh-tag { font-size: 9px; font-weight: 800; letter-spacing: 2.5px; color: rgba(255,255,255,0.3); text-transform: uppercase; margin-bottom: 6px; }
+  .ei-rh-title { font-size: 20px; font-weight: 900; line-height: 1.2; }
+  .ei-rh-company { font-size: 13px; color: rgba(255,255,255,0.55); margin-top: 4px; }
+  .ei-rh-conf { text-align: left; flex-shrink: 0; }
+  .ei-rh-conf-pct { font-size: 38px; font-weight: 900; line-height: 1; }
+  .ei-rh-conf-label { font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+  .ei-rh-conf-badge { font-size: 11px; margin-top: 4px; }
+  .ei-rh-reason { font-size: 11px; color: rgba(255,255,255,0.45); background: rgba(255,255,255,0.08); border-radius: 7px; padding: 8px 10px; margin-top: 12px; }
+
+  .ei-verdict { border-radius: 12px; padding: 14px 16px; border: 2px solid; display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
+  .ei-verdict-icon { font-size: 26px; flex-shrink: 0; }
+  .ei-verdict-text { font-size: 18px; font-weight: 900; }
+  .ei-verdict-reason { font-size: 13px; margin-top: 4px; line-height: 1.5; }
+
+  .ei-section { background: #fff; border: 1.5px solid #E8E2DA; border-radius: 12px; overflow: hidden; margin-bottom: 10px; }
+  .ei-section-head { background: #F8F6F3; border-bottom: 1px solid #E8E2DA; padding: 10px 16px; }
+  .ei-section-head-title { font-size: 10px; font-weight: 800; letter-spacing: 2px; color: #6B6560; text-transform: uppercase; }
+  .ei-section-body { padding: 14px 16px; }
+
+  .ei-kv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .ei-kv-item { background: #FAF5EF; border-radius: 8px; padding: 10px 12px; border: 1px solid #E8E2DA; }
+  .ei-kv-label { font-size: 10px; color: #9A9090; margin-bottom: 3px; }
+  .ei-kv-value { font-size: 13px; font-weight: 700; color: #4A1042; line-height: 1.3; }
+
+  .ei-scenario-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .ei-scenario-card { border-radius: 10px; padding: 12px; text-align: center; border: 1.5px solid; }
+  .ei-scenario-label { font-size: 11px; font-weight: 800; margin-bottom: 6px; }
+  .ei-scenario-roi { font-size: 22px; font-weight: 900; }
+  .ei-scenario-sub { font-size: 10px; color: #6B6560; margin-top: 4px; }
+
+  .ei-bar-row { margin-bottom: 14px; }
+  .ei-bar-header { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 12px; }
+  .ei-bar-label { font-weight: 600; color: #1A1018; }
+  .ei-bar-value { font-weight: 800; }
+  .ei-bar-track { height: 8px; background: #F0E8DF; border-radius: 4px; overflow: hidden; }
+  .ei-bar-fill { height: 8px; border-radius: 4px; transition: width 0.5s ease; }
+  .ei-bar-sub { font-size: 10px; color: #9A9090; margin-top: 3px; }
+
+  .ei-actions-list { display: flex; flex-direction: column; gap: 10px; }
+  .ei-action-item { display: flex; gap: 12px; align-items: flex-start; }
+  .ei-action-num { width: 26px; height: 26px; border-radius: 50%; background: #4A1042; color: #fff; font-size: 12px; font-weight: 900; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+  .ei-action-body { flex: 1; }
+  .ei-action-title { font-size: 13px; font-weight: 700; color: #1A1018; }
+  .ei-action-meta { font-size: 11px; color: #9A9090; margin-top: 3px; display: flex; flex-wrap: wrap; gap: 8px; }
+
+  .ei-swot-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .ei-swot-card { border-radius: 10px; padding: 12px; }
+  .ei-swot-title { font-size: 11px; font-weight: 800; margin-bottom: 8px; }
+  .ei-swot-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 5px; }
+  .ei-swot-item { font-size: 11px; color: #1A1018; display: flex; gap: 6px; line-height: 1.4; }
+  .ei-swot-dot { flex-shrink: 0; margin-top: 3px; }
+
+  .ei-channel-card { border: 1.5px solid #E8E2DA; border-radius: 10px; padding: 12px; margin-bottom: 8px; }
+  .ei-channel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .ei-channel-name { font-size: 13px; font-weight: 800; color: #1A1018; }
+  .ei-channel-status { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 12px; }
+  .ei-channel-meta { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 8px; }
+  .ei-channel-kv { font-size: 10px; color: #9A9090; }
+  .ei-channel-kv strong { display: block; color: #1A1018; font-size: 11px; font-weight: 700; margin-top: 1px; }
+  .ei-channel-tip { font-size: 11px; color: #4A1042; background: #F0E8EF; border-radius: 7px; padding: 7px 10px; }
+
+  .ei-timeline-step { border: 1.5px solid #E8E2DA; border-radius: 10px; overflow: hidden; margin-bottom: 8px; }
+  .ei-timeline-header { background: #F8F6F3; padding: 10px 14px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #E8E2DA; }
+  .ei-timeline-num { width: 24px; height: 24px; border-radius: 50%; background: #4A1042; color: #fff; font-size: 11px; font-weight: 900; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .ei-timeline-title { font-size: 13px; font-weight: 800; color: #4A1042; }
+  .ei-timeline-body { padding: 12px 14px; }
+  .ei-timeline-actions { list-style: none; padding: 0; margin: 0 0 8px; display: flex; flex-direction: column; gap: 4px; }
+  .ei-timeline-action { font-size: 11px; color: #1A1018; display: flex; gap: 6px; line-height: 1.4; }
+  .ei-timeline-dot { color: #7C3AED; flex-shrink: 0; }
+  .ei-timeline-footer { display: flex; gap: 16px; padding-top: 8px; border-top: 1px solid #E8E2DA; }
+  .ei-timeline-kv { font-size: 10px; color: #9A9090; }
+  .ei-timeline-kv strong { color: #1A1018; font-weight: 700; }
+
+  .ei-wa-box { border-radius: 10px; overflow: hidden; border: 1.5px solid; margin-bottom: 8px; }
+  .ei-wa-header { padding: 8px 12px; font-size: 10px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; }
+  .ei-wa-body { padding: 10px 12px; font-size: 12px; line-height: 1.6; }
+  .ei-wa-questions { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
+  .ei-wa-q { font-size: 12px; display: flex; gap: 8px; }
+  .ei-wa-qnum { color: #0D9488; font-weight: 800; flex-shrink: 0; }
+
+  .ei-json-toggle { background: #F8F6F3; border: 1.5px solid #E8E2DA; border-radius: 10px; overflow: hidden; margin-top: 8px; }
+  .ei-json-summary { padding: 12px 16px; cursor: pointer; font-size: 12px; font-weight: 600; color: #6B6560; list-style: none; display: flex; align-items: center; justify-content: space-between; }
+  .ei-json-summary:hover { color: #1A1018; background: #F0E8DF; }
+  .ei-json-pre { padding: 12px 16px; font-size: 10px; color: #6B6560; overflow: auto; max-height: 240px; background: #fff; font-family: monospace; direction: ltr; border-top: 1px solid #E8E2DA; margin: 0; }
+
+  .ei-reality-table { width: 100%; border-collapse: collapse; }
+  .ei-reality-row { border-bottom: 1px solid #F0E8DF; }
+  .ei-reality-row:last-child { border-bottom: none; }
+  .ei-reality-row td { padding: 10px 0; vertical-align: middle; }
+  .ei-reality-item { font-size: 12px; font-weight: 600; color: #1A1018; }
+  .ei-reality-vals { font-size: 10px; color: #9A9090; margin-top: 2px; }
+  .ei-reality-badge { font-size: 10px; font-weight: 800; padding: 3px 10px; border-radius: 12px; color: #fff; white-space: nowrap; }
+
+  @media print {
+    .ei-topbar, .ei-card-grid, .ei-form-panel, .ei-report-actions { display: none !important; }
+    .ei-report-header { background: #4A1042 !important; -webkit-print-color-adjust: exact; }
+    body { background: white !important; }
+  }
+`
+
+// ── ARABIC / ENGLISH LABELS ──────────────────────────────────────
+const LABELS: Record<string, { ar: string; en: string }> = {
+  total_revenue:               { ar: 'إجمالي الإيرادات',           en: 'Total Revenue' },
+  total_cost:                  { ar: 'إجمالي التكاليف',             en: 'Total Costs' },
+  gross_profit:                { ar: 'إجمالي الربح',               en: 'Gross Profit' },
+  net_profit:                  { ar: 'صافي الربح',                 en: 'Net Profit' },
+  gross_margin_pct:            { ar: 'هامش الربح الإجمالي',        en: 'Gross Margin' },
+  net_margin_pct:              { ar: 'هامش الربح الصافي',          en: 'Net Margin' },
+  total_investment:            { ar: 'إجمالي الاستثمار',            en: 'Total Investment' },
+  roi_pct:                     { ar: 'عائد الاستثمار ROI',          en: 'Return on Investment' },
+  payback_months:              { ar: 'فترة الاسترداد',              en: 'Payback Period' },
+  npv_assessment:              { ar: 'تقييم NPV',                   en: 'NPV Assessment' },
+  irr_estimate:                { ar: 'معدل العائد الداخلي IRR',     en: 'IRR Estimate' },
+  current_cpl:                 { ar: 'تكلفة العميل الحالية',        en: 'Current CPL' },
+  benchmark_cpl:               { ar: 'المعيار CPL',                 en: 'Benchmark CPL' },
+  cpl_gap_pct:                 { ar: 'الفجوة عن المعيار',           en: 'CPL Gap vs Benchmark' },
+  cpl_status:                  { ar: 'تقييم CPL',                   en: 'CPL Status' },
+  monthly_leads:               { ar: 'العملاء الشهريون',            en: 'Monthly Leads' },
+  expected_leads_at_benchmark: { ar: 'العملاء عند المعيار',         en: 'Expected at Benchmark' },
+  leads_gap:                   { ar: 'فجوة العملاء',                en: 'Leads Gap' },
+  wasted_budget_estimate:      { ar: 'الميزانية المهدرة',           en: 'Wasted Budget Est.' },
+  roas:                        { ar: 'معدل العائد ROAS',            en: 'ROAS' },
+  roas_benchmark:              { ar: 'معيار ROAS',                  en: 'ROAS Benchmark' },
+  roas_status:                 { ar: 'تقييم ROAS',                  en: 'ROAS Status' },
+  meta_cpl_expected:           { ar: 'CPL المتوقع Meta',            en: 'Expected Meta CPL' },
+  google_cpl_expected:         { ar: 'CPL المتوقع Google',          en: 'Expected Google CPL' },
+  budget_required_100leads:    { ar: 'ميزانية 100 عميل',           en: 'Budget for 100 Leads' },
+  recommended_test_budget:     { ar: 'ميزانية الاختبار',            en: 'Recommended Test Budget' },
+  budget_sufficiency:          { ar: 'كفاية الميزانية',             en: 'Budget Sufficiency' },
+  monthly_leads_at_budget:     { ar: 'عملاء/شهر بالميزانية',       en: 'Monthly Leads at Budget' },
+  qualified_leads:             { ar: 'العملاء المؤهلون',            en: 'Qualified Leads' },
+  qualification_rate:          { ar: 'معدل التأهيل',               en: 'Qualification Rate' },
+  qualification_benchmark:     { ar: 'معيار التأهيل',              en: 'Qualification Benchmark' },
+  qualification_verdict:       { ar: 'تقييم التأهيل',              en: 'Qualification Verdict' },
+  estimated_monthly_deals:     { ar: 'صفقات شهرية متوقعة',         en: 'Est. Monthly Deals' },
+  estimated_monthly_revenue:   { ar: 'إيرادات شهرية متوقعة',       en: 'Est. Monthly Revenue' },
+  cac_current:                 { ar: 'تكلفة اكتساب العميل CAC',    en: 'Current CAC' },
+  cac_benchmark:               { ar: 'معيار CAC',                   en: 'CAC Benchmark' },
+  ltv_cac_ratio:               { ar: 'نسبة LTV/CAC',               en: 'LTV/CAC Ratio' },
+}
+
 const CITIES = [
   'القاهرة الجديدة','العاصمة الإدارية الجديدة','التجمع الخامس','التجمع الأول',
   '6 أكتوبر','الشيخ زايد','المعادي','مدينة نصر','الساحل الشمالي',
@@ -10,682 +227,669 @@ const CITIES = [
 ]
 
 const REPORT_CARDS = [
-  { id:'feasibility' as ReportType,   icon:'📐', titleAr:'دراسة الجدوى العقارية',    titleEn:'Feasibility Study',       desc:'NPV · IRR · 3 سيناريوهات · تحليل حساسية · risk scorecard', time:'دقيقتان', badge:'الأعلى دقة', badgeColor:'#1A6B5A' },
-  { id:'campaign_roi' as ReportType,  icon:'📊', titleAr:'تدقيق أداء الحملات',       titleEn:'Campaign ROI Audit',      desc:'CPL vs معايير مصر 2026 · تحليل القنوات · 3 تحسينات فورية',  time:'دقيقة',   badge:'الأكثر طلباً', badgeColor:'#C9922A' },
-  { id:'market_entry' as ReportType,  icon:'🗺️', titleAr:'استخبارات دخول السوق',     titleEn:'Market Entry Intel',      desc:'جاذبية السوق · المنافسة · CPL المتوقع · خطة 90 يوم',        time:'دقيقتان', badge:null, badgeColor:null },
-  { id:'lead_gen' as ReportType,      icon:'🎯', titleAr:'استخبارات توليد العملاء',   titleEn:'Lead Generation Intel',   desc:'جودة العملاء · معدل التأهيل · سكريبت واتساب',               time:'دقيقة',   badge:null, badgeColor:null },
-  { id:'full_analysis' as ReportType, icon:'🏆', titleAr:'التحليل التسويقي الشامل',   titleEn:'Full Marketing Analysis', desc:'SWOT · أداء الحملات · الحضور الرقمي · خطة 90 يوم كاملة',   time:'3 دقائق', badge:'Premium', badgeColor:'#4A1042' },
+  { id:'feasibility'   as ReportType, icon:'📐', ar:'دراسة الجدوى العقارية',   en:'Feasibility Study',       desc:'NPV · IRR · 3 سيناريوهات · تحليل حساسية · risk scorecard',                     time:'2 min', badge:'الأعلى دقة',   badgeColor:'#0D9488' },
+  { id:'campaign_roi'  as ReportType, icon:'📊', ar:'تدقيق أداء الحملات',      en:'Campaign ROI Audit',      desc:'CPL vs Egypt benchmarks 2026 · channel analysis · 3 optimizations',              time:'1 min', badge:'الأكثر طلباً', badgeColor:'#F0A020' },
+  { id:'market_entry'  as ReportType, icon:'🗺️', ar:'استخبارات دخول السوق',    en:'Market Entry Intel',      desc:'Market attractiveness · competition · expected CPL · 90-day plan',               time:'2 min', badge:null,           badgeColor:null },
+  { id:'lead_gen'      as ReportType, icon:'🎯', ar:'استخبارات توليد العملاء',  en:'Lead Generation Intel',   desc:'Lead quality · qualification rate · WhatsApp script · channel diagnosis',         time:'1 min', badge:null,           badgeColor:null },
+  { id:'full_analysis' as ReportType, icon:'🏆', ar:'التحليل التسويقي الشامل',  en:'Full Marketing Analysis', desc:'SWOT · campaign performance · digital presence · complete 90-day plan',           time:'3 min', badge:'Premium',       badgeColor:'#4A1042' },
 ]
 
-// ── SHARED COMPONENTS ─────────────────────────────────────────────
+// ── SHARED FIELD COMPONENTS ──────────────────────────────────────
 
-function Field({ label, value, onChange, placeholder, type='text', required=false, hint }:{
-  label:string; value:string; onChange:(v:string)=>void
+function F({ label: lbl, labelEn, value, onChange, placeholder, type='text', required=false, hint }:{
+  label:string; labelEn?:string; value:string; onChange:(v:string)=>void
   placeholder?:string; type?:string; required?:boolean; hint?:string
 }) {
   return (
-    <div className="flex flex-col gap-1">
-      <label className="text-xs font-bold text-gray-600">{label}{required && <span className="text-red-500 mr-1">*</span>}</label>
-      {hint && <span className="text-xs text-gray-400 -mt-0.5">{hint}</span>}
+    <div className="ei-field">
+      <label className="ei-label">
+        {lbl}
+        {labelEn && <span style={{color:'#B0A9A2',fontWeight:400}}> / {labelEn}</span>}
+        {required && <span style={{color:'#D4183D',marginRight:3}}>*</span>}
+        {hint && <span className="ei-label-hint"> — {hint}</span>}
+      </label>
       <input type={type} value={value} required={required} placeholder={placeholder}
-        onChange={e=>onChange(e.target.value)}
-        className="bg-white border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-200 transition-all" />
+        onChange={e=>onChange(e.target.value)} className="ei-input" />
     </div>
   )
 }
 
-function Select({ label, value, onChange, options, required=false, hint }:{
-  label:string; value:string; onChange:(v:string)=>void
-  options:{value:string;label:string}[]; required?:boolean; hint?:string
+function Sel({ label: lbl, labelEn, value, onChange, options, required=false }:{
+  label:string; labelEn?:string; value:string; onChange:(v:string)=>void
+  options:{value:string;label:string}[]; required?:boolean
 }) {
   return (
-    <div className="flex flex-col gap-1">
-      <label className="text-xs font-bold text-gray-600">{label}{required && <span className="text-red-500 mr-1">*</span>}</label>
-      {hint && <span className="text-xs text-gray-400 -mt-0.5">{hint}</span>}
+    <div className="ei-field">
+      <label className="ei-label">
+        {lbl}
+        {labelEn && <span style={{color:'#B0A9A2',fontWeight:400}}> / {labelEn}</span>}
+        {required && <span style={{color:'#D4183D',marginRight:3}}>*</span>}
+      </label>
       <select value={value} required={required} onChange={e=>onChange(e.target.value)}
-        className="bg-white border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-200 transition-all appearance-none">
-        <option value="">اختر...</option>
+        className="ei-input" style={{appearance:'none'}}>
+        <option value="">اختر / Select...</option>
         {options.map(o=><option key={o.value} value={o.value}>{o.label}</option>)}
       </select>
     </div>
   )
 }
 
-function SectionTitle({ children }:{ children:React.ReactNode }) {
-  return <div className="text-xs font-black text-purple-900 uppercase tracking-widest border-b border-purple-100 pb-1 mb-3">{children}</div>
+function SecTitle({ ar, en }:{ar:string; en:string}) {
+  return <div className="ei-section-title">{ar} <span style={{fontWeight:500,color:'#B0A9A2',textTransform:'none',letterSpacing:0}}>/ {en}</span></div>
 }
 
-function OptionalBox({ title, children }:{ title:string; children:React.ReactNode }) {
+function OptBox({ ar, en, children }:{ar:string; en:string; children:React.ReactNode}) {
   return (
-    <div className="border border-dashed border-gray-300 rounded-xl p-4 bg-gray-50">
-      <div className="text-xs font-bold text-gray-500 mb-3">✦ {title} — <span className="font-normal">اختياري، يرفع دقة التقرير</span></div>
-      <div className="grid grid-cols-2 gap-3">{children}</div>
+    <div className="ei-optional-box">
+      <div className="ei-optional-label">{ar} <span>/ {en} — Optional</span></div>
+      <div className="ei-field-grid-2">{children}</div>
     </div>
   )
 }
 
-function SubmitBtn({ loading }:{ loading:boolean }) {
+function SubmitBtn({ loading, ar, en }:{loading:boolean; ar:string; en:string}) {
   return (
-    <button type="submit" disabled={loading}
-      className="w-full py-4 bg-gradient-to-l from-purple-950 to-purple-700 text-white rounded-xl font-black text-base hover:opacity-90 disabled:opacity-50 transition-all flex items-center justify-center gap-2 shadow-lg shadow-purple-900/20">
-      {loading
-        ? <><span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"/>جاري توليد التقرير...</>
-        : '⚡ توليد التقرير الآن'}
+    <button type="submit" disabled={loading} className="ei-submit-btn">
+      {loading ? <><div className="ei-spin"/>{ar}... / {en}...</> : <>&#x26A1; {ar} / {en}</>}
     </button>
   )
 }
 
-// ── FEASIBILITY FORM ─────────────────────────────────────────────
+// ── FORMS ────────────────────────────────────────────────────────
 
 function FeasibilityForm({ onSubmit, loading }:{ onSubmit:(d:Record<string,string>)=>void; loading:boolean }) {
   const [d, setD] = useState<Record<string,string>>({
     projectName:'', city:'', projectType:'وحدات سكنية',
-    units:'', unitArea:'', landArea:'',
-    sellPriceSqm:'', buildCostSqm:'', landCost:'',
-    buildMonths:'24', salesMonths:'18', adminPct:'8',
-    downPaymentPct:'20', finishLevel:'تشطيب متوسط (7,000–9,500 EGP/م²)',
-    cashSalesPct:'30', landCostSqm:'',
+    units:'', unitArea:'', landArea:'', sellPriceSqm:'', buildCostSqm:'', landCost:'',
+    buildMonths:'48', salesMonths:'24', adminPct:'8',
+    downPaymentPct:'20', finishLevel:'تشطيب متوسط (7,000–9,500 EGP/م²)', cashSalesPct:'30',
     realSellSqm:'', realBuildSqm:'', realSalesPace:''
   })
   const f=(k:string,v:string)=>setD(p=>({...p,[k]:v}))
-
   return (
-    <form onSubmit={e=>{e.preventDefault();onSubmit(d)}} className="space-y-5">
-      <div>
-        <SectionTitle>معلومات المشروع</SectionTitle>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="اسم المشروع" value={d.projectName} onChange={v=>f('projectName',v)} placeholder="مثال: كمبوند النيل" required />
-          <Select label="المدينة" value={d.city} onChange={v=>f('city',v)} required
-            options={CITIES.map(c=>({value:c,label:c}))} />
-          <Select label="نوع المشروع" value={d.projectType} onChange={v=>f('projectType',v)}
-            options={[
-              {value:'وحدات سكنية',label:'🏠 وحدات سكنية'},
-              {value:'فيلات',label:'🏡 فيلات'},
-              {value:'تاون هاوس',label:'🏘️ تاون هاوس'},
-              {value:'عقار تجاري',label:'🏢 عقار تجاري'},
-              {value:'مشروع مختلط',label:'🏙️ مشروع مختلط (سكني + تجاري)'},
-              {value:'مخازن لوجستية',label:'🏭 مخازن / لوجستي'},
-              {value:'فندق / سياحي',label:'🏨 فندق / سياحي'},
-            ]} />
-          <Field label="عدد الوحدات" type="number" value={d.units} onChange={v=>f('units',v)} placeholder="مثال: 200" required />
-        </div>
+    <form onSubmit={e=>{e.preventDefault();onSubmit(d)}}>
+      <SecTitle ar="معلومات المشروع" en="Project Info" />
+      <div className="ei-field-grid-2" style={{marginBottom:10}}>
+        <F label="اسم المشروع" labelEn="Project Name" value={d.projectName} onChange={v=>f('projectName',v)} placeholder="مثال: كمبوند النيل" required />
+        <Sel label="المدينة" labelEn="City" value={d.city} onChange={v=>f('city',v)} required options={CITIES.map(c=>({value:c,label:c}))} />
+        <Sel label="نوع المشروع" labelEn="Type" value={d.projectType} onChange={v=>f('projectType',v)} options={[
+          {value:'وحدات سكنية',label:'🏠 وحدات سكنية / Residential'},
+          {value:'فيلات',label:'🏡 فيلات / Villas'},
+          {value:'تاون هاوس',label:'🏘️ تاون هاوس / Townhouses'},
+          {value:'عقار تجاري',label:'🏢 عقار تجاري / Commercial'},
+          {value:'مشروع مختلط',label:'🏙️ مشروع مختلط / Mixed-Use'},
+          {value:'مخازن لوجستية',label:'🏭 مخازن / Logistics'},
+          {value:'فندق / سياحي',label:'🏨 فندق / Hotel'},
+        ]} />
+        <F label="عدد الوحدات" labelEn="Units" type="number" value={d.units} onChange={v=>f('units',v)} placeholder="200" required />
       </div>
-
-      <div>
-        <SectionTitle>المساحات</SectionTitle>
-        <div className="grid grid-cols-3 gap-3">
-          <Field label="مساحة الأرض الإجمالية (م²)" type="number" value={d.landArea} onChange={v=>f('landArea',v)} placeholder="مثال: 25000" required hint="إجمالي مساحة قطعة الأرض" />
-          <Field label="متوسط مساحة الوحدة (م²)" type="number" value={d.unitArea} onChange={v=>f('unitArea',v)} placeholder="مثال: 120" required />
-          <Field label="سعر بيع م² المتوقع (EGP)" type="number" value={d.sellPriceSqm} onChange={v=>f('sellPriceSqm',v)} placeholder="مثال: 50,000" required />
-        </div>
+      <SecTitle ar="المساحات" en="Areas" />
+      <div className="ei-field-grid-3" style={{marginBottom:10}}>
+        <F label="مساحة الأرض (م²)" labelEn="Land Area" type="number" value={d.landArea} onChange={v=>f('landArea',v)} placeholder="25000" required hint="إجمالي القطعة" />
+        <F label="مساحة الوحدة (م²)" labelEn="Unit Area" type="number" value={d.unitArea} onChange={v=>f('unitArea',v)} placeholder="120" required />
+        <F label="سعر البيع/م² (EGP)" labelEn="Sell Price/m²" type="number" value={d.sellPriceSqm} onChange={v=>f('sellPriceSqm',v)} placeholder="50000" required />
       </div>
-
-      <div>
-        <SectionTitle>التكاليف</SectionTitle>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="تكلفة الأرض الإجمالية (EGP)" type="number" value={d.landCost} onChange={v=>f('landCost',v)} placeholder="مثال: 50,000,000" required />
-          <Field label="تكلفة الأرض / م² (EGP)" type="number" value={d.landCostSqm} onChange={v=>f('landCostSqm',v)} placeholder="مثال: 2,000" hint="سيتم الحساب تلقائياً إن تُرك فارغاً" />
-          <Field label="تكلفة بناء م² (EGP)" type="number" value={d.buildCostSqm} onChange={v=>f('buildCostSqm',v)} placeholder="مثال: 22,000" required hint="بدون تشطيب" />
-          <Select label="مستوى التشطيب" value={d.finishLevel} onChange={v=>f('finishLevel',v)}
-            options={[
-              {value:'بدون تشطيب (Core & Shell)',label:'بدون تشطيب (Core & Shell)'},
-              {value:'تشطيب عادي (4,500–6,000 EGP/م²)',label:'تشطيب عادي — 4,500–6,000 EGP/م²'},
-              {value:'تشطيب متوسط (7,000–9,500 EGP/م²)',label:'تشطيب متوسط — 7,000–9,500 EGP/م²'},
-              {value:'تشطيب فاخر (11,000–16,000 EGP/م²)',label:'تشطيب فاخر — 11,000–16,000 EGP/م²'},
-            ]} />
-        </div>
+      <SecTitle ar="التكاليف" en="Costs" />
+      <div className="ei-field-grid-2" style={{marginBottom:10}}>
+        <F label="تكلفة الأرض الإجمالية (EGP)" labelEn="Total Land Cost" type="number" value={d.landCost} onChange={v=>f('landCost',v)} placeholder="50,000,000" required />
+        <F label="تكلفة البناء/م² (EGP)" labelEn="Build Cost/m²" type="number" value={d.buildCostSqm} onChange={v=>f('buildCostSqm',v)} placeholder="22000" required hint="بدون تشطيب" />
+        <Sel label="مستوى التشطيب" labelEn="Finish Level" value={d.finishLevel} onChange={v=>f('finishLevel',v)} options={[
+          {value:'بدون تشطيب (Core & Shell)',label:'Core & Shell'},
+          {value:'تشطيب عادي (4,500–6,000 EGP/م²)',label:'Standard Finish — 4,500–6,000 EGP/m²'},
+          {value:'تشطيب متوسط (7,000–9,500 EGP/م²)',label:'Semi-Luxury — 7,000–9,500 EGP/m²'},
+          {value:'تشطيب فاخر (11,000–16,000 EGP/م²)',label:'Luxury Finish — 11,000–16,000 EGP/m²'},
+        ]} />
       </div>
-
-      <div>
-        <SectionTitle>الجدول الزمني والمالي</SectionTitle>
-        <div className="grid grid-cols-3 gap-3">
-          <Field label="مدة التنفيذ (شهور)" type="number" value={d.buildMonths} onChange={v=>f('buildMonths',v)} placeholder="24" />
-          <Field label="مدة البيع المتوقعة (شهور)" type="number" value={d.salesMonths} onChange={v=>f('salesMonths',v)} placeholder="18" />
-          <Field label="مصروفات إدارية وتسويقية %" type="number" value={d.adminPct} onChange={v=>f('adminPct',v)} placeholder="8" />
-          <Field label="نسبة المقدم %" type="number" value={d.downPaymentPct} onChange={v=>f('downPaymentPct',v)} placeholder="20" />
-          <Field label="نسبة البيع نقداً %" type="number" value={d.cashSalesPct} onChange={v=>f('cashSalesPct',v)} placeholder="30" />
-        </div>
+      <SecTitle ar="الجدول الزمني" en="Timeline & Structure" />
+      <div className="ei-field-grid-3" style={{marginBottom:10}}>
+        <F label="مدة التنفيذ (شهور)" labelEn="Build (months)" type="number" value={d.buildMonths} onChange={v=>f('buildMonths',v)} placeholder="48" />
+        <F label="مدة البيع (شهور)" labelEn="Sales (months)" type="number" value={d.salesMonths} onChange={v=>f('salesMonths',v)} placeholder="24" />
+        <F label="مصروفات إدارية %" labelEn="Admin & Mktg %" type="number" value={d.adminPct} onChange={v=>f('adminPct',v)} placeholder="8" />
+        <F label="نسبة المقدم %" labelEn="Down Payment %" type="number" value={d.downPaymentPct} onChange={v=>f('downPaymentPct',v)} placeholder="20" />
+        <F label="نسبة الكاش %" labelEn="Cash Sales %" type="number" value={d.cashSalesPct} onChange={v=>f('cashSalesPct',v)} placeholder="30" />
       </div>
-
-      <OptionalBox title="مقارنة بالسوق">
-        <Field label="سعر بيع م² في السوق (EGP)" type="number" value={d.realSellSqm} onChange={v=>f('realSellSqm',v)} placeholder="مثال: 48,000" />
-        <Field label="تكلفة بناء م² في السوق (EGP)" type="number" value={d.realBuildSqm} onChange={v=>f('realBuildSqm',v)} placeholder="مثال: 21,000" />
-        <Field label="معدل بيع مشاريع مشابهة (وحدة/شهر)" type="number" value={d.realSalesPace} onChange={v=>f('realSalesPace',v)} placeholder="مثال: 5" />
-      </OptionalBox>
-
-      <SubmitBtn loading={loading} />
+      <OptBox ar="مقارنة بالسوق" en="Market Comparison">
+        <F label="سعر بيع السوق/م² (EGP)" labelEn="Market Sell Price" type="number" value={d.realSellSqm} onChange={v=>f('realSellSqm',v)} placeholder="48000" />
+        <F label="تكلفة بناء السوق/م² (EGP)" labelEn="Market Build Cost" type="number" value={d.realBuildSqm} onChange={v=>f('realBuildSqm',v)} placeholder="21000" />
+        <F label="معدل بيع مشاريع مشابهة (وحدة/شهر)" labelEn="Market Sales Pace" type="number" value={d.realSalesPace} onChange={v=>f('realSalesPace',v)} placeholder="5" />
+      </OptBox>
+      <SubmitBtn loading={loading} ar="توليد دراسة الجدوى" en="Generate Feasibility Report" />
     </form>
   )
 }
 
-// ── CAMPAIGN ROI FORM ────────────────────────────────────────────
-
 function CampaignROIForm({ onSubmit, loading }:{ onSubmit:(d:Record<string,string>)=>void; loading:boolean }) {
   const [d, setD] = useState<Record<string,string>>({
-    companyName:'', city:'', clientType:'developer',
-    adSpend:'', cpl:'', leads:'', roas:'',
+    companyName:'', city:'', clientType:'developer', adSpend:'', cpl:'', leads:'', roas:'',
     metaSpend:'', googleSpend:'', tiktokSpend:''
   })
   const f=(k:string,v:string)=>setD(p=>({...p,[k]:v}))
   return (
-    <form onSubmit={e=>{e.preventDefault();onSubmit(d)}} className="space-y-5">
-      <div>
-        <SectionTitle>بيانات الشركة</SectionTitle>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="اسم الشركة" value={d.companyName} onChange={v=>f('companyName',v)} placeholder="مثال: Radix Development" required />
-          <Select label="المدينة" value={d.city} onChange={v=>f('city',v)} required options={CITIES.map(c=>({value:c,label:c}))} />
-          <Select label="نوع العميل" value={d.clientType} onChange={v=>f('clientType',v)} required
-            options={[{value:'developer',label:'🏗️ مطور عقاري'},{value:'broker',label:'🤝 وسيط / بروكر'}]} />
-          <Field label="إجمالي الإنفاق الإعلاني/شهر (EGP)" type="number" value={d.adSpend} onChange={v=>f('adSpend',v)} placeholder="مثال: 150,000" required />
-        </div>
+    <form onSubmit={e=>{e.preventDefault();onSubmit(d)}}>
+      <SecTitle ar="بيانات الشركة" en="Company Info" />
+      <div className="ei-field-grid-2" style={{marginBottom:10}}>
+        <F label="اسم الشركة" labelEn="Company Name" value={d.companyName} onChange={v=>f('companyName',v)} placeholder="Radix Development" required />
+        <Sel label="المدينة" labelEn="City" value={d.city} onChange={v=>f('city',v)} required options={CITIES.map(c=>({value:c,label:c}))} />
+        <Sel label="نوع العميل" labelEn="Client Type" value={d.clientType} onChange={v=>f('clientType',v)} required options={[{value:'developer',label:'🏗️ مطور عقاري / Developer'},{value:'broker',label:'🤝 وسيط / Broker'}]} />
+        <F label="الإنفاق الإعلاني/شهر (EGP)" labelEn="Monthly Ad Spend" type="number" value={d.adSpend} onChange={v=>f('adSpend',v)} placeholder="150,000" required />
       </div>
-      <div>
-        <SectionTitle>مؤشرات الأداء الحالية</SectionTitle>
-        <div className="grid grid-cols-3 gap-3">
-          <Field label="تكلفة العميل CPL (EGP)" type="number" value={d.cpl} onChange={v=>f('cpl',v)} placeholder="مثال: 950" required />
-          <Field label="عدد العملاء/شهر" type="number" value={d.leads} onChange={v=>f('leads',v)} placeholder="مثال: 158" />
-          <Field label="معدل العائد ROAS" type="number" value={d.roas} onChange={v=>f('roas',v)} placeholder="مثال: 2.1" />
-        </div>
+      <SecTitle ar="مؤشرات الأداء" en="Performance KPIs" />
+      <div className="ei-field-grid-3" style={{marginBottom:10}}>
+        <F label="CPL الحالي (EGP)" labelEn="Current CPL" type="number" value={d.cpl} onChange={v=>f('cpl',v)} placeholder="950" required />
+        <F label="عدد العملاء/شهر" labelEn="Monthly Leads" type="number" value={d.leads} onChange={v=>f('leads',v)} placeholder="158" />
+        <F label="معدل العائد ROAS" labelEn="ROAS" type="number" value={d.roas} onChange={v=>f('roas',v)} placeholder="2.1" />
       </div>
-      <OptionalBox title="توزيع الإنفاق على القنوات">
-        <Field label="إنفاق Meta (EGP)" type="number" value={d.metaSpend} onChange={v=>f('metaSpend',v)} placeholder="مثال: 90,000" />
-        <Field label="إنفاق Google (EGP)" type="number" value={d.googleSpend} onChange={v=>f('googleSpend',v)} placeholder="مثال: 45,000" />
-        <Field label="إنفاق TikTok (EGP)" type="number" value={d.tiktokSpend} onChange={v=>f('tiktokSpend',v)} placeholder="مثال: 15,000" />
-      </OptionalBox>
-      <SubmitBtn loading={loading} />
+      <OptBox ar="توزيع الإنفاق" en="Channel Spend Breakdown">
+        <F label="إنفاق Meta (EGP)" labelEn="Meta Spend" type="number" value={d.metaSpend} onChange={v=>f('metaSpend',v)} placeholder="90,000" />
+        <F label="إنفاق Google (EGP)" labelEn="Google Spend" type="number" value={d.googleSpend} onChange={v=>f('googleSpend',v)} placeholder="45,000" />
+        <F label="إنفاق TikTok (EGP)" labelEn="TikTok Spend" type="number" value={d.tiktokSpend} onChange={v=>f('tiktokSpend',v)} placeholder="15,000" />
+      </OptBox>
+      <SubmitBtn loading={loading} ar="توليد تقرير الأداء" en="Generate ROI Audit" />
     </form>
   )
 }
-
-// ── MARKET ENTRY FORM ────────────────────────────────────────────
 
 function MarketEntryForm({ onSubmit, loading }:{ onSubmit:(d:Record<string,string>)=>void; loading:boolean }) {
-  const [d, setD] = useState<Record<string,string>>({
-    companyName:'', targetCity:'', clientType:'developer',
-    budget:'', timeline:'6 أشهر'
-  })
+  const [d, setD] = useState<Record<string,string>>({ companyName:'', targetCity:'', clientType:'developer', budget:'', timeline:'6 أشهر' })
   const f=(k:string,v:string)=>setD(p=>({...p,[k]:v}))
   return (
-    <form onSubmit={e=>{e.preventDefault();onSubmit(d)}} className="space-y-5">
-      <div>
-        <SectionTitle>بيانات الشركة</SectionTitle>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="اسم الشركة" value={d.companyName} onChange={v=>f('companyName',v)} placeholder="مثال: XYZ Properties" required />
-          <Select label="السوق المستهدف" value={d.targetCity} onChange={v=>f('targetCity',v)} required options={CITIES.map(c=>({value:c,label:c}))} />
-          <Select label="نوع الشركة" value={d.clientType} onChange={v=>f('clientType',v)} required
-            options={[{value:'developer',label:'🏗️ مطور عقاري'},{value:'broker',label:'🤝 وسيط / بروكر'}]} />
-          <Field label="ميزانية التسويق الشهرية (EGP)" type="number" value={d.budget} onChange={v=>f('budget',v)} placeholder="مثال: 80,000" required />
-        </div>
+    <form onSubmit={e=>{e.preventDefault();onSubmit(d)}}>
+      <SecTitle ar="بيانات الشركة" en="Company Info" />
+      <div className="ei-field-grid-2" style={{marginBottom:10}}>
+        <F label="اسم الشركة" labelEn="Company Name" value={d.companyName} onChange={v=>f('companyName',v)} placeholder="XYZ Properties" required />
+        <Sel label="السوق المستهدف" labelEn="Target Market" value={d.targetCity} onChange={v=>f('targetCity',v)} required options={CITIES.map(c=>({value:c,label:c}))} />
+        <Sel label="نوع الشركة" labelEn="Company Type" value={d.clientType} onChange={v=>f('clientType',v)} required options={[{value:'developer',label:'🏗️ مطور عقاري / Developer'},{value:'broker',label:'🤝 وسيط / Broker'}]} />
+        <F label="الميزانية الشهرية (EGP)" labelEn="Monthly Budget" type="number" value={d.budget} onChange={v=>f('budget',v)} placeholder="80,000" required />
       </div>
-      <div>
-        <SectionTitle>الإطار الزمني</SectionTitle>
-        <Select label="مدة الدخول للسوق" value={d.timeline} onChange={v=>f('timeline',v)}
-          options={[
-            {value:'3 أشهر',label:'⚡ 3 أشهر — دخول سريع'},
-            {value:'6 أشهر',label:'📈 6 أشهر — دخول متوازن'},
-            {value:'12 شهر',label:'🎯 12 شهر — دخول استراتيجي'},
-            {value:'18+ شهر',label:'🏗️ 18+ شهر — بناء طويل المدى'},
-          ]} />
-      </div>
-      <SubmitBtn loading={loading} />
+      <Sel label="الإطار الزمني / Timeline" value={d.timeline} onChange={v=>f('timeline',v)} options={[
+        {value:'3 أشهر',label:'⚡ 3 أشهر / 3 Months — Fast Entry'},
+        {value:'6 أشهر',label:'📈 6 أشهر / 6 Months — Balanced'},
+        {value:'12 شهر',label:'🎯 12 شهر / 12 Months — Strategic'},
+        {value:'18+ شهر',label:'🏗️ 18+ شهر / 18+ Months — Long-Term'},
+      ]} />
+      <SubmitBtn loading={loading} ar="توليد تقرير دخول السوق" en="Generate Market Entry Report" />
     </form>
   )
 }
-
-// ── LEAD GEN FORM ────────────────────────────────────────────────
 
 function LeadGenForm({ onSubmit, loading }:{ onSubmit:(d:Record<string,string>)=>void; loading:boolean }) {
   const [d, setD] = useState<Record<string,string>>({
-    companyName:'', city:'', clientType:'developer',
-    currentLeads:'', qualifiedPct:'', adSpend:'',
-    cpl:'', avgDealValue:'', salesCycle:'90'
+    companyName:'', city:'', clientType:'developer', currentLeads:'', qualifiedPct:'',
+    adSpend:'', cpl:'', avgDealValue:'', salesCycle:'90'
   })
   const f=(k:string,v:string)=>setD(p=>({...p,[k]:v}))
   return (
-    <form onSubmit={e=>{e.preventDefault();onSubmit(d)}} className="space-y-5">
-      <div>
-        <SectionTitle>بيانات الشركة</SectionTitle>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="اسم الشركة" value={d.companyName} onChange={v=>f('companyName',v)} placeholder="مثال: ABC Brokers" required />
-          <Select label="المدينة" value={d.city} onChange={v=>f('city',v)} required options={CITIES.map(c=>({value:c,label:c}))} />
-          <Select label="نوع العميل" value={d.clientType} onChange={v=>f('clientType',v)} required
-            options={[{value:'developer',label:'🏗️ مطور عقاري'},{value:'broker',label:'🤝 وسيط / بروكر'}]} />
-          <Field label="عدد العملاء المحتملين/شهر" type="number" value={d.currentLeads} onChange={v=>f('currentLeads',v)} placeholder="مثال: 200" required />
-        </div>
+    <form onSubmit={e=>{e.preventDefault();onSubmit(d)}}>
+      <SecTitle ar="بيانات الشركة" en="Company Info" />
+      <div className="ei-field-grid-2" style={{marginBottom:10}}>
+        <F label="اسم الشركة" labelEn="Company Name" value={d.companyName} onChange={v=>f('companyName',v)} placeholder="ABC Brokers" required />
+        <Sel label="المدينة" labelEn="City" value={d.city} onChange={v=>f('city',v)} required options={CITIES.map(c=>({value:c,label:c}))} />
+        <Sel label="نوع العميل" labelEn="Client Type" value={d.clientType} onChange={v=>f('clientType',v)} required options={[{value:'developer',label:'🏗️ مطور عقاري / Developer'},{value:'broker',label:'🤝 وسيط / Broker'}]} />
+        <F label="عدد العملاء المحتملين/شهر" labelEn="Monthly Leads" type="number" value={d.currentLeads} onChange={v=>f('currentLeads',v)} placeholder="200" required />
       </div>
-      <div>
-        <SectionTitle>جودة العملاء الحالية</SectionTitle>
-        <div className="grid grid-cols-3 gap-3">
-          <Field label="نسبة العملاء المؤهلين %" type="number" value={d.qualifiedPct} onChange={v=>f('qualifiedPct',v)} placeholder="مثال: 15" required hint="من يكملون رحلة الشراء" />
-          <Field label="دورة المبيعات (أيام)" type="number" value={d.salesCycle} onChange={v=>f('salesCycle',v)} placeholder="90" />
-          <Field label="متوسط قيمة الصفقة (EGP)" type="number" value={d.avgDealValue} onChange={v=>f('avgDealValue',v)} placeholder="مثال: 3,000,000" />
-        </div>
+      <SecTitle ar="جودة العملاء الحالية" en="Current Lead Quality" />
+      <div className="ei-field-grid-3" style={{marginBottom:10}}>
+        <F label="نسبة العملاء المؤهلين %" labelEn="Qualified Rate %" type="number" value={d.qualifiedPct} onChange={v=>f('qualifiedPct',v)} placeholder="15" required />
+        <F label="دورة المبيعات (أيام)" labelEn="Sales Cycle (days)" type="number" value={d.salesCycle} onChange={v=>f('salesCycle',v)} placeholder="90" />
+        <F label="متوسط قيمة الصفقة (EGP)" labelEn="Avg Deal Value" type="number" value={d.avgDealValue} onChange={v=>f('avgDealValue',v)} placeholder="3,000,000" />
       </div>
-      <OptionalBox title="بيانات الإنفاق الإعلاني">
-        <Field label="الإنفاق الإعلاني/شهر (EGP)" type="number" value={d.adSpend} onChange={v=>f('adSpend',v)} placeholder="مثال: 120,000" />
-        <Field label="تكلفة العميل CPL (EGP)" type="number" value={d.cpl} onChange={v=>f('cpl',v)} placeholder="مثال: 600" />
-      </OptionalBox>
-      <SubmitBtn loading={loading} />
+      <OptBox ar="بيانات الإنفاق الإعلاني" en="Ad Spend Data">
+        <F label="الإنفاق الإعلاني/شهر (EGP)" labelEn="Monthly Ad Spend" type="number" value={d.adSpend} onChange={v=>f('adSpend',v)} placeholder="120,000" />
+        <F label="CPL الحالي (EGP)" labelEn="Current CPL" type="number" value={d.cpl} onChange={v=>f('cpl',v)} placeholder="600" />
+      </OptBox>
+      <SubmitBtn loading={loading} ar="توليد تقرير العملاء" en="Generate Lead Gen Report" />
     </form>
   )
 }
-
-// ── FULL ANALYSIS FORM ───────────────────────────────────────────
 
 function FullAnalysisForm({ onSubmit, loading }:{ onSubmit:(d:Record<string,string>)=>void; loading:boolean }) {
   const [d, setD] = useState<Record<string,string>>({
-    companyName:'', city:'', clientType:'developer',
-    website:'', fbPage:'', igPage:'', ttPage:'',
-    adSpend:'', cpl:'', roas:'', leads:'',
-    revenue:'', competitors:''
+    companyName:'', city:'', clientType:'developer', website:'', fbPage:'', igPage:'', ttPage:'',
+    adSpend:'', cpl:'', roas:'', leads:'', revenue:'', competitors:''
   })
   const f=(k:string,v:string)=>setD(p=>({...p,[k]:v}))
   return (
-    <form onSubmit={e=>{e.preventDefault();onSubmit(d)}} className="space-y-5">
-      <div>
-        <SectionTitle>بيانات الشركة</SectionTitle>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="اسم الشركة" value={d.companyName} onChange={v=>f('companyName',v)} placeholder="مثال: Palm Hills Developments" required />
-          <Select label="المدينة" value={d.city} onChange={v=>f('city',v)} required options={CITIES.map(c=>({value:c,label:c}))} />
-          <Select label="نوع الشركة" value={d.clientType} onChange={v=>f('clientType',v)} required
-            options={[{value:'developer',label:'🏗️ مطور عقاري'},{value:'broker',label:'🤝 وسيط / بروكر'}]} />
-          <Field label="المنافسون الرئيسيون" value={d.competitors} onChange={v=>f('competitors',v)} placeholder="مثال: SODIC، Emaar، Ora" />
-        </div>
+    <form onSubmit={e=>{e.preventDefault();onSubmit(d)}}>
+      <SecTitle ar="بيانات الشركة" en="Company Info" />
+      <div className="ei-field-grid-2" style={{marginBottom:10}}>
+        <F label="اسم الشركة" labelEn="Company Name" value={d.companyName} onChange={v=>f('companyName',v)} placeholder="Palm Hills Developments" required />
+        <Sel label="المدينة" labelEn="City" value={d.city} onChange={v=>f('city',v)} required options={CITIES.map(c=>({value:c,label:c}))} />
+        <Sel label="نوع الشركة" labelEn="Company Type" value={d.clientType} onChange={v=>f('clientType',v)} required options={[{value:'developer',label:'🏗️ مطور عقاري / Developer'},{value:'broker',label:'🤝 وسيط / Broker'}]} />
+        <F label="المنافسون الرئيسيون" labelEn="Competitors" value={d.competitors} onChange={v=>f('competitors',v)} placeholder="SODIC، Emaar، Ora" />
       </div>
-      <OptionalBox title="روابط الحضور الرقمي">
-        <Field label="الموقع الإلكتروني" value={d.website} onChange={v=>f('website',v)} placeholder="https://company.com" />
-        <Field label="Facebook Page" value={d.fbPage} onChange={v=>f('fbPage',v)} placeholder="facebook.com/page" />
-        <Field label="Instagram" value={d.igPage} onChange={v=>f('igPage',v)} placeholder="instagram.com/account" />
-        <Field label="TikTok" value={d.ttPage} onChange={v=>f('ttPage',v)} placeholder="tiktok.com/@account" />
-      </OptionalBox>
-      <OptionalBox title="بيانات الحملات الإعلانية">
-        <Field label="إنفاق إعلاني/شهر (EGP)" type="number" value={d.adSpend} onChange={v=>f('adSpend',v)} placeholder="مثال: 200,000" />
-        <Field label="تكلفة العميل CPL (EGP)" type="number" value={d.cpl} onChange={v=>f('cpl',v)} placeholder="مثال: 800" />
-        <Field label="معدل العائد ROAS" type="number" value={d.roas} onChange={v=>f('roas',v)} placeholder="مثال: 2.5" />
-        <Field label="عدد العملاء/شهر" type="number" value={d.leads} onChange={v=>f('leads',v)} placeholder="مثال: 250" />
-        <Field label="الإيرادات الشهرية (EGP)" type="number" value={d.revenue} onChange={v=>f('revenue',v)} placeholder="مثال: 5,000,000" />
-      </OptionalBox>
-      <SubmitBtn loading={loading} />
+      <OptBox ar="روابط الحضور الرقمي" en="Digital Presence Links">
+        <F label="الموقع الإلكتروني" labelEn="Website" value={d.website} onChange={v=>f('website',v)} placeholder="https://company.com" />
+        <F label="Facebook Page" value={d.fbPage} onChange={v=>f('fbPage',v)} placeholder="facebook.com/page" />
+        <F label="Instagram" value={d.igPage} onChange={v=>f('igPage',v)} placeholder="instagram.com/account" />
+        <F label="TikTok" value={d.ttPage} onChange={v=>f('ttPage',v)} placeholder="tiktok.com/@account" />
+      </OptBox>
+      <OptBox ar="بيانات الحملات الإعلانية" en="Campaign Performance Data">
+        <F label="إنفاق إعلاني/شهر (EGP)" labelEn="Monthly Ad Spend" type="number" value={d.adSpend} onChange={v=>f('adSpend',v)} placeholder="200,000" />
+        <F label="CPL الحالي (EGP)" labelEn="Current CPL" type="number" value={d.cpl} onChange={v=>f('cpl',v)} placeholder="800" />
+        <F label="معدل العائد ROAS" labelEn="ROAS" type="number" value={d.roas} onChange={v=>f('roas',v)} placeholder="2.5" />
+        <F label="عدد العملاء/شهر" labelEn="Monthly Leads" type="number" value={d.leads} onChange={v=>f('leads',v)} placeholder="250" />
+        <F label="الإيرادات الشهرية (EGP)" labelEn="Monthly Revenue" type="number" value={d.revenue} onChange={v=>f('revenue',v)} placeholder="5,000,000" />
+      </OptBox>
+      <SubmitBtn loading={loading} ar="توليد التحليل الشامل" en="Generate Full Analysis" />
     </form>
   )
 }
 
-// ── ARABIC LABEL MAP ─────────────────────────────────────────────
-
-const AR_LABELS: Record<string,string> = {
-  total_revenue: 'إجمالي الإيرادات',
-  total_cost: 'إجمالي التكاليف',
-  gross_profit: 'إجمالي الربح',
-  net_profit: 'صافي الربح',
-  gross_margin_pct: 'هامش الربح الإجمالي',
-  net_margin_pct: 'هامش الربح الصافي',
-  total_investment: 'إجمالي الاستثمار',
-  roi_pct: 'عائد الاستثمار ROI',
-  payback_months: 'فترة الاسترداد',
-  npv_assessment: 'تقييم صافي القيمة الحالية NPV',
-  irr_estimate: 'معدل العائد الداخلي IRR',
-  current_cpl: 'تكلفة العميل الحالية CPL',
-  benchmark_cpl: 'المعيار CPL',
-  cpl_gap_pct: 'الفجوة عن المعيار',
-  cpl_status: 'تقييم CPL',
-  monthly_leads: 'عدد العملاء/شهر',
-  expected_leads_at_benchmark: 'العملاء المتوقعون عند المعيار',
-  leads_gap: 'فجوة العملاء الشهرية',
-  roas: 'معدل العائد ROAS',
-  roas_benchmark: 'معيار ROAS',
-  roas_status: 'تقييم ROAS',
-  wasted_budget_estimate: 'الميزانية المهدرة (تقدير)',
-  monthly_leads_gen: 'العملاء المحتملون/شهر',
-  qualified_leads: 'العملاء المؤهلون',
-  qualification_rate: 'معدل التأهيل',
-  qualification_benchmark: 'معيار التأهيل',
-  qualification_verdict: 'تقييم التأهيل',
-  estimated_monthly_deals: 'الصفقات الشهرية المتوقعة',
-  estimated_monthly_revenue: 'الإيرادات الشهرية المتوقعة',
-  cac_current: 'تكلفة اكتساب العميل CAC',
-  cac_benchmark: 'معيار CAC',
-  ltv_cac_ratio: 'نسبة LTV/CAC',
+// ── LABEL HELPER ─────────────────────────────────────────────────
+function lbl(key: string, lang: 'ar'|'en'): string {
+  return LABELS[key]?.[lang] || key.replace(/_/g,' ')
 }
 
-function arLabel(key: string): string {
-  return AR_LABELS[key] || key.replace(/_/g,' ')
-}
-
-// ── EXPORT FUNCTIONS ─────────────────────────────────────────────
-
-function exportToPDF(reportTitle: string) {
-  const printStyle = document.createElement('style')
-  printStyle.id = 'print-style'
-  printStyle.textContent = `
+// ── EXPORT ───────────────────────────────────────────────────────
+function exportPDF(title: string) {
+  const style = document.createElement('style')
+  style.id = '__ei_print'
+  style.textContent = `
     @media print {
-      body > *:not(#report-print-area) { display: none !important; }
-      #report-print-area { display: block !important; position: fixed; top: 0; left: 0; width: 100%; }
-      @page { margin: 15mm; size: A4; }
+      body > * { visibility: hidden; }
+      #ei-report-output, #ei-report-output * { visibility: visible; }
+      #ei-report-output { position: fixed; top: 0; left: 0; width: 100%; padding: 20px; }
+      .ei-report-actions { display: none !important; }
+      .ei-report-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      @page { margin: 15mm; size: A4 portrait; }
     }
   `
-  document.head.appendChild(printStyle)
-  document.title = reportTitle
+  document.head.appendChild(style)
+  const prev = document.title
+  document.title = title
   window.print()
   setTimeout(() => {
-    const el = document.getElementById('print-style')
-    if (el) document.head.removeChild(el)
-    document.title = 'Eunoia Intelligence'
-  }, 1000)
+    document.title = prev
+    const s = document.getElementById('__ei_print')
+    if (s) s.remove()
+  }, 1500)
 }
 
-function exportToExcel(report: Record<string,unknown>, reportTitle: string) {
+function exportCSV(report: Record<string,unknown>, title: string, lang: 'ar'|'en') {
   const rows: string[][] = [
-    ['تقرير Eunoia Zones Intelligence'],
-    [reportTitle],
-    ['تاريخ التقرير', new Date().toLocaleDateString('ar-EG')],
+    ['Eunoia Zones Intelligence Platform'],
+    [title],
+    ['Date / التاريخ', new Date().toLocaleDateString('en-EG')],
     [],
   ]
-
   function flatten(obj: Record<string,unknown>, prefix = '') {
     for (const [k, v] of Object.entries(obj)) {
-      const label = prefix ? `${prefix} — ${arLabel(k)}` : arLabel(k)
+      const l = prefix ? `${prefix} > ${lbl(k,'ar')} / ${lbl(k,'en')}` : `${lbl(k,'ar')} / ${lbl(k,'en')}`
       if (v === null || v === undefined) continue
       if (typeof v === 'object' && !Array.isArray(v)) {
-        flatten(v as Record<string,unknown>, label)
+        flatten(v as Record<string,unknown>, l)
       } else if (Array.isArray(v)) {
-        rows.push([label])
+        rows.push([l])
         v.forEach((item, i) => {
-          if (typeof item === 'object' && item !== null) {
-            flatten(item as Record<string,unknown>, `${label} ${i+1}`)
-          } else {
-            rows.push([`  ${i+1}`, String(item)])
-          }
+          if (typeof item === 'object' && item !== null) flatten(item as Record<string,unknown>, `${l} ${i+1}`)
+          else rows.push([`  ${i+1}`, String(item)])
         })
       } else {
-        rows.push([label, String(v)])
+        rows.push([l, String(v)])
       }
     }
   }
-
   flatten(report)
-
-  const csvContent = rows.map(row =>
-    row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')
-  ).join('\n')
-
-  const bom = '﻿'
-  const blob = new Blob([bom + csvContent], { type: 'text/csv;charset=utf-8;' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `${reportTitle}-${new Date().toISOString().split('T')[0]}.csv`
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
-  URL.revokeObjectURL(url)
+  const csv = '﻿' + rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n')
+  const a = Object.assign(document.createElement('a'), {
+    href: URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8;'})),
+    download: `${title}-${new Date().toISOString().split('T')[0]}.csv`
+  })
+  document.body.appendChild(a); a.click(); document.body.removeChild(a)
+  void lang
 }
 
 // ── REPORT RENDERER ──────────────────────────────────────────────
 
-function KVGrid({ data }: { data: Record<string,string> }) {
-  const entries = Object.entries(data).filter(([,v]) => v)
+function KV({ data, lang }: { data: Record<string,string>; lang:'ar'|'en' }) {
+  const entries = Object.entries(data).filter(([,v]) => v && v !== 'undefined')
   if (!entries.length) return null
   return (
-    <div className="grid grid-cols-2 gap-2">
+    <div className="ei-kv-grid">
       {entries.map(([k, v]) => (
-        <div key={k} className="bg-gray-50 rounded-lg p-3 border border-gray-100">
-          <div className="text-xs text-gray-500 mb-1">{arLabel(k)}</div>
-          <div className="font-bold text-purple-900 text-sm leading-snug">{v}</div>
+        <div key={k} className="ei-kv-item">
+          <div className="ei-kv-label">{lbl(k, lang)}</div>
+          <div className="ei-kv-value">{v}</div>
         </div>
       ))}
     </div>
   )
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Sec({ titleAr, titleEn, children }: { titleAr:string; titleEn:string; children:React.ReactNode }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-      <div className="bg-gray-50 border-b border-gray-100 px-4 py-2.5">
-        <div className="text-xs font-black text-gray-600 uppercase tracking-wide">{title}</div>
+    <div className="ei-section">
+      <div className="ei-section-head">
+        <div className="ei-section-head-title">{titleAr} <span style={{fontWeight:400,color:'#B0A9A2',textTransform:'none',letterSpacing:0}}>/ {titleEn}</span></div>
       </div>
-      <div className="p-4">{children}</div>
+      <div className="ei-section-body">{children}</div>
     </div>
   )
 }
 
-function ReportView({ report, onBack, onRegen }: {
-  report: Record<string,unknown>
-  onBack: () => void
-  onRegen: () => void
+function ReportView({ report, lang, onBack, onRegen }:{
+  report:Record<string,unknown>; lang:'ar'|'en'; onBack:()=>void; onRegen:()=>void
 }) {
-  const conf = report.confidence_score as {pct?:number;label?:string;reason?:string} | undefined
-  const confPct = conf?.pct ?? 0
-  const verdict = report.verdict as string | undefined
-  const verdictColor = verdict === 'مجدي' ? '#16a34a' : verdict === 'مجدي مشروط' ? '#d97706' : '#dc2626'
-  const reportTitle = `${report.report_type as string} — ${(report.company || report.project_name || report.target_market || '') as string}`
+  const conf = report.confidence_score as {pct?:number;label?:string;reason?:string}|undefined
+  const pct = conf?.pct ?? 0
+  const pctColor = pct >= 80 ? '#10B981' : pct >= 65 ? '#F0A020' : '#9A9090'
+  const confBadge = pct >= 80
+    ? (lang==='ar' ? '🎯 دقة عالية' : '🎯 High Accuracy')
+    : pct >= 65
+    ? (lang==='ar' ? '📊 دقة جيدة' : '📊 Good Accuracy')
+    : (lang==='ar' ? '⚠️ بيانات محدودة' : '⚠️ Limited Data')
+  const verdict = report.verdict as string|undefined
+  const verdictColor = verdict?.includes('مجدي') && !verdict?.includes('مشروط') ? '#0D9488'
+    : verdict?.includes('مشروط') ? '#F0A020'
+    : verdict ? '#D4183D'
+    : '#7C3AED'
+  const title = `${report.report_type as string} — ${(report.company||report.project_name||report.target_market||'') as string}`
 
   return (
-    <div dir="rtl" className="space-y-4" id="report-print-area">
-      {/* Actions */}
-      <div className="flex gap-2">
-        <button onClick={onBack}
-          className="flex-1 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-50 transition-colors">
-          ← تقرير جديد
-        </button>
-        <button onClick={onRegen}
-          className="flex-1 py-2.5 bg-white border border-purple-200 text-purple-800 rounded-xl text-sm font-bold hover:bg-purple-50 transition-colors">
-          🔄 إعادة التوليد
-        </button>
-        <button onClick={() => exportToPDF(reportTitle)}
-          className="flex-1 py-2.5 bg-red-600 text-white rounded-xl text-sm font-bold hover:opacity-90 transition-colors">
-          📄 PDF
-        </button>
-        <button onClick={() => exportToExcel(report, reportTitle)}
-          className="flex-1 py-2.5 bg-green-600 text-white rounded-xl text-sm font-bold hover:opacity-90 transition-colors">
-          📊 Excel
-        </button>
+    <div className="ei-report" id="ei-report-output">
+      {/* Action buttons */}
+      <div className="ei-report-actions">
+        <button onClick={onBack} className="ei-action-btn">&#8592; {lang==='ar'?'تقرير جديد':'New Report'}</button>
+        <button onClick={onRegen} className="ei-action-btn">&#x1F504; {lang==='ar'?'إعادة التوليد':'Regenerate'}</button>
+        <button onClick={()=>exportCSV(report, title, lang)} className="ei-action-btn green">&#x1F4CA; Excel</button>
+        <button onClick={()=>exportPDF(title)} className="ei-action-btn red">&#x1F5A8;&#xFE0F; {lang==='ar'?'طباعة / PDF':'Print / PDF'}</button>
       </div>
 
-      {/* Header */}
-      <div className="bg-gradient-to-br from-purple-950 to-purple-700 rounded-2xl p-5 text-white">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              <div className="text-xs font-bold tracking-widest text-white/40">EUNOIA ZONES · INTELLIGENCE PLATFORM</div>
-              <span className="text-xs font-black px-2 py-0.5 rounded-full bg-white/15 text-white/80">
-                {confPct >= 80 ? '🎯 دقة عالية' : confPct >= 65 ? '📊 دقة جيدة' : '⚠️ بيانات محدودة'}
-              </span>
-            </div>
-            <h2 className="text-xl font-black leading-snug">{report.report_type as string}</h2>
-            <div className="text-white/60 text-sm mt-1">
-              {(report.company || report.project_name || report.target_market || '') as string}
-              {!!((report.city || '') as string) && <span className="mr-2 text-white/40">· {(report.city || '') as string}</span>}
+      {/* Report header */}
+      <div className="ei-report-header">
+        <div className="ei-rh-top">
+          <div>
+            <div className="ei-rh-tag">EUNOIA ZONES · INTELLIGENCE PLATFORM</div>
+            <div className="ei-rh-title">{report.report_type as string}</div>
+            <div className="ei-rh-company">
+              {(report.company||report.project_name||report.target_market||'') as string}
+              {(report.city as string) && <span style={{color:'rgba(255,255,255,0.3)',margin:'0 6px'}}>·</span>}
+              {report.city as string}
             </div>
           </div>
-          <div className="text-left mr-4">
-            <div className="text-4xl font-black leading-none" style={{color: confPct >= 75 ? '#4ade80' : confPct >= 52 ? '#fcd34d' : '#f87171'}}>{confPct}%</div>
-            <div className="text-xs text-white/50 mt-0.5">دقة التقرير</div>
+          <div className="ei-rh-conf">
+            <div className="ei-rh-conf-pct" style={{color:pctColor}}>{pct}%</div>
+            <div className="ei-rh-conf-label">{lang==='ar'?'دقة التقرير':'Accuracy'}</div>
+            <div className="ei-rh-conf-badge">{confBadge}</div>
           </div>
         </div>
-        {conf?.reason && <div className="text-xs text-white/50 bg-white/10 rounded-lg p-2 mt-3">{conf.reason}</div>}
+        {conf?.reason && <div className="ei-rh-reason">{conf.reason}</div>}
       </div>
 
       {/* Verdict */}
-      {!!verdict && (
-        <div className="rounded-xl p-4 border-2 flex items-center gap-3"
-          style={{borderColor: verdictColor, background: verdictColor + '12'}}>
-          <span className="text-3xl flex-shrink-0">
-            {verdict === 'مجدي' ? '✅' : verdict === 'مجدي مشروط' ? '⚠️' : '❌'}
-          </span>
+      {verdict && (
+        <div className="ei-verdict" style={{borderColor:verdictColor, background:verdictColor+'14'}}>
+          <div className="ei-verdict-icon">
+            {verdict.includes('مجدي') && !verdict.includes('مشروط') ? '✅' : verdict.includes('مشروط') ? '⚠️' : '❌'}
+          </div>
           <div>
-            <div className="font-black text-xl" style={{color: verdictColor}}>{verdict}</div>
-            {!!(report.verdict_reason) && <div className="text-sm text-gray-700 mt-0.5 leading-relaxed">{report.verdict_reason as string}</div>}
+            <div className="ei-verdict-text" style={{color:verdictColor}}>{verdict}</div>
+            {!!(report.verdict_reason) && <div className="ei-verdict-reason" style={{color:'#6B6560'}}>{report.verdict_reason as string}</div>}
           </div>
         </div>
       )}
 
-      {/* Executive summary */}
+      {/* Executive Summary */}
       {!!(report.executive_summary) && (
-        <Section title="الملخص التنفيذي">
-          <p className="text-gray-800 text-sm leading-relaxed">{report.executive_summary as string}</p>
-        </Section>
+        <Sec titleAr="الملخص التنفيذي" titleEn="Executive Summary">
+          <p style={{fontSize:13,color:'#1A1018',lineHeight:1.7,margin:0}}>{report.executive_summary as string}</p>
+        </Sec>
       )}
 
       {/* Financials */}
       {!!(report.financials) && (
-        <Section title="المؤشرات المالية الرئيسية">
-          <KVGrid data={report.financials as Record<string,string>} />
-        </Section>
+        <Sec titleAr="المؤشرات المالية" titleEn="Financial KPIs">
+          <KV data={report.financials as Record<string,string>} lang={lang} />
+        </Sec>
+      )}
+
+      {/* Cost Breakdown */}
+      {!!(report.cost_breakdown) && (
+        <Sec titleAr="تفصيل التكاليف" titleEn="Cost Breakdown">
+          <KV data={report.cost_breakdown as Record<string,string>} lang={lang} />
+        </Sec>
       )}
 
       {/* Scenarios */}
       {!!(report.scenarios) && (() => {
         const sc = report.scenarios as Record<string,Record<string,string>>
+        const scenarios = [
+          {key:'optimistic', ar:'متفائل', en:'Optimistic', color:'#0D9488', bg:'#E6FDF9'},
+          {key:'base',       ar:'قاعدي',  en:'Base Case',  color:'#F0A020', bg:'#FEF8EA'},
+          {key:'pessimistic',ar:'متشائم', en:'Pessimistic',color:'#D4183D', bg:'#FCE8EC'},
+        ]
         return (
-          <Section title="السيناريوهات الثلاثة">
-            <div className="grid grid-cols-3 gap-3">
-              {([
-                {key:'optimistic', label:'متفائل 🌟', color:'#16a34a', bg:'#f0fdf4'},
-                {key:'base',       label:'قاعدي 📊',  color:'#d97706', bg:'#fffbeb'},
-                {key:'pessimistic',label:'متشائم ⚠️', color:'#dc2626', bg:'#fef2f2'},
-              ] as const).map(s => (
-                <div key={s.key} className="rounded-xl p-3 text-center border"
-                  style={{background: s.bg, borderColor: s.color + '40'}}>
-                  <div className="text-xs font-bold mb-2" style={{color: s.color}}>{s.label}</div>
-                  <div className="font-black text-2xl mb-0.5" style={{color: s.color}}>{sc[s.key]?.roi_pct ?? '—'}</div>
-                  <div className="text-xs text-gray-500">ROI</div>
-                  <div className="text-xs text-gray-600 mt-1">⏱ {sc[s.key]?.payback_months ?? '—'} شهر</div>
-                  {sc[s.key]?.net_profit && <div className="text-xs text-gray-500 mt-0.5">{sc[s.key].net_profit}</div>}
+          <Sec titleAr="السيناريوهات الثلاثة" titleEn="Three Scenarios">
+            <div className="ei-scenario-grid">
+              {scenarios.map(s => (
+                <div key={s.key} className="ei-scenario-card" style={{background:s.bg,borderColor:s.color+'50'}}>
+                  <div className="ei-scenario-label" style={{color:s.color}}>{s.ar} / {s.en}</div>
+                  <div className="ei-scenario-roi" style={{color:s.color}}>{sc[s.key]?.roi_pct ?? '—'}</div>
+                  <div style={{fontSize:9,color:'#9A9090',marginTop:2}}>ROI</div>
+                  {sc[s.key]?.roi_annual_pct && <div style={{fontSize:10,color:s.color,fontWeight:700}}>{sc[s.key].roi_annual_pct} / yr</div>}
+                  <div className="ei-scenario-sub">&#x23F1; {sc[s.key]?.payback_months ?? '—'}</div>
+                  {sc[s.key]?.net_profit && <div style={{fontSize:10,color:'#6B6560',marginTop:2}}>{sc[s.key].net_profit}</div>}
                 </div>
               ))}
             </div>
-          </Section>
+          </Sec>
         )
       })()}
 
-      {/* Reality check */}
+      {/* Reality Check */}
       {!!(report.reality_check) && (() => {
         const rc = report.reality_check as Array<Record<string,string>>
         return (
-          <Section title="مقارنة افتراضاتك بالسوق">
-            <div className="space-y-2">
-              {rc.map((row, i) => {
-                const color = row.assessment === 'منطقي' ? '#16a34a' : row.assessment === 'متفائل' ? '#d97706' : '#dc2626'
-                return (
-                  <div key={i} className="flex items-center gap-3 py-2.5 border-b border-gray-100 last:border-0">
-                    <div className="flex-1">
-                      <div className="text-sm font-medium text-gray-800">{row.item}</div>
-                      <div className="text-xs text-gray-400 mt-0.5">افتراضك: <span className="font-bold text-gray-600">{row.your_value}</span> · السوق: <span className="font-bold text-gray-600">{row.market_benchmark}</span></div>
-                    </div>
-                    <div className="text-xs font-black px-3 py-1 rounded-full text-white" style={{background: color}}>
-                      {row.assessment}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </Section>
+          <Sec titleAr="مقارنة بالسوق" titleEn="Market Reality Check">
+            <table className="ei-reality-table">
+              <tbody>
+                {rc.map((row, i) => {
+                  const ac = row.assessment === 'منطقي' ? '#0D9488' : row.assessment === 'متفائل' ? '#F0A020' : '#D4183D'
+                  return (
+                    <tr key={i} className="ei-reality-row">
+                      <td style={{width:'40%'}}>
+                        <div className="ei-reality-item">{row.item}</div>
+                        <div className="ei-reality-vals">{lang==='ar'?'افتراضك':'Yours'}: {row.your_value} · {lang==='ar'?'السوق':'Market'}: {row.market_benchmark}</div>
+                      </td>
+                      <td style={{textAlign:'left'}}>
+                        <span className="ei-reality-badge" style={{background:ac}}>{row.assessment}</span>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </Sec>
         )
       })()}
 
       {/* KPI Scorecard */}
       {!!(report.kpi_scorecard) && (
-        <Section title="مؤشرات الأداء التسويقي">
-          <KVGrid data={report.kpi_scorecard as Record<string,string>} />
-        </Section>
+        <Sec titleAr="مؤشرات الأداء التسويقي" titleEn="Marketing Performance KPIs">
+          <KV data={report.kpi_scorecard as Record<string,string>} lang={lang} />
+        </Sec>
       )}
 
-      {/* Channel breakdown */}
-      {!!(report.channel_breakdown) && (() => {
-        const channels = report.channel_breakdown as Array<Record<string,string>>
-        return (
-          <Section title="تحليل القنوات الإعلانية">
-            <div className="space-y-3">
-              {channels.map((ch, i) => (
-                <div key={i} className="border border-gray-100 rounded-lg p-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="font-bold text-sm text-gray-900">{ch.channel}</div>
-                    <div className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                      ch.performance?.includes('أفضل') ? 'bg-green-100 text-green-700' :
-                      ch.performance?.includes('ضمن') ? 'bg-blue-100 text-blue-700' :
-                      'bg-red-100 text-red-700'
-                    }`}>{ch.performance}</div>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2 text-xs text-gray-600 mb-2">
-                    {ch.spend && <span>الإنفاق: <strong>{ch.spend}</strong></span>}
-                    {ch.benchmark_cpl && <span>معيار CPL: <strong>{ch.benchmark_cpl}</strong></span>}
-                    {ch.estimated_leads && <span>عملاء متوقعون: <strong>{ch.estimated_leads}</strong></span>}
-                  </div>
-                  {ch.recommendation && <div className="text-xs text-purple-700 bg-purple-50 rounded p-2">💡 {ch.recommendation}</div>}
-                </div>
-              ))}
-            </div>
-          </Section>
-        )
-      })()}
-
-      {/* Market scores */}
+      {/* Market Scores */}
       {!!(report.market_scores) && (() => {
         const ms = report.market_scores as Record<string,{score:number;max:number;label:string;reasoning:string}>
         return (
-          <Section title="تقييم السوق">
-            <div className="space-y-4">
-              {Object.values(ms).map((item, i) => (
-                <div key={i}>
-                  <div className="flex justify-between text-sm mb-1.5">
-                    <span className="font-bold text-gray-800">{item.label}</span>
-                    <span className="font-black text-purple-900">{item.score}<span className="text-gray-400 font-normal">/{item.max}</span></span>
-                  </div>
-                  <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
-                    <div className="h-2.5 rounded-full bg-gradient-to-l from-purple-600 to-purple-400 transition-all"
-                      style={{width: `${(item.score/item.max)*100}%`}} />
-                  </div>
-                  {item.reasoning && <div className="text-xs text-gray-500 mt-1">{item.reasoning}</div>}
+          <Sec titleAr="تقييم السوق" titleEn="Market Assessment">
+            {Object.values(ms).map((item, i) => (
+              <div key={i} className="ei-bar-row">
+                <div className="ei-bar-header">
+                  <span className="ei-bar-label">{item.label}</span>
+                  <span className="ei-bar-value" style={{color:'#4A1042'}}>{item.score}<span style={{color:'#9A9090',fontWeight:400}}>/{item.max}</span></span>
                 </div>
-              ))}
-            </div>
-          </Section>
+                <div className="ei-bar-track">
+                  <div className="ei-bar-fill" style={{width:`${(item.score/item.max)*100}%`,background:'linear-gradient(90deg,#4A1042,#7C3AED)'}} />
+                </div>
+                {item.reasoning && <div className="ei-bar-sub">{item.reasoning}</div>}
+              </div>
+            ))}
+          </Sec>
         )
       })()}
 
-      {/* Quick wins / optimizations */}
-      {!!(report.quick_wins || report.optimizations || report.improvements || report.immediate_actions) && (() => {
-        const items = (report.quick_wins || report.optimizations || report.improvements || report.immediate_actions) as Array<Record<string,string>>
+      {/* Score Breakdown */}
+      {!!(report.score_breakdown) && (() => {
+        const sb = report.score_breakdown as Record<string,{score:number;max:number;assessment:string}>
         return (
-          <Section title="⚡ الإجراءات الفورية">
-            <div className="space-y-3">
+          <Sec titleAr="تقييم الأداء التسويقي الشامل" titleEn="Marketing Score Breakdown">
+            {!!(report.marketing_score) && (
+              <div style={{textAlign:'center',padding:'12px 0 16px',borderBottom:'1px solid #E8E2DA',marginBottom:12}}>
+                <div style={{fontSize:48,fontWeight:900,color:'#4A1042',lineHeight:1}}>{report.marketing_score as number}</div>
+                <div style={{fontSize:11,color:'#9A9090',marginTop:4}}>{lang==='ar'?'نقاط التسويق الكلية / 100':'Overall Marketing Score / 100'}</div>
+              </div>
+            )}
+            {Object.entries(sb).map(([k, v], i) => (
+              <div key={i} className="ei-bar-row">
+                <div className="ei-bar-header">
+                  <span className="ei-bar-label">{lbl(k, lang)}</span>
+                  <span className="ei-bar-value" style={{color:'#4A1042'}}>{v.score}<span style={{color:'#9A9090',fontWeight:400}}>/{v.max}</span></span>
+                </div>
+                <div className="ei-bar-track">
+                  <div className="ei-bar-fill" style={{width:`${(v.score/v.max)*100}%`,background:'linear-gradient(90deg,#4A1042,#7C3AED)'}} />
+                </div>
+                {v.assessment && <div className="ei-bar-sub">{v.assessment}</div>}
+              </div>
+            ))}
+          </Sec>
+        )
+      })()}
+
+      {/* Risk Scorecard */}
+      {!!(report.risk_scorecard) && (() => {
+        const rs = report.risk_scorecard as {overall_risk:string;overall_score:number;dimensions:Array<{name:string;score:number;detail:string}>}
+        const rc2 = rs.overall_score > 60 ? '#D4183D' : rs.overall_score > 35 ? '#F0A020' : '#0D9488'
+        const rlabel = rs.overall_risk === 'Low'
+          ? (lang==='ar'?'مخاطر منخفضة ✅':'Low Risk ✅')
+          : rs.overall_risk === 'Medium'
+          ? (lang==='ar'?'مخاطر متوسطة ⚠️':'Medium Risk ⚠️')
+          : (lang==='ar'?'مخاطر عالية ❌':'High Risk ❌')
+        return (
+          <Sec titleAr="مؤشر المخاطر" titleEn="Risk Scorecard">
+            <div style={{display:'flex',alignItems:'center',gap:14,padding:'10px 0 16px',borderBottom:'1px solid #E8E2DA',marginBottom:12}}>
+              <div style={{fontSize:42,fontWeight:900,color:rc2,lineHeight:1}}>{rs.overall_score}</div>
+              <div>
+                <div style={{fontSize:15,fontWeight:800,color:rc2}}>{rlabel}</div>
+                <div style={{fontSize:11,color:'#9A9090',marginTop:2}}>{lang==='ar'?'من 100 — كلما ارتفع زاد الخطر':'Out of 100 — higher = more risk'}</div>
+              </div>
+            </div>
+            {(rs.dimensions||[]).map((dim, i) => {
+              const dc = dim.score > 60 ? '#D4183D' : dim.score > 35 ? '#F0A020' : '#0D9488'
+              return (
+                <div key={i} className="ei-bar-row">
+                  <div className="ei-bar-header">
+                    <span className="ei-bar-label">{dim.name}</span>
+                    <span className="ei-bar-value" style={{color:dc}}>{dim.score}/100</span>
+                  </div>
+                  <div className="ei-bar-track">
+                    <div className="ei-bar-fill" style={{width:`${dim.score}%`,background:dc}} />
+                  </div>
+                  {dim.detail && <div className="ei-bar-sub">{dim.detail}</div>}
+                </div>
+              )
+            })}
+          </Sec>
+        )
+      })()}
+
+      {/* Sensitivity Analysis */}
+      {!!(report.sensitivity_analysis) && (() => {
+        const sa = report.sensitivity_analysis as Array<Record<string,string>>
+        return (
+          <Sec titleAr="تحليل الحساسية" titleEn="Sensitivity Analysis">
+            {sa.map((row, i) => (
+              <div key={i} style={{borderBottom:'1px solid #F0E8DF',paddingBottom:10,marginBottom:10}}>
+                <div style={{display:'flex',justifyContent:'space-between',marginBottom:6}}>
+                  <span style={{fontSize:13,fontWeight:700,color:'#1A1018'}}>{row.variable}</span>
+                  <span className="ei-reality-badge" style={{background:row.sensitivity==='عالية'?'#D4183D':row.sensitivity==='متوسطة'?'#F0A020':'#0D9488'}}>
+                    {row.sensitivity}
+                  </span>
+                </div>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6}}>
+                  {row.impact_10pct_up    && <div style={{fontSize:11,color:'#0D9488'}}>&#8593; 10%: {row.impact_10pct_up}</div>}
+                  {row.impact_10pct_down  && <div style={{fontSize:11,color:'#D4183D'}}>&#8595; 10%: {row.impact_10pct_down}</div>}
+                  {row.impact_3months_more && <div style={{fontSize:11,color:'#D4183D'}}>+3 {lang==='ar'?'شهور':'months'}: {row.impact_3months_more}</div>}
+                  {row.impact_3months_less && <div style={{fontSize:11,color:'#0D9488'}}>-3 {lang==='ar'?'شهور':'months'}: {row.impact_3months_less}</div>}
+                </div>
+              </div>
+            ))}
+          </Sec>
+        )
+      })()}
+
+      {/* Channel Breakdown */}
+      {!!(report.channel_breakdown) && (() => {
+        const ch = report.channel_breakdown as Array<Record<string,string>>
+        return (
+          <Sec titleAr="تحليل القنوات الإعلانية" titleEn="Channel Performance">
+            {ch.map((c2, i) => (
+              <div key={i} className="ei-channel-card">
+                <div className="ei-channel-header">
+                  <div className="ei-channel-name">{c2.channel}</div>
+                  <div className="ei-channel-status" style={{
+                    background: c2.performance?.includes('أفضل')||c2.performance?.includes('Better') ? '#E6FDF9' : c2.performance?.includes('ضمن')||c2.performance?.includes('Within') ? '#EBF4FF' : '#FCE8EC',
+                    color: c2.performance?.includes('أفضل')||c2.performance?.includes('Better') ? '#0D9488' : c2.performance?.includes('ضمن')||c2.performance?.includes('Within') ? '#1D4ED8' : '#D4183D',
+                  }}>{c2.performance}</div>
+                </div>
+                <div className="ei-channel-meta">
+                  {c2.spend           && <div className="ei-channel-kv">{lang==='ar'?'الإنفاق':'Spend'}<strong>{c2.spend}</strong></div>}
+                  {c2.benchmark_cpl   && <div className="ei-channel-kv">{lang==='ar'?'معيار CPL':'Benchmark CPL'}<strong>{c2.benchmark_cpl}</strong></div>}
+                  {c2.estimated_leads && <div className="ei-channel-kv">{lang==='ar'?'عملاء متوقعون':'Est. Leads'}<strong>{c2.estimated_leads}</strong></div>}
+                </div>
+                {c2.recommendation && <div className="ei-channel-tip">&#x1F4A1; {c2.recommendation}</div>}
+              </div>
+            ))}
+          </Sec>
+        )
+      })()}
+
+      {/* Quick Wins / Optimizations / Improvements / Immediate Actions */}
+      {!!(report.quick_wins||report.optimizations||report.improvements||report.immediate_actions) && (() => {
+        const items = (report.quick_wins||report.optimizations||report.improvements||report.immediate_actions) as Array<Record<string,string>>
+        return (
+          <Sec titleAr="&#x26A1; الإجراءات الفورية" titleEn="Immediate Actions">
+            <div className="ei-actions-list">
               {items.slice(0,3).map((item, i) => (
-                <div key={i} className="flex gap-3">
-                  <div className="w-8 h-8 rounded-full bg-purple-100 text-purple-900 font-black text-sm flex items-center justify-center flex-shrink-0 mt-0.5">{i+1}</div>
-                  <div className="flex-1">
-                    <div className="font-bold text-sm text-gray-900 leading-snug">{item.action}</div>
-                    <div className="text-xs text-gray-500 mt-0.5 flex flex-wrap gap-x-3">
-                      {item.timeline && <span>⏱ {item.timeline}</span>}
-                      {item.impact && <span>📈 {item.impact}</span>}
-                      {item.expected_cpl_reduction && <span>📉 {item.expected_cpl_reduction}</span>}
-                      {item.effort && <span>💪 {item.effort}</span>}
+                <div key={i} className="ei-action-item">
+                  <div className="ei-action-num">{i+1}</div>
+                  <div className="ei-action-body">
+                    <div className="ei-action-title">{item.action}</div>
+                    <div className="ei-action-meta">
+                      {item.timeline                && <span>&#x23F1; {item.timeline}</span>}
+                      {item.impact                  && <span>&#x1F4C8; {item.impact}</span>}
+                      {item.expected_cpl_reduction  && <span>&#x1F4C9; {item.expected_cpl_reduction}</span>}
+                      {item.effort                  && <span style={{padding:'1px 6px',background:'#F0E8DF',borderRadius:4,fontSize:10}}>{item.effort}</span>}
                     </div>
                   </div>
                 </div>
               ))}
             </div>
-          </Section>
+          </Sec>
         )
       })()}
 
       {/* SWOT */}
       {!!(report.swot) && (() => {
         const sw = report.swot as Record<string,string[]>
+        const quads = [
+          {key:'strengths',     ar:'&#x1F4AA; نقاط القوة',  en:'Strengths',     color:'#0D9488', bg:'#E6FDF9'},
+          {key:'weaknesses',    ar:'&#x26A0;&#xFE0F; نقاط الضعف', en:'Weaknesses', color:'#D4183D', bg:'#FCE8EC'},
+          {key:'opportunities', ar:'&#x1F680; الفرص',        en:'Opportunities', color:'#F0A020', bg:'#FEF8EA'},
+          {key:'threats',       ar:'&#x1F6E1;&#xFE0F; التهديدات', en:'Threats',  color:'#7C3AED', bg:'#F0E8FF'},
+        ]
         return (
-          <Section title="تحليل SWOT">
-            <div className="grid grid-cols-2 gap-2">
-              {([
-                {key:'strengths',     label:'💪 نقاط القوة',  color:'#16a34a', bg:'#f0fdf4'},
-                {key:'weaknesses',    label:'⚠️ نقاط الضعف', color:'#dc2626', bg:'#fef2f2'},
-                {key:'opportunities', label:'🚀 الفرص',       color:'#d97706', bg:'#fffbeb'},
-                {key:'threats',       label:'🛡️ التهديدات',   color:'#7c3aed', bg:'#f5f3ff'},
-              ] as const).map(s => (
-                <div key={s.key} className="rounded-xl p-3" style={{background: s.bg}}>
-                  <div className="text-xs font-black mb-2" style={{color: s.color}}>{s.label}</div>
-                  <ul className="space-y-1.5">
-                    {(sw[s.key] || []).slice(0,3).map((item:string, i:number) => (
-                      <li key={i} className="text-xs text-gray-700 flex gap-1.5 leading-snug">
-                        <span className="flex-shrink-0 mt-0.5" style={{color: s.color}}>▸</span>
+          <Sec titleAr="تحليل SWOT" titleEn="SWOT Analysis">
+            <div className="ei-swot-grid">
+              {quads.map(q => (
+                <div key={q.key} className="ei-swot-card" style={{background:q.bg}}>
+                  <div className="ei-swot-title" style={{color:q.color}} dangerouslySetInnerHTML={{__html:`${q.ar} / ${q.en}`}} />
+                  <ul className="ei-swot-list">
+                    {(sw[q.key]||[]).slice(0,3).map((item:string, i:number) => (
+                      <li key={i} className="ei-swot-item">
+                        <span className="ei-swot-dot" style={{color:q.color}}>&#x25B8;</span>
                         <span>{item}</span>
                       </li>
                     ))}
@@ -693,198 +897,88 @@ function ReportView({ report, onBack, onRegen }: {
                 </div>
               ))}
             </div>
-          </Section>
+          </Sec>
         )
       })()}
 
-      {/* Risk scorecard */}
-      {!!(report.risk_scorecard) && (() => {
-        const rs = report.risk_scorecard as {overall_risk:string;overall_score:number;dimensions:Array<{name:string;score:number;detail:string}>}
-        const rColor = rs.overall_risk === 'Low' ? '#16a34a' : rs.overall_risk === 'Medium' ? '#d97706' : '#dc2626'
+      {/* 90-Day Plan */}
+      {!!(report.entry_strategy_90days||report.strategy_90days) && (() => {
+        const plan = (report.entry_strategy_90days||report.strategy_90days) as Record<string,{title?:string;focus?:string;actions:string[];budget:string;kpi:string}>
         return (
-          <Section title="مؤشر المخاطر">
-            <div className="flex items-center gap-4 p-3 bg-gray-50 rounded-xl mb-4">
-              <div className="text-4xl font-black" style={{color: rColor}}>{rs.overall_score}</div>
-              <div>
-                <div className="font-black text-base" style={{color: rColor}}>
-                  {rs.overall_risk === 'Low' ? 'مخاطر منخفضة' : rs.overall_risk === 'Medium' ? 'مخاطر متوسطة' : 'مخاطر عالية'}
-                </div>
-                <div className="text-xs text-gray-500">من 100 · كلما ارتفع زاد الخطر</div>
-              </div>
-            </div>
-            <div className="space-y-3">
-              {(rs.dimensions || []).map((dim, i) => {
-                const dc = dim.score > 60 ? '#dc2626' : dim.score > 35 ? '#d97706' : '#16a34a'
-                return (
-                  <div key={i}>
-                    <div className="flex justify-between text-xs mb-1">
-                      <span className="font-bold text-gray-700">{dim.name}</span>
-                      <span className="font-black" style={{color: dc}}>{dim.score}/100</span>
-                    </div>
-                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                      <div className="h-2 rounded-full transition-all" style={{width:`${dim.score}%`, background: dc}} />
-                    </div>
-                    {dim.detail && <div className="text-xs text-gray-400 mt-0.5">{dim.detail}</div>}
+          <Sec titleAr="خطة 90 يوم" titleEn="90-Day Strategy">
+            {(['month1','month2','month3'] as const).map((m, i) => {
+              const month = plan[m]; if (!month) return null
+              return (
+                <div key={m} className="ei-timeline-step">
+                  <div className="ei-timeline-header">
+                    <div className="ei-timeline-num">{i+1}</div>
+                    <div className="ei-timeline-title">{month.title||month.focus||`${lang==='ar'?'الشهر':'Month'} ${i+1}`}</div>
                   </div>
-                )
-              })}
-            </div>
-          </Section>
-        )
-      })()}
-
-      {/* 90-day strategy */}
-      {!!(report.entry_strategy_90days || report.strategy_90days) && (() => {
-        const plan = (report.entry_strategy_90days || report.strategy_90days) as Record<string,{title?:string;focus?:string;actions:string[];budget:string;kpi:string}>
-        return (
-          <Section title="خطة 90 يوم">
-            <div className="space-y-3">
-              {(['month1','month2','month3'] as const).map((m, i) => {
-                const month = plan[m]
-                if (!month) return null
-                const label = month.title || month.focus || `الشهر ${i+1}`
-                return (
-                  <div key={m} className="border border-gray-200 rounded-xl overflow-hidden">
-                    <div className="flex items-center gap-3 bg-purple-50 px-4 py-2.5 border-b border-purple-100">
-                      <div className="w-7 h-7 rounded-full bg-purple-700 text-white text-xs font-black flex items-center justify-center flex-shrink-0">{i+1}</div>
-                      <div className="font-bold text-sm text-purple-900">{label}</div>
+                  <div className="ei-timeline-body">
+                    <ul className="ei-timeline-actions">
+                      {(month.actions||[]).map((a:string, j:number) => (
+                        <li key={j} className="ei-timeline-action">
+                          <span className="ei-timeline-dot">&#x25B8;</span><span>{a}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="ei-timeline-footer">
+                      {month.budget && <div className="ei-timeline-kv">&#x1F4B0; <strong>{month.budget}</strong></div>}
+                      {month.kpi    && <div className="ei-timeline-kv">&#x1F3AF; <strong>{month.kpi}</strong></div>}
                     </div>
-                    <div className="p-3">
-                      <ul className="space-y-1 mb-3">
-                        {(month.actions || []).map((a:string, j:number) => (
-                          <li key={j} className="text-xs text-gray-700 flex gap-1.5 leading-snug">
-                            <span className="text-purple-400 flex-shrink-0 mt-0.5">▸</span><span>{a}</span>
-                          </li>
-                        ))}
-                      </ul>
-                      <div className="flex gap-4 text-xs border-t border-gray-100 pt-2">
-                        {month.budget && <span className="text-amber-700 font-medium">💰 {month.budget}</span>}
-                        {month.kpi && <span className="text-teal-700 font-medium">🎯 {month.kpi}</span>}
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </Section>
-        )
-      })()}
-
-      {/* Sensitivity analysis */}
-      {!!(report.sensitivity_analysis) && (() => {
-        const sa = report.sensitivity_analysis as Array<Record<string,string>>
-        return (
-          <Section title="تحليل الحساسية">
-            <div className="space-y-3">
-              {sa.map((row, i) => (
-                <div key={i} className="border border-gray-100 rounded-lg p-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="font-bold text-sm text-gray-800">{row.variable}</div>
-                    <div className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                      row.sensitivity === 'عالية' ? 'bg-red-100 text-red-700' :
-                      row.sensitivity === 'متوسطة' ? 'bg-amber-100 text-amber-700' :
-                      'bg-green-100 text-green-700'
-                    }`}>{row.sensitivity}</div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
-                    {row.impact_10pct_up && <span>↑ 10%: <strong className="text-green-700">{row.impact_10pct_up}</strong></span>}
-                    {row.impact_10pct_down && <span>↓ 10%: <strong className="text-red-700">{row.impact_10pct_down}</strong></span>}
-                    {row.impact_3months_more && <span>+3 شهور: <strong className="text-red-700">{row.impact_3months_more}</strong></span>}
-                    {row.impact_3months_less && <span>-3 شهور: <strong className="text-green-700">{row.impact_3months_less}</strong></span>}
                   </div>
                 </div>
-              ))}
-            </div>
-          </Section>
+              )
+            })}
+          </Sec>
         )
       })()}
 
-      {/* WhatsApp script */}
+      {/* CPL Intelligence */}
+      {!!(report.cpl_intelligence) && (
+        <Sec titleAr="ذكاء تكلفة العميل CPL" titleEn="CPL Intelligence">
+          <KV data={report.cpl_intelligence as Record<string,string>} lang={lang} />
+        </Sec>
+      )}
+
+      {/* WhatsApp Script */}
       {!!(report.whatsapp_script) && (() => {
         const ws = report.whatsapp_script as {opening:string;qualification_questions:string[];closing:string}
         return (
-          <Section title="💬 سكريبت واتساب للتأهيل">
-            <div className="space-y-3">
-              <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                <div className="text-xs font-bold text-green-800 mb-1">رسالة الافتتاح</div>
-                <div className="text-sm text-gray-700">{ws.opening}</div>
-              </div>
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                <div className="text-xs font-bold text-blue-800 mb-2">أسئلة التأهيل</div>
-                <ol className="space-y-1.5">
-                  {(ws.qualification_questions || []).map((q:string, i:number) => (
-                    <li key={i} className="text-sm text-gray-700 flex gap-2">
-                      <span className="font-bold text-blue-600 flex-shrink-0">{i+1}.</span><span>{q}</span>
-                    </li>
+          <Sec titleAr="&#x1F4AC; سكريبت واتساب للتأهيل" titleEn="WhatsApp Qualification Script">
+            <div className="ei-wa-box" style={{borderColor:'#0D9488',marginBottom:8}}>
+              <div className="ei-wa-header" style={{background:'#E6FDF9',color:'#0D9488'}}>{lang==='ar'?'رسالة الافتتاح':'Opening Message'}</div>
+              <div className="ei-wa-body">{ws.opening}</div>
+            </div>
+            <div className="ei-wa-box" style={{borderColor:'#7C3AED',marginBottom:8}}>
+              <div className="ei-wa-header" style={{background:'#F0E8FF',color:'#7C3AED'}}>{lang==='ar'?'أسئلة التأهيل':'Qualification Questions'}</div>
+              <div className="ei-wa-body">
+                <ul className="ei-wa-questions">
+                  {(ws.qualification_questions||[]).map((q:string, i:number) => (
+                    <li key={i} className="ei-wa-q"><span className="ei-wa-qnum">{i+1}.</span><span>{q}</span></li>
                   ))}
-                </ol>
-              </div>
-              <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
-                <div className="text-xs font-bold text-purple-800 mb-1">إغلاق الحوار</div>
-                <div className="text-sm text-gray-700">{ws.closing}</div>
+                </ul>
               </div>
             </div>
-          </Section>
-        )
-      })()}
-
-      {/* CPL intelligence */}
-      {!!(report.cpl_intelligence) && (() => {
-        const cpl = report.cpl_intelligence as Record<string,string>
-        return (
-          <Section title="ذكاء تكلفة العميل CPL">
-            <KVGrid data={cpl} />
-          </Section>
-        )
-      })()}
-
-      {/* Marketing score breakdown */}
-      {!!(report.score_breakdown) && (() => {
-        const sb = report.score_breakdown as Record<string,{score:number;max:number;assessment:string}>
-        return (
-          <Section title="تقييم الأداء التسويقي الشامل">
-            {!!(report.marketing_score) && (
-              <div className="text-center mb-4 p-4 bg-purple-50 rounded-xl">
-                <div className="text-5xl font-black text-purple-900">{report.marketing_score as number}</div>
-                <div className="text-sm text-gray-500 mt-1">من 100 — نقاط التسويق الكلية</div>
-              </div>
-            )}
-            <div className="space-y-3">
-              {Object.entries(sb).map(([k, v], i) => (
-                <div key={i}>
-                  <div className="flex justify-between text-xs mb-1">
-                    <span className="font-bold text-gray-700">{arLabel(k)}</span>
-                    <span className="font-black text-purple-900">{v.score}/{v.max}</span>
-                  </div>
-                  <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                    <div className="h-2 rounded-full bg-gradient-to-l from-purple-600 to-purple-400"
-                      style={{width:`${(v.score/v.max)*100}%`}} />
-                  </div>
-                  {v.assessment && <div className="text-xs text-gray-500 mt-0.5">{v.assessment}</div>}
-                </div>
-              ))}
+            <div className="ei-wa-box" style={{borderColor:'#4A1042'}}>
+              <div className="ei-wa-header" style={{background:'#F0E8EF',color:'#4A1042'}}>{lang==='ar'?'إغلاق الحوار':'Closing'}</div>
+              <div className="ei-wa-body">{ws.closing}</div>
             </div>
-          </Section>
+          </Sec>
         )
       })()}
 
       {/* Recommendation */}
       {!!(report.recommendation) && (
-        <Section title="التوصية النهائية">
-          <p className="text-gray-800 text-sm leading-relaxed font-medium">{report.recommendation as string}</p>
-        </Section>
+        <Sec titleAr="التوصية النهائية" titleEn="Final Recommendation">
+          <p style={{fontSize:13,fontWeight:600,color:'#1A1018',lineHeight:1.7,margin:0}}>{report.recommendation as string}</p>
+        </Sec>
       )}
 
       {/* JSON toggle */}
-      <details className="bg-gray-50 rounded-xl border border-gray-200">
-        <summary className="p-4 text-sm font-bold text-gray-500 cursor-pointer hover:text-gray-700 select-none">
-          عرض البيانات الكاملة (JSON) ▾
-        </summary>
-        <div className="p-4 pt-0">
-          <pre className="text-xs text-gray-500 overflow-auto max-h-64 bg-white rounded-lg p-3 border border-gray-200 font-mono" dir="ltr">
-            {JSON.stringify(report, null, 2)}
-          </pre>
-        </div>
+      <details className="ei-json-toggle">
+        <summary className="ei-json-summary">{lang==='ar'?'عرض البيانات الكاملة':'Show Full JSON Data'} &#x25BE;</summary>
+        <pre className="ei-json-pre">{JSON.stringify(report, null, 2)}</pre>
       </details>
     </div>
   )
@@ -893,137 +987,125 @@ function ReportView({ report, onBack, onRegen }: {
 // ── MAIN PAGE ────────────────────────────────────────────────────
 
 export default function RealEstateIntelligencePage() {
-  const [selected, setSelected]   = useState<ReportType | null>(null)
-  const [loading, setLoading]     = useState(false)
-  const [report, setReport]       = useState<Record<string,unknown> | null>(null)
-  const [error, setError]         = useState<string | null>(null)
-  const [lastForm, setLastForm]   = useState<Record<string,string> | null>(null)
+  const [lang, setLang]         = useState<'ar'|'en'>('ar')
+  const [selected, setSelected] = useState<ReportType|null>(null)
+  const [loading, setLoading]   = useState(false)
+  const [report, setReport]     = useState<Record<string,unknown>|null>(null)
+  const [error, setError]       = useState<string|null>(null)
+  const [lastForm, setLastForm] = useState<Record<string,string>|null>(null)
 
   async function handleSubmit(formData: Record<string,string>) {
     setLoading(true); setError(null); setReport(null); setLastForm(formData)
     try {
       const res = await fetch('/api/intelligence', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({reportType: selected, formData})
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({reportType:selected, formData})
       })
-      const data = await res.json() as {report?: Record<string,unknown>; error?: string}
-      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`)
-      setReport(data.report ?? null)
+      const data = await res.json()
+      if (!res.ok) throw new Error((data as {error?:string}).error || `HTTP ${res.status}`)
+      setReport((data as {report:Record<string,unknown>}).report)
     } catch(e) {
-      setError(e instanceof Error ? e.message : 'حدث خطأ غير متوقع')
-    } finally {
-      setLoading(false)
-    }
+      setError(e instanceof Error ? e.message : (lang==='ar'?'حدث خطأ غير متوقع':'Unexpected error'))
+    } finally { setLoading(false) }
   }
 
-  const card = REPORT_CARDS.find(c => c.id === selected)
+  const card = REPORT_CARDS.find(c=>c.id===selected)
 
   return (
-    <div dir="rtl" className="min-h-screen bg-[#F7F3EE]">
-      {/* Page header */}
-      <div className="bg-gradient-to-l from-purple-950 via-purple-900 to-purple-800 text-white">
-        <div className="max-w-2xl mx-auto px-5 py-6">
-          <div className="text-xs font-black tracking-widest text-white/30 mb-1">EUNOIA ZONES</div>
-          <h1 className="text-2xl font-black">محرك الاستخبارات العقارية</h1>
-          <p className="text-sm text-white/50 mt-1">5 تقارير متخصصة · معايير السوق المصري 2026 · حسابات مالية دقيقة</p>
+    <>
+      <style>{styles}</style>
+      <div className="ei-page" dir={lang==='ar'?'rtl':'ltr'}>
+
+        {/* Top bar */}
+        <div className="ei-topbar">
+          <div className="ei-topbar-inner">
+            <div className="ei-brand">
+              <div className="ei-brand-tag">EUNOIA ZONES</div>
+              <div className="ei-brand-title">{lang==='ar'?'محرك الاستخبارات العقارية':'Real Estate Intelligence Engine'}</div>
+              <div className="ei-brand-sub">{lang==='ar'?'5 تقارير متخصصة · معايير السوق المصري 2026 · حسابات مالية دقيقة':'5 Specialized Reports · Egypt Market Benchmarks 2026 · Precise Financial Calculations'}</div>
+            </div>
+            <div className="ei-lang-toggle">
+              <button className={`ei-lang-btn${lang==='ar'?' active':''}`} onClick={()=>setLang('ar')}>عربي</button>
+              <button className={`ei-lang-btn${lang==='en'?' active':''}`} onClick={()=>setLang('en')}>EN</button>
+            </div>
+          </div>
+        </div>
+
+        <div className="ei-body">
+
+          {/* Report type selector */}
+          {!report && (
+            <>
+              <div className="ei-section-label">{lang==='ar'?'اختر نوع التقرير':'Select Report Type'}</div>
+              <div className="ei-card-grid">
+                {REPORT_CARDS.map(c => (
+                  <div key={c.id} className={`ei-report-card${selected===c.id?' selected':''}`}
+                    onClick={()=>{setSelected(c.id);setError(null)}}>
+                    <div className="ei-card-icon">{c.icon}</div>
+                    <div className="ei-card-content">
+                      <div className="ei-card-title-ar">
+                        {lang==='ar'?c.ar:c.en}
+                        {c.badge && <span className="ei-badge" style={{background:c.badgeColor!}}>{c.badge}</span>}
+                      </div>
+                      <div className="ei-card-title-en">{lang==='ar'?c.en:c.ar}</div>
+                      <div className="ei-card-desc">{c.desc}</div>
+                    </div>
+                    <div className="ei-card-time">&#x23F1; {c.time}</div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* Form */}
+          {selected && !report && (
+            <div className="ei-form-panel">
+              <div className="ei-form-header">
+                <div className="ei-form-header-icon">{card?.icon}</div>
+                <div>
+                  <div className="ei-form-header-title">{lang==='ar'?card?.ar:card?.en}</div>
+                  <div className="ei-form-header-sub">{lang==='ar'?card?.en:card?.ar}</div>
+                </div>
+                <button className="ei-form-close" onClick={()=>{setSelected(null);setReport(null);setError(null)}}>&#x00D7;</button>
+              </div>
+              <div className="ei-form-body">
+                {loading ? (
+                  <div className="ei-skeleton">
+                    <div className="ei-skel-bar" style={{height:20,width:'60%',marginBottom:12}} />
+                    <div className="ei-skel-bar" style={{height:14,width:'80%',marginBottom:8}} />
+                    <div className="ei-skel-bar" style={{height:14,width:'70%',marginBottom:16}} />
+                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:12}}>
+                      {[1,2,3,4].map(i=><div key={i} className="ei-skel-bar" style={{height:52}} />)}
+                    </div>
+                    <div style={{textAlign:'center',fontSize:12,color:'#9A9090',padding:'8px 0'}}>
+                      &#x231B; {lang==='ar'?'جاري تحليل بيانات السوق المصري...':'Analyzing Egyptian market data...'}
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {selected==='feasibility'   && <FeasibilityForm   onSubmit={handleSubmit} loading={loading} />}
+                    {selected==='campaign_roi'  && <CampaignROIForm   onSubmit={handleSubmit} loading={loading} />}
+                    {selected==='market_entry'  && <MarketEntryForm   onSubmit={handleSubmit} loading={loading} />}
+                    {selected==='lead_gen'      && <LeadGenForm       onSubmit={handleSubmit} loading={loading} />}
+                    {selected==='full_analysis' && <FullAnalysisForm  onSubmit={handleSubmit} loading={loading} />}
+                    {error && <div className="ei-error">&#x274C; {error}</div>}
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Report output */}
+          {report && (
+            <ReportView
+              report={report} lang={lang}
+              onBack={()=>{setReport(null);setSelected(null);setError(null)}}
+              onRegen={()=>{if(lastForm) handleSubmit(lastForm)}}
+            />
+          )}
+
         </div>
       </div>
-
-      <div className="max-w-2xl mx-auto px-4 py-5 space-y-4">
-
-        {/* Report type cards */}
-        {!report && (
-          <div className="space-y-2">
-            <div className="text-xs font-black text-gray-400 uppercase tracking-widest px-1 mb-3">اختر نوع التقرير</div>
-            {REPORT_CARDS.map(c => (
-              <button key={c.id} onClick={()=>{ setSelected(c.id); setError(null) }}
-                className={`w-full text-right p-4 rounded-xl border-2 transition-all flex items-center gap-4 ${
-                  selected === c.id
-                    ? 'border-purple-700 bg-purple-50 shadow-md shadow-purple-100'
-                    : 'border-gray-200 bg-white hover:border-purple-300 hover:shadow-sm'
-                }`}>
-                <span className="text-3xl flex-shrink-0 leading-none">{c.icon}</span>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                    <span className="font-black text-gray-900">{c.titleAr}</span>
-                    {c.badge && (
-                      <span className="text-xs font-black px-2 py-0.5 rounded-full text-white" style={{background: c.badgeColor!}}>
-                        {c.badge}
-                      </span>
-                    )}
-                  </div>
-                  <div className="text-xs text-gray-400 font-medium">{c.titleEn}</div>
-                  <div className="text-xs text-gray-500 mt-1 leading-relaxed">{c.desc}</div>
-                </div>
-                <div className="text-xs text-gray-400 flex-shrink-0 whitespace-nowrap">⏱ {c.time}</div>
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Form panel */}
-        {selected && !report && (
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100 bg-gradient-to-l from-purple-50 to-white">
-              <span className="text-2xl leading-none">{card?.icon}</span>
-              <div className="flex-1">
-                <div className="font-black text-gray-900">{card?.titleAr}</div>
-                <div className="text-xs text-gray-400 font-medium">{card?.titleEn}</div>
-              </div>
-              <button onClick={()=>{ setSelected(null); setReport(null); setError(null) }}
-                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200 text-gray-400 hover:text-gray-700 transition-colors text-lg font-bold">
-                ×
-              </button>
-            </div>
-            <div className="p-5">
-              {loading ? (
-                <div className="space-y-4">
-                  <div className="animate-pulse space-y-4">
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="h-12 bg-gray-100 rounded-lg" />
-                      <div className="h-12 bg-gray-100 rounded-lg" />
-                      <div className="h-12 bg-gray-100 rounded-lg" />
-                      <div className="h-12 bg-gray-100 rounded-lg" />
-                    </div>
-                    <div className="h-px bg-gray-100" />
-                    <div className="grid grid-cols-3 gap-3">
-                      <div className="h-12 bg-gray-100 rounded-lg" />
-                      <div className="h-12 bg-gray-100 rounded-lg" />
-                      <div className="h-12 bg-gray-100 rounded-lg" />
-                    </div>
-                    <div className="h-14 bg-purple-100 rounded-xl" />
-                  </div>
-                  <div className="text-center text-xs text-purple-600 font-bold tracking-wide mt-2">⚡ جاري تحليل البيانات وتوليد التقرير...</div>
-                </div>
-              ) : (
-                <>
-                  {selected === 'feasibility'   && <FeasibilityForm   onSubmit={handleSubmit} loading={loading} />}
-                  {selected === 'campaign_roi'  && <CampaignROIForm   onSubmit={handleSubmit} loading={loading} />}
-                  {selected === 'market_entry'  && <MarketEntryForm   onSubmit={handleSubmit} loading={loading} />}
-                  {selected === 'lead_gen'      && <LeadGenForm       onSubmit={handleSubmit} loading={loading} />}
-                  {selected === 'full_analysis' && <FullAnalysisForm  onSubmit={handleSubmit} loading={loading} />}
-                </>
-              )}
-              {!loading && error && (
-                <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 flex gap-2 items-start">
-                  <span className="flex-shrink-0">❌</span><span>{error}</span>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Report output */}
-        {report && (
-          <ReportView
-            report={report}
-            onBack={()=>{ setReport(null); setSelected(null); setError(null) }}
-            onRegen={()=>{ if(lastForm) handleSubmit(lastForm) }}
-          />
-        )}
-
-      </div>
-    </div>
+    </>
   )
 }
