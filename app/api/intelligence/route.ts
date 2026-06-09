@@ -210,6 +210,174 @@ function formatPct(ratio: number): string {
 // END CASHFLOW ENGINE
 // ══════════════════════════════════════════════════════════════════
 
+// ══════════════════════════════════════════════════════════════════
+// SMART CALCULATORS — run before AI, provide pre-calculated numbers
+// ══════════════════════════════════════════════════════════════════
+
+function calculateCampaignROI(data: Record<string, string>) {
+  const adSpend = parseFloat(data.adSpend) || 0
+  const cpl = parseFloat(data.cpl) || 0
+  const leads = adSpend > 0 && cpl > 0 ? Math.round(adSpend / cpl) : parseFloat(data.leads) || 0
+  const roas = parseFloat(data.roas) || 0
+  const metaSpend = parseFloat(data.metaSpend) || 0
+  const googleSpend = parseFloat(data.googleSpend) || 0
+  const tiktokSpend = parseFloat(data.tiktokSpend) || 0
+  const clientType = data.clientType || 'developer'
+
+  const benchCPL = clientType === 'developer' ? 550 : 400
+  const benchROAS = 3.5
+
+  const cplGapPct = benchCPL > 0 ? ((cpl - benchCPL) / benchCPL) * 100 : 0
+  const expectedLeads = benchCPL > 0 ? Math.round(adSpend / benchCPL) : 0
+  const leadsGap = expectedLeads - leads
+  const wastedBudget = leadsGap > 0 ? Math.round(leadsGap * cpl) : 0
+  const roasGapPct = benchROAS > 0 ? ((roas - benchROAS) / benchROAS) * 100 : 0
+
+  const targetCPL = Math.round(benchCPL * 0.9)
+  const projectedLeads = adSpend > 0 && targetCPL > 0 ? Math.round(adSpend / targetCPL) : 0
+  const additionalLeads = projectedLeads - leads
+
+  const cplStatus = cplGapPct <= -10 ? 'أفضل من المعيار ✅' :
+                    cplGapPct <= 15  ? 'ضمن المعيار' :
+                    cplGapPct <= 40  ? 'أعلى من المعيار ⚠️' : 'أعلى بكثير من المعيار ❌'
+
+  const roasStatus = !roas        ? 'غير محدد' :
+                     roas >= 5    ? 'ممتاز ✅' :
+                     roas >= 3    ? 'جيد' :
+                     roas >= 1.5  ? 'ضعيف ⚠️' : 'خسارة ❌'
+
+  return {
+    adSpend, cpl, leads, roas, metaSpend, googleSpend, tiktokSpend,
+    benchCPL, benchROAS,
+    cplGapPct: Math.round(cplGapPct),
+    expectedLeads, leadsGap, wastedBudget,
+    roasGapPct: Math.round(roasGapPct),
+    targetCPL, projectedLeads, additionalLeads,
+    cplStatus, roasStatus,
+    performanceVerdict: cplGapPct <= 10 && (!roas || roas >= 3) ? 'جيد' :
+                        cplGapPct <= 30 ? 'يحتاج تحسين' : 'ضعيف',
+  }
+}
+
+function calculateMarketEntry(data: Record<string, string>) {
+  const budget = parseFloat(data.budget) || 0
+  const clientType = data.clientType || 'developer'
+  const city = data.targetCity || data.city || ''
+
+  const cityMultipliers: Record<string, number> = {
+    'القاهرة الجديدة': 1.0, 'العاصمة الإدارية الجديدة': 1.3,
+    'التجمع الخامس': 1.1, 'التجمع الأول': 1.2,
+    '6 أكتوبر': 0.75, 'الشيخ زايد': 0.85,
+    'المعادي': 1.0, 'الساحل الشمالي': 1.4, 'العين السخنة': 1.1,
+  }
+  const mult = cityMultipliers[city] || 1.0
+
+  const baseCPL = clientType === 'developer' ? 550 : 400
+  const expectedCPLMeta = Math.round(baseCPL * mult)
+  const expectedCPLGoogle = Math.round(expectedCPLMeta * 1.8)
+  const expectedLeads100 = Math.round(100 * expectedCPLMeta)
+  const testBudget = Math.round(expectedCPLMeta * 30)
+
+  const budgetSufficiency = budget >= testBudget ? 'كافي للاختبار' :
+                             budget >= testBudget * 0.5 ? 'كافٍ جزئياً — يُنصح بزيادته' :
+                             'غير كافٍ للاختبار الصحيح'
+
+  const breakEvenMonths = budget > 0 ? Math.round(testBudget / budget * 2) : 6
+
+  return {
+    budget, city, mult,
+    expectedCPLMeta, expectedCPLGoogle,
+    expectedLeads100, testBudget, budgetSufficiency, breakEvenMonths,
+    monthlyLeadsAtBudget: budget > 0 ? Math.round(budget / expectedCPLMeta) : 0,
+    marketAttractiveness: mult >= 1.2 ? 'عالية' : mult >= 0.9 ? 'متوسطة' : 'منخفضة نسبياً',
+    entryDifficulty: mult >= 1.2 ? 'عالية — سوق تنافسي' : 'متوسطة',
+  }
+}
+
+function calculateLeadGen(data: Record<string, string>) {
+  const currentLeads = parseFloat(data.currentLeads) || 0
+  const qualifiedPct = parseFloat(data.qualifiedPct) || 0
+  const adSpend = parseFloat(data.adSpend) || 0
+  const cpl = parseFloat(data.cpl) || 0
+  const avgDealValue = parseFloat(data.avgDealValue) || 0
+  const salesCycle = parseFloat(data.salesCycle) || 90
+  const clientType = data.clientType || 'developer'
+
+  const qualifiedLeads = Math.round(currentLeads * qualifiedPct / 100)
+  const benchQualPct = 20
+  const qualGap = benchQualPct - qualifiedPct
+
+  const cacCurrent = qualifiedLeads > 0 && adSpend > 0 ? Math.round(adSpend / qualifiedLeads) : 0
+  const benchCAC = clientType === 'developer' ? 12500 : 5000
+
+  const closeRateEst = 0.15
+  const estimatedDeals = Math.round(qualifiedLeads * closeRateEst)
+  const estimatedRevenue = estimatedDeals * avgDealValue
+
+  const improvedQualPct = Math.min(qualifiedPct + 8, 35)
+  const improvedLeads = Math.round(currentLeads * improvedQualPct / 100)
+  const additionalDeals = Math.round((improvedLeads - qualifiedLeads) * closeRateEst)
+  const additionalRevenue = additionalDeals * avgDealValue
+
+  const ltv = avgDealValue > 0 ? avgDealValue * 0.025 : 0
+  const ltvCacRatio = cacCurrent > 0 && ltv > 0 ? (ltv / cacCurrent).toFixed(1) : 'غير محدد'
+
+  return {
+    currentLeads, qualifiedPct, qualifiedLeads,
+    benchQualPct, qualGap,
+    cacCurrent, benchCAC,
+    estimatedDeals, estimatedRevenue,
+    improvedQualPct, improvedLeads, additionalDeals, additionalRevenue,
+    ltvCacRatio, salesCycle,
+    qualVerdictLabel: qualifiedPct >= 25 ? 'ممتاز ✅' :
+                      qualifiedPct >= 15 ? 'جيد' :
+                      qualifiedPct >= 8  ? 'يحتاج تحسين ⚠️' : 'ضعيف ❌',
+    cacVerdictLabel: !cacCurrent ? 'غير محدد' :
+                     cacCurrent <= benchCAC * 0.8 ? 'أفضل من المعيار ✅' :
+                     cacCurrent <= benchCAC * 1.2 ? 'ضمن المعيار' : 'أعلى من المعيار ⚠️',
+  }
+}
+
+function calculateFullAnalysis(data: Record<string, string>) {
+  const adSpend = parseFloat(data.adSpend) || 0
+  const cpl = parseFloat(data.cpl) || 0
+  const roas = parseFloat(data.roas) || 0
+  const clientType = data.clientType || 'developer'
+
+  const benchCPL = clientType === 'developer' ? 550 : 400
+  const cplGap = cpl > 0 ? Math.round(((cpl - benchCPL) / benchCPL) * 100) : 0
+  const wastedBudget = cpl > benchCPL && adSpend > 0 ? Math.round((cpl - benchCPL) / cpl * adSpend) : 0
+  const expectedLeads = adSpend > 0 && benchCPL > 0 ? Math.round(adSpend / benchCPL) : 0
+
+  let digitalScore = 30
+  if (data.website) digitalScore += 15
+  if (data.fbPage)  digitalScore += 10
+  if (data.igPage)  digitalScore += 10
+  if (data.ttPage)  digitalScore += 8
+  if (adSpend > 0)  digitalScore += 15
+  if (cpl > 0)      digitalScore += 7
+  if (roas > 0)     digitalScore += 5
+  digitalScore = Math.min(digitalScore, 95)
+
+  const marketingScore = Math.round(
+    (cplGap <= 10 ? 80 : cplGap <= 30 ? 60 : 40) * 0.4 +
+    digitalScore * 0.3 +
+    (roas >= 3 ? 80 : roas >= 1.5 ? 60 : roas > 0 ? 40 : 50) * 0.3
+  )
+
+  return {
+    adSpend, cpl, roas, benchCPL, cplGap, wastedBudget, expectedLeads,
+    digitalScore, marketingScore,
+    hasDigitalPresence: !!(data.website || data.fbPage || data.igPage),
+    hasCampaignData: adSpend > 0,
+    performanceTier: marketingScore >= 70 ? 'متقدم' : marketingScore >= 50 ? 'متوسط' : 'مبتدئ',
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// END SMART CALCULATORS
+// ══════════════════════════════════════════════════════════════════
+
 // ── PROMPTS ─────────────────────────────────────────────────────────
 
 function buildFeasibilityPrompt(data: Record<string, string>): string {
@@ -411,305 +579,343 @@ Return ONLY valid JSON (no markdown, start with {):
 }
 
 function buildCampaignROIPrompt(data: Record<string, string>): string {
-  const { companyName, city, clientType, adSpend, cpl, leads, roas,
-    metaSpend, googleSpend, tiktokSpend } = data
-  const bench = clientType === 'developer' ? RE_BENCHMARKS.developer : RE_BENCHMARKS.broker
+  const c = calculateCampaignROI(data)
+  const confPct = data.metaSpend && data.googleSpend ? 80 : data.roas ? 72 : 65
+  const metaLeads = c.metaSpend > 0 ? Math.round(c.metaSpend / c.benchCPL) : 0
+  const googleLeads = c.googleSpend > 0 ? Math.round(c.googleSpend / Math.round(c.benchCPL * 1.8)) : 0
+  const tiktokLeads = c.tiktokSpend > 0 ? Math.round(c.tiktokSpend / Math.round(c.benchCPL * 0.5)) : 0
+  const roiImprovePct = c.leads > 0 ? Math.round((c.additionalLeads / c.leads) * 100) : 0
+  const cplSign = c.cplGapPct > 0 ? '+' : ''
+  const confReason = confPct >= 80 ? 'بيانات كاملة لجميع القنوات'
+    : confPct >= 72 ? 'ROAS متاح — أضف توزيع القنوات لرفع الدقة'
+    : 'بيانات أساسية — أضف القنوات وROAS'
 
-  return `You are Egypt's top real estate marketing analyst. Generate a Campaign ROI Audit.
+  return `You are Egypt's top real estate marketing analyst.
+Numbers are PRE-CALCULATED — interpret and write in Arabic, do NOT recalculate.
 
-CLIENT DATA:
-- Company: ${companyName}
-- City: ${city}
-- Type: ${clientType === 'developer' ? 'مطور عقاري' : 'وسيط/بروكر عقاري'}
-- Total ad spend/month: EGP ${adSpend}
-- Meta spend: EGP ${metaSpend || 'not specified'}
-- Google spend: EGP ${googleSpend || 'not specified'}
-- TikTok spend: EGP ${tiktokSpend || 'not specified'}
-- Current CPL: EGP ${cpl}
-- Monthly leads: ${leads}
-- ROAS: ${roas || 'not tracked'}
+CLIENT: ${data.companyName} | ${data.city} | ${data.clientType === 'developer' ? 'مطور عقاري' : 'وسيط عقاري'}
+MONTHLY AD SPEND: EGP ${c.adSpend.toLocaleString()}
+Meta: EGP ${c.metaSpend > 0 ? c.metaSpend.toLocaleString() : 'N/A'} | Google: EGP ${c.googleSpend > 0 ? c.googleSpend.toLocaleString() : 'N/A'} | TikTok: EGP ${c.tiktokSpend > 0 ? c.tiktokSpend.toLocaleString() : 'N/A'}
 
-EGYPT REAL ESTATE BENCHMARKS 2026:
-- Developer Meta CPL: ${RE_BENCHMARKS.developer.cpl_meta}
-- Developer Google CPL: ${RE_BENCHMARKS.developer.cpl_google}
-- Broker Meta CPL: ${RE_BENCHMARKS.broker.cpl_meta}
-- Decision cycle: ${bench.decision_cycle}
-- Peak seasons: ${'peak_seasons' in bench ? bench.peak_seasons : 'N/A'}
+PRE-CALCULATED CAMPAIGN ANALYSIS (numbers are FINAL — do not change):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Current CPL:            EGP ${c.cpl}
+Benchmark CPL:          EGP ${c.benchCPL} (${data.clientType === 'developer' ? 'مطور' : 'بروكر'} midpoint 2026)
+CPL Gap:                ${cplSign}${c.cplGapPct}% → ${c.cplStatus}
+Current Leads/month:    ${c.leads}
+Expected at Benchmark:  ${c.expectedLeads} leads
+Leads Lost Monthly:     ${c.leadsGap} leads
+Wasted Budget/month:    EGP ${c.wastedBudget.toLocaleString()}
+ROAS:                   ${c.roas > 0 ? c.roas : 'not tracked'} → ${c.roasStatus}
+Target CPL (90% bench): EGP ${c.targetCPL}
+Projected Leads:        ${c.projectedLeads}/month
+Additional Leads:       +${c.additionalLeads}/month
+Performance Verdict:    ${c.performanceVerdict}
+Meta estimated leads:   ${metaLeads > 0 ? metaLeads : 'N/A'}
+Google estimated leads: ${googleLeads > 0 ? googleLeads : 'N/A'}
+TikTok estimated leads: ${tiktokLeads > 0 ? tiktokLeads : 'N/A'}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Return ONLY valid JSON (no markdown, start with {):
 {
   "report_type": "تدقيق أداء الحملات الإعلانية",
-  "company": "${companyName}",
-  "executive_summary": "2 sentences: overall performance assessment and biggest opportunity",
-  "performance_verdict": "ممتاز/جيد/يحتاج تحسين/ضعيف",
+  "company": "${data.companyName}",
+  "executive_summary": "2 Arabic sentences: CPL is ${cplSign}${c.cplGapPct}% ${c.cplGapPct > 0 ? 'أعلى من المعيار' : 'أقل من المعيار'} مما يهدر EGP ${c.wastedBudget.toLocaleString()} شهرياً ويخسر ${c.leadsGap} عميل. Biggest improvement opportunity.",
+  "performance_verdict": "${c.performanceVerdict}",
   "kpi_scorecard": {
-    "current_cpl": "EGP ${cpl}",
-    "benchmark_cpl": "${bench.cpl_meta}",
-    "cpl_gap_pct": "% above or below benchmark",
-    "cpl_status": "أفضل من المعيار/ضمن المعيار/أعلى من المعيار/أعلى بكثير",
-    "monthly_leads": "${leads}",
-    "expected_leads_at_benchmark": "calculate: ${adSpend} / benchmark_cpl_midpoint",
-    "leads_gap": "difference in leads being lost monthly",
-    "roas": "${roas || 'غير محدد'}",
-    "roas_benchmark": "3-6x for real estate",
-    "roas_status": "ممتاز/جيد/ضعيف/غير محدد",
-    "wasted_budget_estimate": "EGP amount wasted vs benchmark performance"
+    "current_cpl": "EGP ${c.cpl}",
+    "benchmark_cpl": "EGP ${c.benchCPL}",
+    "cpl_gap_pct": "${cplSign}${c.cplGapPct}%",
+    "cpl_status": "${c.cplStatus}",
+    "monthly_leads": "${c.leads}",
+    "expected_leads_at_benchmark": "${c.expectedLeads} عميل",
+    "leads_gap": "${c.leadsGap} عميل شهرياً",
+    "roas": "${c.roas > 0 ? c.roas : 'غير محدد'}",
+    "roas_benchmark": "3-6x للعقارات",
+    "roas_status": "${c.roasStatus}",
+    "wasted_budget_estimate": "EGP ${c.wastedBudget.toLocaleString()}"
   },
   "channel_breakdown": [
-    {"channel": "Meta Ads", "spend": "EGP ${metaSpend || 'not specified'}", "benchmark_cpl": "${RE_BENCHMARKS.developer.cpl_meta}", "estimated_leads": "calculate if spend provided", "performance": "أفضل من المعيار/ضمن/أعلى", "recommendation": "specific action"},
-    {"channel": "Google Ads", "spend": "EGP ${googleSpend || 'not specified'}", "benchmark_cpl": "${RE_BENCHMARKS.developer.cpl_google}", "estimated_leads": "calculate if spend provided", "performance": "أفضل من المعيار/ضمن/أعلى", "recommendation": "specific action"},
-    {"channel": "TikTok Ads", "spend": "EGP ${tiktokSpend || 'not specified'}", "benchmark_cpl": "${RE_BENCHMARKS.developer.cpl_tiktok}", "estimated_leads": "calculate if spend provided", "performance": "أفضل من المعيار/ضمن/أعلى/غير مستخدم", "recommendation": "specific action"}
+    {"channel": "Meta Ads", "spend": "EGP ${c.metaSpend > 0 ? c.metaSpend.toLocaleString() : 'N/A'}", "benchmark_cpl": "${RE_BENCHMARKS.developer.cpl_meta}", "estimated_leads": "${metaLeads > 0 ? metaLeads + ' عميل' : 'N/A'}", "performance": "write: أفضل من المعيار OR ضمن المعيار OR أعلى من المعيار", "recommendation": "specific Arabic action for Meta"},
+    {"channel": "Google Ads", "spend": "EGP ${c.googleSpend > 0 ? c.googleSpend.toLocaleString() : 'N/A'}", "benchmark_cpl": "${RE_BENCHMARKS.developer.cpl_google}", "estimated_leads": "${googleLeads > 0 ? googleLeads + ' عميل' : 'N/A'}", "performance": "write: أفضل من المعيار OR ضمن المعيار OR أعلى من المعيار", "recommendation": "specific Arabic action for Google"},
+    {"channel": "TikTok Ads", "spend": "EGP ${c.tiktokSpend > 0 ? c.tiktokSpend.toLocaleString() : 'N/A'}", "benchmark_cpl": "${RE_BENCHMARKS.developer.cpl_tiktok}", "estimated_leads": "${tiktokLeads > 0 ? tiktokLeads + ' عميل' : 'N/A'}", "performance": "write: أفضل OR ضمن OR أعلى OR غير مستخدم", "recommendation": "specific Arabic action for TikTok"}
   ],
   "optimizations": [
-    {"rank": 1, "action": "most impactful specific optimization", "expected_cpl_reduction": "% or EGP reduction", "timeline": "3-7 days to implement", "effort": "منخفض/متوسط/عالي"},
-    {"rank": 2, "action": "second optimization", "expected_cpl_reduction": "% or EGP", "timeline": "timeline", "effort": "effort"},
-    {"rank": 3, "action": "third optimization", "expected_cpl_reduction": "% or EGP", "timeline": "timeline", "effort": "effort"}
+    {"rank": 1, "action": "Arabic action to reduce CPL from EGP ${c.cpl} toward EGP ${c.targetCPL}", "expected_cpl_reduction": "EGP ${Math.abs(c.cpl - c.targetCPL)} تخفيض في CPL", "timeline": "3-7 أيام", "effort": "منخفض/متوسط/عالي"},
+    {"rank": 2, "action": "second specific Arabic optimization", "expected_cpl_reduction": "% or EGP reduction", "timeline": "timeline", "effort": "منخفض/متوسط/عالي"},
+    {"rank": 3, "action": "third specific Arabic optimization", "expected_cpl_reduction": "% or EGP reduction", "timeline": "timeline", "effort": "منخفض/متوسط/عالي"}
   ],
   "projection_optimized": {
-    "target_cpl": "EGP achievable within 60 days",
-    "projected_leads_month1": "leads at target CPL with same budget",
-    "projected_leads_month2": "leads after full optimization",
-    "additional_leads_monthly": "extra leads vs current",
-    "roi_improvement": "% improvement in marketing ROI"
+    "target_cpl": "EGP ${c.targetCPL}",
+    "projected_leads_month1": "${c.projectedLeads} عميل",
+    "projected_leads_month2": "${Math.round(c.projectedLeads * 1.15)} عميل",
+    "additional_leads_monthly": "+${c.additionalLeads} عميل",
+    "roi_improvement": "${roiImprovePct}% تحسن"
   },
-  "confidence_score": {"pct": 0, "label": "High/Medium/Low", "reason": "based on data quality"}
+  "confidence_score": {"pct": ${confPct}, "label": "${confPct >= 75 ? 'High' : 'Medium'}", "reason": "${confReason}"}
 }`
 }
 
 function buildMarketEntryPrompt(data: Record<string, string>): string {
-  const { companyName, targetCity, clientType, budget, timeline } = data
-  const bench = RE_BENCHMARKS.developer
-  const cityMult = bench.city_multipliers[targetCity] ?? 1.0
-  const metaLow = Math.round(parseInt(bench.cpl_meta.split('-')[0]) * cityMult)
-  const metaHigh = Math.round(parseInt(bench.cpl_meta.split('-')[1]) * cityMult)
-  const gLow = Math.round(parseInt(bench.cpl_google.split('-')[0]) * cityMult)
-  const gHigh = Math.round(parseInt(bench.cpl_google.split('-')[1]) * cityMult)
+  const m = calculateMarketEntry(data)
+  const budget1 = Math.round(m.budget * 0.6)
+  const budget2 = Math.round(m.budget * 0.9)
+  const confReason = 'تحليل مبني على معاملات أسعار ' + data.targetCity + ' 2026 والميزانية المُدخلة'
 
-  return `You are Egypt's top real estate market intelligence analyst. Generate a Market Entry report.
+  return `You are Egypt's top real estate market intelligence analyst.
+Numbers are PRE-CALCULATED — interpret and write in Arabic, do NOT recalculate.
 
-COMPANY: ${companyName}
-TARGET MARKET: ${targetCity}
-TYPE: ${clientType === 'developer' ? 'مطور عقاري' : 'وسيط/بروكر عقاري'}
-ENTRY BUDGET: EGP ${budget}/month
-TIMELINE: ${timeline}
+COMPANY: ${data.companyName} | ${data.targetCity} | ${data.clientType === 'developer' ? 'مطور عقاري' : 'وسيط عقاري'}
+ENTRY BUDGET: EGP ${m.budget.toLocaleString()}/month | TIMELINE: ${data.timeline}
 
-MARKET DATA:
-- ${targetCity} CPL multiplier vs Cairo: ${cityMult}x
-- Expected Meta CPL in ${targetCity}: EGP ${metaLow}-${metaHigh}
-- Market growth: ${bench.market_growth}
-- Key seasons: ${bench.peak_seasons}
+PRE-CALCULATED MARKET ANALYSIS (numbers are FINAL — do not change):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+City Price Multiplier:    ${m.mult}x vs Cairo baseline
+Expected Meta CPL:        EGP ${m.expectedCPLMeta}
+Expected Google CPL:      EGP ${m.expectedCPLGoogle}
+Budget for 100 Leads/mo:  EGP ${m.expectedLeads100.toLocaleString()}
+Recommended Test Budget:  EGP ${m.testBudget.toLocaleString()}
+Budget Sufficiency:       ${m.budgetSufficiency}
+Monthly Leads at Budget:  ${m.monthlyLeadsAtBudget} leads/month
+Break-even Estimate:      ${m.breakEvenMonths} months
+Market Attractiveness:    ${m.marketAttractiveness}
+Entry Difficulty:         ${m.entryDifficulty}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Return ONLY valid JSON (no markdown, start with {):
 {
   "report_type": "تقرير دخول السوق العقاري",
-  "target_market": "${targetCity}",
-  "executive_summary": "2 sentences: market opportunity and recommended entry approach",
+  "target_market": "${data.targetCity}",
+  "executive_summary": "2 Arabic sentences: CPL expected EGP ${m.expectedCPLMeta} in ${data.targetCity} (${m.mult}x multiplier), ${m.budgetSufficiency} with ${m.monthlyLeadsAtBudget} leads/month expected. Entry recommendation based on ${m.marketAttractiveness} attractiveness.",
   "market_scores": {
-    "attractiveness": {"score": 0, "max": 10, "label": "جاذبية السوق", "reasoning": "2 sentences"},
-    "competition": {"score": 0, "max": 10, "label": "مستوى المنافسة (أعلى = أشد)", "reasoning": "2 sentences"},
-    "entry_difficulty": {"score": 0, "max": 10, "label": "صعوبة الدخول (أعلى = أصعب)", "reasoning": "2 sentences"},
-    "opportunity_size": {"score": 0, "max": 10, "label": "حجم الفرصة", "reasoning": "2 sentences"}
+    "attractiveness": {"score": 0, "max": 10, "label": "جاذبية السوق", "reasoning": "based on ${m.marketAttractiveness} rating and ${m.mult}x price multiplier in ${data.targetCity}"},
+    "competition": {"score": 0, "max": 10, "label": "مستوى المنافسة (أعلى = أشد)", "reasoning": "specific competition level in ${data.targetCity} 2026"},
+    "entry_difficulty": {"score": 0, "max": 10, "label": "صعوبة الدخول (أعلى = أصعب)", "reasoning": "based on ${m.entryDifficulty} and budget ${m.budgetSufficiency}"},
+    "opportunity_size": {"score": 0, "max": 10, "label": "حجم الفرصة", "reasoning": "specific opportunity size for ${data.targetCity}"}
   },
   "market_overview": {
-    "size_estimate": "EGP value of ${targetCity} real estate market",
-    "growth_rate": "${bench.market_growth}",
-    "demand_supply": "Oversupply/Balanced/Undersupply with explanation",
-    "buyer_profile": "primary buyer profile in ${targetCity}",
-    "avg_price_sqm": "EGP range for residential in ${targetCity}",
-    "key_developers": ["developer 1 active in ${targetCity}", "developer 2", "developer 3"]
+    "size_estimate": "EGP value of ${data.targetCity} real estate market 2026",
+    "growth_rate": "${RE_BENCHMARKS.developer.market_growth}",
+    "demand_supply": "specific assessment for ${data.targetCity} 2026",
+    "buyer_profile": "primary buyer profile in ${data.targetCity}",
+    "avg_price_sqm": "EGP range for residential in ${data.targetCity}",
+    "key_developers": ["top developer in ${data.targetCity}", "second developer", "third developer"]
   },
   "swot": {
-    "strengths": ["strength 1 for ${companyName} entering ${targetCity}", "strength 2", "strength 3"],
+    "strengths": ["strength 1 for ${data.companyName} entering ${data.targetCity}", "strength 2", "strength 3"],
     "weaknesses": ["weakness 1", "weakness 2"],
-    "opportunities": ["opportunity 1 specific to ${targetCity}", "opportunity 2", "opportunity 3"],
-    "threats": ["threat 1", "threat 2"]
+    "opportunities": ["opportunity 1 specific to ${data.targetCity} 2026", "opportunity 2", "opportunity 3"],
+    "threats": ["threat 1 specific to ${data.targetCity}", "threat 2"]
   },
   "cpl_intelligence": {
-    "meta_cpl_expected": "EGP ${metaLow}-${metaHigh}",
-    "google_cpl_expected": "EGP ${gLow}-${gHigh}",
-    "budget_required_100leads": "EGP amount for 100 qualified leads/month",
-    "recommended_test_budget": "EGP amount for market validation phase",
-    "payback_timeline": "months to first profitable campaign"
+    "meta_cpl_expected": "EGP ${m.expectedCPLMeta}",
+    "google_cpl_expected": "EGP ${m.expectedCPLGoogle}",
+    "budget_required_100leads": "EGP ${m.expectedLeads100.toLocaleString()} شهرياً",
+    "recommended_test_budget": "EGP ${m.testBudget.toLocaleString()} (30 عميل اختباري)",
+    "payback_timeline": "${m.breakEvenMonths} أشهر للوصول لأول حملة مربحة"
   },
   "entry_strategy_90days": {
-    "month1": {"title": "التأسيس الرقمي", "actions": ["action 1", "action 2", "action 3"], "budget": "EGP", "kpi": "measurable target"},
-    "month2": {"title": "اختبار السوق", "actions": ["action 1", "action 2", "action 3"], "budget": "EGP", "kpi": "measurable target"},
-    "month3": {"title": "التوسع والتحسين", "actions": ["action 1", "action 2", "action 3"], "budget": "EGP", "kpi": "measurable target"}
+    "month1": {"title": "التأسيس الرقمي", "actions": ["action 1 for ${data.targetCity}", "action 2", "action 3"], "budget": "EGP ${budget1.toLocaleString()}", "kpi": "specific measurable target"},
+    "month2": {"title": "اختبار السوق", "actions": ["action 1", "action 2", "action 3"], "budget": "EGP ${budget2.toLocaleString()}", "kpi": "specific measurable target"},
+    "month3": {"title": "التوسع والتحسين", "actions": ["action 1", "action 2", "action 3"], "budget": "EGP ${m.budget.toLocaleString()}", "kpi": "${m.monthlyLeadsAtBudget} عميل/شهر بـ EGP ${m.expectedCPLMeta} CPL"}
   },
-  "recommendation": "final 2-sentence recommendation: should they enter, how, and when",
-  "confidence_score": {"pct": 0, "label": "High/Medium/Low", "reason": "based on available market data"}
+  "recommendation": "2 Arabic sentences: ${m.budgetSufficiency === 'كافي للاختبار' ? 'الميزانية كافية للبدء' : 'يُنصح بزيادة الميزانية'}، specific next step with timeline.",
+  "confidence_score": {"pct": 72, "label": "Medium", "reason": "${confReason}"}
 }`
 }
 
 function buildLeadGenPrompt(data: Record<string, string>): string {
-  const { companyName, city, clientType, currentLeads, qualifiedPct,
-    adSpend, cpl, avgDealValue, salesCycle } = data
-  const bench = clientType === 'developer' ? RE_BENCHMARKS.developer : RE_BENCHMARKS.broker
+  const lg = calculateLeadGen(data)
+  const confPct = data.avgDealValue && data.adSpend ? 78 : data.avgDealValue ? 70 : 63
+  const confReason = confPct >= 78 ? 'بيانات كاملة: عملاء + إنفاق + قيمة صفقة'
+    : confPct >= 70 ? 'قيمة الصفقة متاحة — أضف الإنفاق لرفع الدقة'
+    : 'بيانات أساسية — أضف قيمة الصفقة والإنفاق الإعلاني'
 
-  return `You are Egypt's top real estate lead generation strategist. Generate a Lead Generation Intelligence report.
+  return `You are Egypt's top real estate lead generation strategist.
+Numbers are PRE-CALCULATED — interpret and write in Arabic, do NOT recalculate.
 
-DATA:
-- Company: ${companyName}
-- City: ${city}
-- Type: ${clientType === 'developer' ? 'مطور عقاري' : 'وسيط/بروكر عقاري'}
-- Monthly leads: ${currentLeads}
-- Qualified leads %: ${qualifiedPct}%
-- Monthly ad spend: EGP ${adSpend}
-- Current CPL: EGP ${cpl}
-- Average deal value: EGP ${avgDealValue}
-- Sales cycle: ${salesCycle} days
+COMPANY: ${data.companyName} | ${data.city} | ${data.clientType === 'developer' ? 'مطور عقاري' : 'وسيط عقاري'}
 
-BENCHMARKS:
-- Decision cycle: ${bench.decision_cycle}
-- CAC benchmark: ${bench.cac}
-- LTV benchmark: ${bench.ltv}
+PRE-CALCULATED LEAD ANALYSIS (numbers are FINAL — do not change):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Monthly Leads:            ${lg.currentLeads}
+Qualification Rate:       ${lg.qualifiedPct}% (benchmark: ${lg.benchQualPct}%)
+Qualified Leads:          ${lg.qualifiedLeads}/month
+Qual Gap from Benchmark:  ${lg.qualGap > 0 ? '+' : ''}${lg.qualGap}% ${lg.qualGap > 0 ? '(below benchmark)' : '(above benchmark ✅)'}
+Qualification Verdict:    ${lg.qualVerdictLabel}
+Estimated Deals:          ${lg.estimatedDeals}/month (15% close rate)
+Estimated Revenue:        EGP ${lg.estimatedRevenue.toLocaleString()}
+Current CAC:              ${lg.cacCurrent > 0 ? 'EGP ' + lg.cacCurrent.toLocaleString() : 'N/A'}
+CAC Benchmark:            EGP ${lg.benchCAC.toLocaleString()}
+CAC Verdict:              ${lg.cacVerdictLabel}
+LTV/CAC Ratio:            ${lg.ltvCacRatio}
+Scenario → qual to ${lg.improvedQualPct}%:
+  Additional Deals:       +${lg.additionalDeals}/month
+  Additional Revenue:     EGP ${lg.additionalRevenue.toLocaleString()}
+Sales Cycle:              ${lg.salesCycle} days
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Return ONLY valid JSON (no markdown, start with {):
 {
   "report_type": "تقرير استخبارات توليد العملاء",
-  "company": "${companyName}",
-  "executive_summary": "2 sentences: lead quality assessment and biggest improvement opportunity",
+  "company": "${data.companyName}",
+  "executive_summary": "2 Arabic sentences: qualification rate ${lg.qualifiedPct}% vs ${lg.benchQualPct}% benchmark (${lg.qualVerdictLabel}), ${lg.estimatedDeals} estimated deals/month EGP ${lg.estimatedRevenue.toLocaleString()}. Raising to ${lg.improvedQualPct}% adds +${lg.additionalDeals} deals EGP ${lg.additionalRevenue.toLocaleString()}.",
   "pipeline_health": {
-    "monthly_leads": ${currentLeads || 0},
-    "qualified_leads": "calculate: ${currentLeads} × ${qualifiedPct}%",
-    "qualification_rate": "${qualifiedPct}%",
-    "qualification_benchmark": "15-25% for real estate",
-    "qualification_verdict": "ممتاز/جيد/يحتاج تحسين",
-    "estimated_monthly_deals": "calculate: qualified × close rate estimate",
-    "estimated_monthly_revenue": "EGP based on ${avgDealValue}",
-    "cac_current": "EGP ${adSpend} / qualified leads",
-    "cac_benchmark": "${bench.cac}",
-    "ltv_cac_ratio": "calculate and assess"
+    "monthly_leads": ${lg.currentLeads},
+    "qualified_leads": "${lg.qualifiedLeads} عميل مؤهل",
+    "qualification_rate": "${lg.qualifiedPct}%",
+    "qualification_benchmark": "${lg.benchQualPct}% للعقارات المصرية",
+    "qualification_verdict": "${lg.qualVerdictLabel}",
+    "estimated_monthly_deals": "${lg.estimatedDeals} صفقة (بمعدل إغلاق 15%)",
+    "estimated_monthly_revenue": "EGP ${lg.estimatedRevenue.toLocaleString()}",
+    "cac_current": "${lg.cacCurrent > 0 ? 'EGP ' + lg.cacCurrent.toLocaleString() : 'غير محدد'}",
+    "cac_benchmark": "EGP ${lg.benchCAC.toLocaleString()}",
+    "ltv_cac_ratio": "${lg.ltvCacRatio}"
   },
   "lead_quality_diagnosis": [
-    {"issue": "specific quality issue 1 for real estate in ${city}", "severity": "عالية/متوسطة/منخفضة", "impact": "% leads lost", "fix": "specific action"},
-    {"issue": "specific quality issue 2", "severity": "عالية/متوسطة/منخفضة", "impact": "% leads lost", "fix": "specific action"},
-    {"issue": "specific quality issue 3", "severity": "عالية/متوسطة/منخفضة", "impact": "% leads lost", "fix": "specific action"}
+    {"issue": "specific quality issue 1 for ${data.clientType} in ${data.city}", "severity": "عالية/متوسطة/منخفضة", "impact": "% leads lost", "fix": "specific Arabic action"},
+    {"issue": "specific quality issue 2", "severity": "عالية/متوسطة/منخفضة", "impact": "% leads lost", "fix": "specific Arabic action"},
+    {"issue": "specific quality issue 3", "severity": "عالية/متوسطة/منخفضة", "impact": "% leads lost", "fix": "specific Arabic action"}
   ],
   "qualification_framework": {
     "scoring_criteria": [
-      {"criterion": "الميزانية", "weight": "30%", "qualifier": "specific budget range for ${clientType}"},
+      {"criterion": "الميزانية", "weight": "30%", "qualifier": "specific budget range for ${data.clientType} in ${data.city}"},
       {"criterion": "الجدية والنية", "weight": "25%", "qualifier": "signs of serious buyer intent"},
-      {"criterion": "الجدول الزمني", "weight": "20%", "qualifier": "timeline indicators"},
+      {"criterion": "الجدول الزمني", "weight": "20%", "qualifier": "timeline indicators for ${data.salesCycle || 90}-day cycle"},
       {"criterion": "صلاحية اتخاذ القرار", "weight": "15%", "qualifier": "decision maker identification"},
-      {"criterion": "الموقع الجغرافي", "weight": "10%", "qualifier": "location match criteria"}
+      {"criterion": "الموقع الجغرافي", "weight": "10%", "qualifier": "location match for ${data.city}"}
     ],
-    "disqualifiers": ["disqualifier 1 specific to ${clientType}", "disqualifier 2", "disqualifier 3"],
-    "nurture_vs_close": "criteria for when to nurture vs push to close"
+    "disqualifiers": ["disqualifier 1 for ${data.clientType}", "disqualifier 2", "disqualifier 3"],
+    "nurture_vs_close": "specific criteria for ${data.city} market and ${lg.salesCycle}-day cycle"
   },
   "channel_lead_quality": [
-    {"channel": "Meta Ads", "lead_quality": "High/Medium/Low", "typical_qualification_rate": "%", "recommendation": "specific action"},
-    {"channel": "Google Search", "lead_quality": "High/Medium/Low", "typical_qualification_rate": "%", "recommendation": "specific action"},
-    {"channel": "WhatsApp Organic", "lead_quality": "High/Medium/Low", "typical_qualification_rate": "%", "recommendation": "specific action"},
-    {"channel": "Referrals", "lead_quality": "High/Medium/Low", "typical_qualification_rate": "%", "recommendation": "specific action"}
+    {"channel": "Meta Ads", "lead_quality": "High/Medium/Low", "typical_qualification_rate": "%", "recommendation": "specific Arabic action"},
+    {"channel": "Google Search", "lead_quality": "High/Medium/Low", "typical_qualification_rate": "%", "recommendation": "specific Arabic action"},
+    {"channel": "WhatsApp Organic", "lead_quality": "High/Medium/Low", "typical_qualification_rate": "%", "recommendation": "specific Arabic action"},
+    {"channel": "Referrals", "lead_quality": "High/Medium/Low", "typical_qualification_rate": "%", "recommendation": "specific Arabic action"}
   ],
   "improvements": [
-    {"action": "specific improvement 1", "expected_impact": "% increase in qualified leads", "timeline": "days", "effort": "منخفض/متوسط/عالي"},
-    {"action": "specific improvement 2", "expected_impact": "% impact", "timeline": "days", "effort": "effort"},
-    {"action": "specific improvement 3", "expected_impact": "% impact", "timeline": "days", "effort": "effort"}
+    {"action": "Arabic action to raise qualification from ${lg.qualifiedPct}% to ${lg.improvedQualPct}% (+${lg.additionalDeals} deals, EGP ${lg.additionalRevenue.toLocaleString()} revenue)", "expected_impact": "+${lg.additionalDeals} صفقة/شهر", "timeline": "14-30 يوم", "effort": "منخفض/متوسط/عالي"},
+    {"action": "second Arabic improvement", "expected_impact": "% impact", "timeline": "days", "effort": "منخفض/متوسط/عالي"},
+    {"action": "third Arabic improvement", "expected_impact": "% impact", "timeline": "days", "effort": "منخفض/متوسط/عالي"}
   ],
   "whatsapp_script": {
-    "opening": "specific opening message for ${clientType} leads in ${city}",
-    "qualification_questions": ["question 1 to qualify budget", "question 2 to qualify timeline", "question 3 to qualify seriousness"],
-    "closing": "specific call to action"
+    "opening": "specific Arabic opening for ${data.clientType} leads in ${data.city}",
+    "qualification_questions": ["question 1 to qualify budget for ${data.clientType}", "question 2 to qualify timeline (${lg.salesCycle} days avg)", "question 3 to qualify seriousness"],
+    "closing": "specific Arabic call to action for ${data.clientType}"
   },
-  "confidence_score": {"pct": 0, "label": "High/Medium/Low", "reason": "based on data provided"}
+  "confidence_score": {"pct": ${confPct}, "label": "${confPct >= 75 ? 'High' : 'Medium'}", "reason": "${confReason}"}
 }`
 }
 
 function buildFullAnalysisPrompt(data: Record<string, string>): string {
-  const { companyName, city, clientType, website, fbPage, igPage, ttPage,
-    adSpend, cpl, roas, leads, revenue, competitors } = data
-  const bench = clientType === 'developer' ? RE_BENCHMARKS.developer : RE_BENCHMARKS.broker
-  const devBench = RE_BENCHMARKS.developer
+  const fa = calculateFullAnalysis(data)
+  const confPct = fa.hasCampaignData && fa.hasDigitalPresence ? 75
+    : fa.hasCampaignData ? 65 : fa.hasDigitalPresence ? 60 : 55
+  const confReason = confPct >= 75 ? 'بيانات حملات ورقمية كاملة'
+    : confPct >= 65 ? 'بيانات حملات متاحة — أضف الحضور الرقمي'
+    : confPct >= 60 ? 'حضور رقمي متاح — أضف بيانات الحملات'
+    : 'بيانات محدودة — أضف الحملات والحضور الرقمي'
+  const digitalScoreScaled = Math.round(fa.digitalScore * 100 / 95)
+  const paidScore = fa.cplGap <= 10 ? 80 : fa.cplGap <= 30 ? 60 : 35
+  const cplSign = fa.cplGap > 0 ? '+' : ''
+  const cplVerdict = fa.cplGap <= 0 ? 'أفضل من المعيار' : fa.cplGap <= 20 ? 'ضمن المعيار' : 'أعلى من المعيار'
+  const roasVerdict = !data.roas ? 'غير محدد'
+    : parseFloat(data.roas) >= 5 ? 'ممتاز' : parseFloat(data.roas) >= 3 ? 'جيد' : 'ضعيف'
+  const digitalMaturity = fa.digitalScore >= 70 ? 'متقدم' : fa.digitalScore >= 50 ? 'متوسط' : 'مبتدئ'
+  const budget1 = fa.adSpend > 0 ? Math.round(fa.adSpend * 0.8).toLocaleString() : 'حسب الميزانية'
+  const budget2 = fa.adSpend > 0 ? fa.adSpend.toLocaleString() : 'حسب الميزانية'
+  const budget3 = fa.adSpend > 0 ? Math.round(fa.adSpend * 1.2).toLocaleString() : 'حسب الميزانية'
 
-  return `You are Egypt's top real estate marketing intelligence analyst. Generate a comprehensive Full Marketing Analysis.
-This is a premium report — every section must be specific, data-driven, and actionable for a ${clientType === 'developer' ? 'real estate developer' : 'real estate broker'} in ${city}.
+  return `You are Egypt's top real estate marketing intelligence analyst.
+Numbers are PRE-CALCULATED — interpret and write in Arabic, do NOT recalculate.
 
-CLIENT DATA:
-- Company: ${companyName}
-- City: ${city}
-- Type: ${clientType === 'developer' ? 'مطور عقاري' : 'وسيط/بروكر عقاري'}
-- Website: ${website || 'not provided'}
-- Facebook: ${fbPage || 'not provided'}
-- Instagram: ${igPage || 'not provided'}
-- TikTok: ${ttPage || 'not provided'}
-- Monthly ad spend: EGP ${adSpend || 'not provided'}
-- Current CPL: EGP ${cpl || 'not provided'}
-- ROAS: ${roas || 'not provided'}
-- Monthly leads: ${leads || 'not provided'}
-- Monthly revenue: EGP ${revenue || 'not provided'}
-- Known competitors: ${competitors || 'not provided'}
+COMPANY: ${data.companyName} | ${data.city} | ${data.clientType === 'developer' ? 'مطور عقاري' : 'وسيط عقاري'}
+Website: ${data.website || 'None'} | FB: ${data.fbPage || 'None'} | IG: ${data.igPage || 'None'} | TT: ${data.ttPage || 'None'}
+Competitors: ${data.competitors || 'Not provided'}
+Monthly Revenue: EGP ${data.revenue || 'N/A'}
 
-EGYPT REAL ESTATE BENCHMARKS 2026:
-- Market size: ${devBench.market_size}
-- Growth: ${devBench.market_growth}
-- Meta CPL: ${bench.cpl_meta}
-- Google CPL: ${bench.cpl_google}
-- Decision cycle: ${bench.decision_cycle}
-- Peak seasons: ${'peak_seasons' in bench ? bench.peak_seasons : 'N/A'}
-- Top pain points: ${bench.top_pain}
+PRE-CALCULATED MARKETING SCORES (numbers are FINAL — do not change):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Marketing Score:      ${fa.marketingScore}/100
+Digital Score:        ${fa.digitalScore}/95 → ${digitalScoreScaled}/100 scaled
+Performance Tier:     ${fa.performanceTier}
+Digital Presence:     ${fa.hasDigitalPresence ? 'Yes' : 'No'}
+Campaign Data:        ${fa.hasCampaignData ? 'Yes' : 'No'}
+CPL:                  ${fa.cpl > 0 ? 'EGP ' + fa.cpl : 'N/A'} (benchmark EGP ${fa.benchCPL})
+CPL Gap:              ${cplSign}${fa.cplGap}% → ${cplVerdict}
+Wasted Budget:        EGP ${fa.wastedBudget.toLocaleString()}/month
+Expected Leads:       ${fa.expectedLeads} (at benchmark CPL)
+ROAS:                 ${data.roas || 'N/A'} → ${roasVerdict}
+Current Leads:        ${data.leads || 'N/A'}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+INSTRUCTIONS:
+- marketing_score MUST be ${fa.marketingScore}
+- digital_presence score MUST be ${digitalScoreScaled}
+- paid_performance score MUST be ${paidScore}
+- Write executive_summary in Arabic using exact scores above
 
 Return ONLY valid JSON (no markdown, start with {):
 {
   "report_type": "التحليل التسويقي الشامل",
-  "company": "${companyName}",
-  "marketing_score": 0,
+  "company": "${data.companyName}",
+  "marketing_score": ${fa.marketingScore},
   "score_breakdown": {
-    "digital_presence": {"score": 0, "max": 100, "assessment": "2 sentences"},
-    "paid_performance": {"score": 0, "max": 100, "assessment": "2 sentences"},
-    "content_quality": {"score": 0, "max": 100, "assessment": "2 sentences"},
-    "brand_strength": {"score": 0, "max": 100, "assessment": "2 sentences"},
-    "competitive_position": {"score": 0, "max": 100, "assessment": "2 sentences"}
+    "digital_presence": {"score": ${digitalScoreScaled}, "max": 100, "assessment": "2 Arabic sentences on ${fa.hasDigitalPresence ? 'existing' : 'absent'} digital presence and what to improve"},
+    "paid_performance": {"score": ${paidScore}, "max": 100, "assessment": "2 Arabic sentences: CPL ${cplSign}${fa.cplGap}% vs benchmark, wasted EGP ${fa.wastedBudget.toLocaleString()}/mo"},
+    "content_quality": {"score": 0, "max": 100, "assessment": "2 Arabic sentences based on available channels"},
+    "brand_strength": {"score": 0, "max": 100, "assessment": "2 Arabic sentences for ${data.companyName} in ${data.city}"},
+    "competitive_position": {"score": 0, "max": 100, "assessment": "2 Arabic sentences vs ${data.competitors || 'السوق'}"}
   },
-  "executive_summary": "3 powerful sentences: market position, biggest strength, most urgent opportunity",
+  "executive_summary": "3 Arabic sentences: performance tier ${fa.performanceTier} with score ${fa.marketingScore}/100, ${fa.cplGap > 0 ? 'CPL ' + cplSign + fa.cplGap + '% أعلى من المعيار يهدر EGP ' + fa.wastedBudget.toLocaleString() + '/شهر' : 'CPL ضمن المعيار'}, biggest opportunity for ${data.companyName}.",
   "market_overview": {
-    "size": "${devBench.market_size}",
-    "growth": "${devBench.market_growth}",
-    "city_specific": "2 sentences on ${city} real estate market conditions 2026",
-    "key_trends": ["trend 1 specific to ${city}", "trend 2", "trend 3"]
+    "size": "${RE_BENCHMARKS.developer.market_size}",
+    "growth": "${RE_BENCHMARKS.developer.market_growth}",
+    "city_specific": "2 Arabic sentences on ${data.city} real estate 2026",
+    "key_trends": ["trend 1 for ${data.city} 2026", "trend 2", "trend 3"]
   },
   "digital_presence_audit": {
-    "website": {"status": "موجود/غير موجود", "assessment": "2 sentences", "score": 0},
-    "facebook": {"activity": "نشط/غير نشط", "assessment": "1 sentence"},
-    "instagram": {"activity": "نشط/غير نشط", "assessment": "1 sentence"},
-    "tiktok": {"activity": "نشط/غير نشط", "assessment": "1 sentence"},
-    "google_business": {"status": "موجود/غير موجود", "assessment": "1 sentence"},
-    "overall_digital_maturity": "متقدم/متوسط/مبتدئ"
+    "website": {"status": "${data.website ? 'موجود' : 'غير موجود'}", "assessment": "2 Arabic sentences", "score": ${data.website ? 70 : 0}},
+    "facebook": {"activity": "${data.fbPage ? 'نشط' : 'غير نشط'}", "assessment": "1 Arabic sentence"},
+    "instagram": {"activity": "${data.igPage ? 'نشط' : 'غير نشط'}", "assessment": "1 Arabic sentence"},
+    "tiktok": {"activity": "${data.ttPage ? 'نشط' : 'غير نشط'}", "assessment": "1 Arabic sentence"},
+    "google_business": {"status": "غير محدد", "assessment": "يُنصح بإنشاء حساب Google Business للحضور المحلي في ${data.city}"},
+    "overall_digital_maturity": "${digitalMaturity}"
   },
   "campaign_performance": {
-    "cpl_analysis": {"current": "EGP ${cpl || 'غير محدد'}", "benchmark": "${bench.cpl_meta}", "verdict": "أفضل/ضمن/أعلى من المعيار"},
-    "roas_analysis": {"current": "${roas || 'غير محدد'}", "benchmark": "3-6x for real estate", "verdict": "ممتاز/جيد/ضعيف/غير محدد"},
-    "wasted_budget": "EGP estimate if data available",
-    "top_3_optimizations": ["optimization 1", "optimization 2", "optimization 3"]
+    "cpl_analysis": {"current": "${fa.cpl > 0 ? 'EGP ' + fa.cpl : 'غير محدد'}", "benchmark": "EGP ${fa.benchCPL}", "verdict": "${cplVerdict}"},
+    "roas_analysis": {"current": "${data.roas || 'غير محدد'}", "benchmark": "3-6x للعقارات", "verdict": "${roasVerdict}"},
+    "wasted_budget": "EGP ${fa.wastedBudget.toLocaleString()}/month",
+    "top_3_optimizations": ["optimization 1 in Arabic", "optimization 2 in Arabic", "optimization 3 in Arabic"]
   },
   "competitive_landscape": {
-    "competition_level": "منخفض/متوسط/عالي/عالي جداً",
-    "competitive_gaps": ["gap 1 that ${companyName} can exploit", "gap 2", "gap 3"],
-    "differentiation_opportunity": "2 sentences on the clearest differentiation opportunity"
+    "competition_level": "specific level for ${data.city} 2026",
+    "competitive_gaps": ["gap 1 for ${data.companyName} to exploit", "gap 2", "gap 3"],
+    "differentiation_opportunity": "2 Arabic sentences on clearest differentiation for ${data.city}"
   },
   "swot": {
-    "strengths": ["specific strength 1", "specific strength 2", "specific strength 3"],
+    "strengths": ["specific strength 1 for ${data.companyName}", "strength 2", "strength 3"],
     "weaknesses": ["specific weakness 1", "specific weakness 2"],
-    "opportunities": ["specific opportunity in ${city}", "opportunity 2", "opportunity 3"],
+    "opportunities": ["specific opportunity in ${data.city} 2026", "opportunity 2", "opportunity 3"],
     "threats": ["specific threat 1", "specific threat 2"]
   },
   "strategy_90days": {
-    "month1": {"focus": "title", "actions": ["action 1", "action 2", "action 3"], "kpi": "measurable target", "budget": "EGP"},
-    "month2": {"focus": "title", "actions": ["action 1", "action 2", "action 3"], "kpi": "measurable target", "budget": "EGP"},
-    "month3": {"focus": "title", "actions": ["action 1", "action 2", "action 3"], "kpi": "measurable target", "budget": "EGP"}
+    "month1": {"focus": "title", "actions": ["action 1", "action 2", "action 3"], "kpi": "measurable target", "budget": "EGP ${budget1}"},
+    "month2": {"focus": "title", "actions": ["action 1", "action 2", "action 3"], "kpi": "measurable target", "budget": "EGP ${budget2}"},
+    "month3": {"focus": "title", "actions": ["action 1", "action 2", "action 3"], "kpi": "measurable target", "budget": "EGP ${budget3}"}
   },
   "quick_wins": [
-    {"action": "most impactful quick win", "timeline": "7 days", "impact": "specific EGP or % impact", "effort": "منخفض"},
-    {"action": "second quick win", "timeline": "14 days", "impact": "impact", "effort": "منخفض"},
-    {"action": "third quick win", "timeline": "21 days", "impact": "impact", "effort": "متوسط"}
+    {"action": "most impactful quick win in Arabic", "timeline": "7 أيام", "impact": "specific EGP or % impact", "effort": "منخفض"},
+    {"action": "second quick win in Arabic", "timeline": "14 يوم", "impact": "impact", "effort": "منخفض"},
+    {"action": "third quick win in Arabic", "timeline": "21 يوم", "impact": "impact", "effort": "متوسط"}
   ],
   "pain_points": [
-    {"level": "high", "title": "main pain", "detail": "2 sentences with solution"},
-    {"level": "high", "title": "second pain", "detail": "2 sentences"},
-    {"level": "med", "title": "third pain", "detail": "1 sentence"}
+    {"level": "high", "title": "main pain in Arabic", "detail": "2 Arabic sentences with solution"},
+    {"level": "high", "title": "second pain in Arabic", "detail": "2 Arabic sentences"},
+    {"level": "med", "title": "third pain in Arabic", "detail": "1 Arabic sentence"}
   ],
-  "confidence_score": {"pct": 0, "label": "High/Medium/Low", "reason": "based on data completeness"}
+  "confidence_score": {"pct": ${confPct}, "label": "${confPct >= 70 ? 'Medium' : 'Low'}", "reason": "${confReason}"}
 }`
 }
 
