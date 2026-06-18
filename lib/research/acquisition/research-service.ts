@@ -2,7 +2,7 @@ import crypto from 'crypto'
 import { cacheGet, cacheSet, CACHE_TTL } from '@/lib/redis/cache'
 import type { AIProvider } from '@/services/legacy-ai-engine/providers/base.provider'
 import { OpenAIProvider } from '@/services/legacy-ai-engine/providers/openai.provider'
-import { GoogleCustomSearchProvider, type SearchProvider } from './search-provider'
+import { SerpApiProvider, type SearchProvider } from './search-provider'
 import { FetchSourceCollector, classifySourceType, isNoFetchDomain, type SourceCollector } from './source-collector'
 import { normalizeSources, type CollectedItem } from './normalizer'
 import { rankSources } from './ranker'
@@ -41,7 +41,7 @@ function buildQueryHash(input: RunResearchInput): string {
  * calls. Wires Search → Collect → Normalize → Rank → AI Analysis together,
  * with the same cache-by-input-hash pattern as
  * services/legacy-ai-engine/orchestrator.ts so repeat queries don't re-spend
- * the Google Custom Search daily quota or an OpenAI call.
+ * the SerpAPI daily quota or an OpenAI call.
  */
 export class ResearchService {
   private searchProvider: SearchProvider
@@ -50,7 +50,7 @@ export class ResearchService {
   private _aiProvider?: AIProvider
 
   constructor(options: ResearchServiceOptions = {}) {
-    this.searchProvider = options.searchProvider ?? new GoogleCustomSearchProvider()
+    this.searchProvider = options.searchProvider ?? new SerpApiProvider()
     this.sourceCollector = options.sourceCollector ?? new FetchSourceCollector()
     this.aiProviderOverride = options.aiProvider
   }

@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase/server'
 import { getSector } from '@core/data/sectors.data'
 import { getCity } from '@core/data/cities.data'
 import { checkRateLimit, rateLimitMessage } from '@/lib/research/rate-limit'
+import { checkPlanLimit } from '@/lib/research/plan-enforcement'
+import { PLAN_LABELS } from '@/types/plan.types'
 import { buildCandidateSources, computeConfidence, COUNTRY_CURRENCY } from '@/lib/research/sources'
 
 interface TalentFinderInput {
@@ -79,17 +81,31 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: rateLimitMessage(rate.resetIn), resetIn: rate.resetIn }, { status: 429 })
     }
 
+    // `research_requests`/`reports`/`user_plans` aren't in the generated Supabase types yet
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sb = supabase as any
+
+    const planCheck = await checkPlanLimit(sb, user.id)
+    if (!planCheck.ok) {
+      return NextResponse.json(
+        {
+          error: `Monthly plan limit reached (${planCheck.used}/${planCheck.limit} reports used this month on the ${PLAN_LABELS[planCheck.plan]} plan). Upgrade your plan to continue.`,
+          used: planCheck.used,
+          limit: planCheck.limit,
+          plan: planCheck.plan,
+        },
+        { status: 403 }
+      )
+    }
+
     const sector = getSector(industry)
     const city = getCity(location)
     const currency = COUNTRY_CURRENCY[city.country] ?? 'USD'
     const input: TalentFinderInput = { jobTitle, location, industry, experience, skills }
 
-    // `research_requests`/`reports` aren't in the generated Supabase types yet
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const sb = supabase as any
     const { data: reqRow } = await sb
       .from('research_requests')
-      .insert({ user_id: user.id, module: 'talent_finder', status: 'submitted', input })
+      .insert({ user_id: user.id, module: 'talent_finder', status: 'submitted', input, credits_used: 1 })
       .select('id')
       .single()
     const requestId = reqRow?.id as string | undefined
