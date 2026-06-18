@@ -63,7 +63,7 @@ export function Header({ title, subtitle, onMenuClick, sidebarOpen }: {
 
         {/* New Report CTA */}
         <Link
-          href="/dashboard/intelligence"
+          href="/dashboard/real-estate"
           className="hidden sm:flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg transition-all hover:opacity-90"
           style={{ background: 'linear-gradient(135deg,#b8922a,#d4aa45)', color: '#fff' }}
         >

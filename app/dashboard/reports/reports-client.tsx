@@ -16,6 +16,8 @@ const TYPE_ICONS: Record<string, string> = {
   market_entry:  '🗺️',
   lead_gen:      '🎯',
   full_analysis: '🏆',
+  lead_finder:   '🎯',
+  talent_finder: '🧑‍💼',
 }
 
 const TYPE_LABELS: Record<string, { ar: string; en: string }> = {
@@ -24,6 +26,8 @@ const TYPE_LABELS: Record<string, { ar: string; en: string }> = {
   market_entry:  { ar: 'دخول السوق',      en: 'Market Entry Intel' },
   lead_gen:      { ar: 'توليد العملاء',   en: 'Lead Generation Intel' },
   full_analysis: { ar: 'التحليل الشامل', en: 'Full Marketing Analysis' },
+  lead_finder:   { ar: 'البحث عن عملاء',  en: 'Lead Finder' },
+  talent_finder: { ar: 'البحث عن مواهب',  en: 'Talent Finder' },
 }
 
 const styles = `
@@ -138,6 +142,18 @@ function getKeyMetrics(type: string, data: Record<string, unknown> | null): Arra
     if (data.performance_tier) metrics.push({ label: 'المستوى',       value: data.performance_tier as string })
     const cp = data.campaign_performance as Record<string, Record<string, string>> | undefined
     if (cp?.cpl_analysis?.gap) metrics.push({ label: 'فجوة CPL',     value: cp.cpl_analysis.gap })
+  } else if (type === 'lead_finder') {
+    const companies = data.companies as Array<{ lead_score?: number }> | undefined
+    if (companies?.length) metrics.push({ label: 'الشركات', value: String(companies.length) })
+    if (companies?.length) {
+      const avg = Math.round(companies.reduce((s, c) => s + (c.lead_score ?? 0), 0) / companies.length)
+      metrics.push({ label: 'متوسط النقاط', value: `${avg}/100` })
+    }
+  } else if (type === 'talent_finder') {
+    const sal = data.salary_range as Record<string, string | number> | undefined
+    if (sal?.min !== undefined && sal?.max !== undefined) metrics.push({ label: 'الراتب', value: `${sal.min}-${sal.max} ${sal.currency ?? ''}` })
+    const demand = data.hiring_demand as Record<string, string> | undefined
+    if (demand?.level) metrics.push({ label: 'الطلب', value: demand.level })
   }
   return metrics.slice(0, 4)
 }
@@ -231,6 +247,8 @@ export default function ReportsClient({ reports, userEmail }: { reports: Report[
             <button className={`rh-filter-btn${filter === 'market_entry' ? ' active' : ''}`} onClick={() => setFilter('market_entry')}>&#128506; سوق</button>
             <button className={`rh-filter-btn${filter === 'lead_gen' ? ' active' : ''}`} onClick={() => setFilter('lead_gen')}>&#127919; عملاء</button>
             <button className={`rh-filter-btn${filter === 'full_analysis' ? ' active' : ''}`} onClick={() => setFilter('full_analysis')}>&#127942; شامل</button>
+            <button className={`rh-filter-btn${filter === 'lead_finder' ? ' active' : ''}`} onClick={() => setFilter('lead_finder')}>&#127919; Leads</button>
+            <button className={`rh-filter-btn${filter === 'talent_finder' ? ' active' : ''}`} onClick={() => setFilter('talent_finder')}>&#129489;&#8205;&#128188; Talent</button>
           </div>
 
           {/* Empty state */}
