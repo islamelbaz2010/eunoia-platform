@@ -1,3 +1,8 @@
+console.log("=== LEADS API START ===")
+console.log("SERPAPI:", !!process.env.SERPAPI_API_KEY)
+console.log("OPENAI:", !!process.env.OPENAI_API_KEY)
+
+
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { SECTORS, getSector } from '@core/data/sectors.data'
