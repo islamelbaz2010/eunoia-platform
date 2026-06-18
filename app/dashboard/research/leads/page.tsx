@@ -46,12 +46,17 @@ const styles = `
   .ri-chip { font-size: 10px; background: #FAF5EF; color: #6B6560; padding: 3px 8px; border-radius: 8px; border: 1px solid #E8E2DA; }
   .ri-link-row { display: flex; flex-wrap: wrap; gap: 8px; }
   .ri-link-btn { font-size: 11px; font-weight: 700; color: #7C3AED; text-decoration: none; border: 1px solid #E0D0F5; padding: 5px 10px; border-radius: 8px; background: #FAF5FF; }
+  .ri-source-url { display: block; font-size: 11px; color: #7C3AED; word-break: break-all; margin-bottom: 8px; text-decoration: none; }
+  .ri-source-url:hover { text-decoration: underline; }
+  .ri-empty { background: #fff; border: 1.5px dashed #E8E2DA; border-radius: 12px; padding: 24px; text-align: center; font-size: 13px; color: #6B6560; }
 `
 
 interface DecisionMaker { title: string; linkedin_search_url: string }
+type SourceType = 'company_website' | 'business_directory' | 'public_listing'
 interface Company {
-  name: string; description: string; why_fit: string; estimated_size: string
-  public_sources: string[]; lead_score: number; linkedin_company_search_url: string
+  name: string; sourceUrl: string; sourceType: SourceType
+  confidenceScore: number; summary: string
+  linkedin_company_search_url: string
   decision_makers: DecisionMaker[]
 }
 interface LeadReport {
@@ -59,9 +64,16 @@ interface LeadReport {
   executive_summary: string; research_summary: string; companies: Company[]
   outreach_disclaimer: string
   confidence_score: { pct: number; label: string; reason: string }
+  total_sources_found?: number
+  total_sources_collected?: number
 }
 
 const SIZES = ['1-10', '11-50', '51-200', '201-500', '500+']
+const SOURCE_TYPE_LABELS: Record<SourceType, string> = {
+  company_website: 'Company Website',
+  business_directory: 'Business Directory',
+  public_listing: 'Public Listing',
+}
 
 export default function LeadFinderPage() {
   const [industry, setIndustry] = useState('')
@@ -102,9 +114,9 @@ export default function LeadFinderPage() {
       ['Eunoia Research Intelligence — Lead Finder'],
       [`Industry: ${report.search_criteria.industry}`, `Location: ${report.search_criteria.location}`, `Size: ${report.search_criteria.company_size}`],
       [],
-      ['Company', 'Lead Score', 'Estimated Size', 'Why Fit', 'Description', 'LinkedIn Search', 'Decision Makers'],
+      ['Company', 'Confidence Score', 'Source Type', 'Source URL', 'Summary', 'LinkedIn Search', 'Decision Maker Titles'],
       ...report.companies.map(c => [
-        c.name, c.lead_score, c.estimated_size, c.why_fit, c.description,
+        c.name, c.confidenceScore, SOURCE_TYPE_LABELS[c.sourceType] ?? c.sourceType, c.sourceUrl, c.summary,
         c.linkedin_company_search_url,
         c.decision_makers.map(d => d.title).join('; '),
       ]),
@@ -190,27 +202,29 @@ export default function LeadFinderPage() {
               </div>
 
               <div className="ri-company-list">
-                {report.companies.map((c, i) => (
-                  <div key={i} className="ri-company">
-                    <div className="ri-company-head">
-                      <span className="ri-company-name">{c.name}</span>
-                      <span className="ri-score">{c.lead_score}/100</span>
-                    </div>
-                    <div className="ri-company-desc">{c.description} {c.why_fit && <>— {c.why_fit}</>}</div>
-                    {c.public_sources.length > 0 && (
-                      <div className="ri-chips">
-                        {c.public_sources.map((s, j) => <span key={j} className="ri-chip">{s}</span>)}
-                        {c.estimated_size && <span className="ri-chip">{c.estimated_size}</span>}
+                {report.companies.length === 0 ? (
+                  <div className="ri-empty">No real companies were found for this search. Try a different industry or location — nothing is fabricated to fill this list.</div>
+                ) : (
+                  report.companies.map((c, i) => (
+                    <div key={i} className="ri-company">
+                      <div className="ri-company-head">
+                        <span className="ri-company-name">{c.name}</span>
+                        <span className="ri-score">{c.confidenceScore}% confidence</span>
                       </div>
-                    )}
-                    <div className="ri-link-row">
-                      <a className="ri-link-btn" href={c.linkedin_company_search_url} target="_blank" rel="noopener noreferrer">Search company on LinkedIn ↗</a>
-                      {c.decision_makers.map((d, j) => (
-                        <a key={j} className="ri-link-btn" href={d.linkedin_search_url} target="_blank" rel="noopener noreferrer">Search {d.title} ↗</a>
-                      ))}
+                      <div className="ri-company-desc">{c.summary}</div>
+                      <div className="ri-chips">
+                        <span className="ri-chip">{SOURCE_TYPE_LABELS[c.sourceType] ?? c.sourceType}</span>
+                      </div>
+                      <a className="ri-source-url" href={c.sourceUrl} target="_blank" rel="noopener noreferrer">{c.sourceUrl}</a>
+                      <div className="ri-link-row">
+                        <a className="ri-link-btn" href={c.linkedin_company_search_url} target="_blank" rel="noopener noreferrer">Search company on LinkedIn ↗</a>
+                        {c.decision_makers.map((d, j) => (
+                          <a key={j} className="ri-link-btn" href={d.linkedin_search_url} target="_blank" rel="noopener noreferrer">Search {d.title} ↗</a>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </>
           )}

@@ -46,12 +46,31 @@ function buildQueryHash(input: RunResearchInput): string {
 export class ResearchService {
   private searchProvider: SearchProvider
   private sourceCollector: SourceCollector
-  private aiProvider: AIProvider
+  private aiProviderOverride?: AIProvider
+  private _aiProvider?: AIProvider
 
   constructor(options: ResearchServiceOptions = {}) {
     this.searchProvider = options.searchProvider ?? new GoogleCustomSearchProvider()
     this.sourceCollector = options.sourceCollector ?? new FetchSourceCollector()
-    this.aiProvider = options.aiProvider ?? new OpenAIProvider()
+    this.aiProviderOverride = options.aiProvider
+  }
+
+  /**
+   * Constructed lazily, only once the search step has already succeeded —
+   * so a missing OPENAI_API_KEY doesn't crash the singleton at first touch
+   * (which previously hid a missing GOOGLE_CSE_API_KEY behind an unrelated
+   * OpenAI SDK error) and instead surfaces a clear error at the actual point
+   * the AI Analysis stage is needed.
+   */
+  private getAIProvider(): AIProvider {
+    if (!this._aiProvider) {
+      try {
+        this._aiProvider = this.aiProviderOverride ?? new OpenAIProvider()
+      } catch (err) {
+        throw new Error(`AI Analysis provider is not configured: ${err instanceof Error ? err.message : String(err)}`)
+      }
+    }
+    return this._aiProvider
   }
 
   async run(input: RunResearchInput): Promise<ResearchResult> {
@@ -84,7 +103,7 @@ export class ResearchService {
 
     const normalized = normalizeSources(collectedItems)
     const ranked = rankSources(normalized, { sectorHint: input.sectorHint, cityHint: input.cityHint })
-    const items = await analyzeRankedSources(ranked, input.query, this.aiProvider, { maxItems: maxResults })
+    const items = await analyzeRankedSources(ranked, input.query, this.getAIProvider(), { maxItems: maxResults })
 
     const result: ResearchResult = {
       query: input.query,
