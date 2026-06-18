@@ -34,6 +34,9 @@ model Workspace {
   updatedAt DateTime @updatedAt
 }
 
+/// LEGACY: powered the retired /dashboard/intelligence + /dashboard/feasibility pages.
+/// No longer written to by any route. Kept for historical data — do not drop.
+/// Current reports (Real Estate, Research Intelligence) are stored in the Supabase `reports` table instead.
 model Report {
   id          String       @id @default(cuid())
   type        ReportType
@@ -50,6 +53,7 @@ model Report {
   updatedAt   DateTime     @updatedAt
 }
 
+/// LEGACY: usage tracking for the retired Report model's AI engine. Kept for historical data — do not drop.
 model ApiUsage {
   id          String   @id @default(cuid())
   userId      String
@@ -75,6 +79,7 @@ enum Plan {
   ENTERPRISE
 }
 
+/// LEGACY: status values for the retired Report model.
 enum ReportStatus {
   QUEUED
   PROCESSING
@@ -82,6 +87,7 @@ enum ReportStatus {
   FAILED
 }
 
+/// LEGACY: report types for the retired Report model / legacy AI engine.
 enum ReportType {
   COMPETITOR
   PRICING
