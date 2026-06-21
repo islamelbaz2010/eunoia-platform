@@ -35,12 +35,21 @@ export interface RunResearchInput {
   siteRestrict?: string
   /** Caps both the number of search results requested and the number of AI-summarized items returned. */
   maxResults?: number
+  /**
+   * Only used for the per-tenant fair-share search quota check in quota.ts —
+   * excluded from the cache-key hash below so identical queries from
+   * different users still share one cached result. Never reaches the search
+   * provider's actual query string, and is irrelevant on a cache hit since a
+   * cache hit never calls the search provider at all.
+   */
+  userId?: string
 }
 
 const CACHE_PREFIX = 'research:acquisition'
 
 function buildQueryHash(input: RunResearchInput): string {
-  const payload = JSON.stringify(input)
+  const { userId, ...cacheable } = input
+  const payload = JSON.stringify(cacheable)
   return crypto.createHash('sha256').update(payload).digest('hex')
 }
 
@@ -161,6 +170,7 @@ export class ResearchService {
     const searchResults = await this.searchProvider.search(input.query, {
       num: maxResults,
       siteRestrict: input.siteRestrict,
+      userId: input.userId,
     })
 
     const collectedItems = (

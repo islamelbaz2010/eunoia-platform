@@ -101,6 +101,7 @@ export async function POST(request: Request) {
         cityHint: city.key,
         companySizeHint: companySize,
         maxResults: 10,
+        userId: user.id,
       })
     } catch (err) {
       const message = err instanceof SearchProviderError
