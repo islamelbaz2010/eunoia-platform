@@ -7,6 +7,7 @@ import { FetchSourceCollector, classifySourceType, isNoFetchDomain, type SourceC
 import { normalizeSources, type CollectedItem } from './normalizer'
 import { filterValidSources } from '../company-validation'
 import { dedupeCompanies } from '../dedup'
+import { isParkedDomainProvider, detectBrokenPage, recordSourceOutcome, getSourceReputation } from '../source-quality'
 import { rankSources } from './ranker'
 import { analyzeRankedSources } from './ai-analysis'
 import { ResearchResultSchema, type ResearchResult } from './types'
@@ -35,6 +36,14 @@ const CACHE_PREFIX = 'research:acquisition'
 function buildQueryHash(input: RunResearchInput): string {
   const payload = JSON.stringify(input)
   return crypto.createHash('sha256').update(payload).digest('hex')
+}
+
+function safeDomain(url: string): string | undefined {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '')
+  } catch {
+    return undefined
+  }
 }
 
 /**
@@ -92,16 +101,39 @@ export class ResearchService {
       siteRestrict: input.siteRestrict,
     })
 
-    const collectedItems: CollectedItem[] = await Promise.all(
-      searchResults.map(async searchResult => {
-        const sourceType = classifySourceType(searchResult.url)
-        if (isNoFetchDomain(searchResult.url)) {
-          return { searchResult, collected: null, sourceType }
-        }
-        const collected = await this.sourceCollector.collect(searchResult.url)
-        return { searchResult, collected, sourceType }
-      })
-    )
+    const collectedItems = (
+      await Promise.all(
+        searchResults.map(async (searchResult): Promise<CollectedItem | null> => {
+          const sourceType = classifySourceType(searchResult.url)
+          const domain = safeDomain(searchResult.url)
+
+          if (domain) {
+            if (isParkedDomainProvider(domain)) return null
+            if ((await getSourceReputation(domain)).suppressed) return null
+          }
+
+          if (isNoFetchDomain(searchResult.url)) {
+            return { searchResult, collected: null, sourceType }
+          }
+
+          const collected = await this.sourceCollector.collect(searchResult.url)
+
+          if (domain) {
+            if (!collected) {
+              await recordSourceOutcome(domain, 'failure')
+              return null
+            }
+            if (detectBrokenPage(collected).isBroken) {
+              await recordSourceOutcome(domain, 'failure')
+              return null
+            }
+            await recordSourceOutcome(domain, 'success')
+          }
+
+          return { searchResult, collected, sourceType }
+        })
+      )
+    ).filter((item): item is CollectedItem => item !== null)
 
     const normalized = normalizeSources(collectedItems)
     const validated = filterValidSources(normalized)
