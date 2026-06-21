@@ -28,6 +28,8 @@ export const ResearchResultSchema = z.object({
   totalSourcesCollected: z.number().int().min(0),
   totalSourcesValidated: z.number().int().min(0),
   totalSourcesDeduped: z.number().int().min(0),
+  /** How many of totalSourcesCollected came from the Company Expansion step (lib/research/company-expansion.ts) rather than directly from search results. */
+  totalSourcesExpanded: z.number().int().min(0),
   cached: z.boolean(),
   durationMs: z.number().int().min(0),
 })

@@ -8,9 +8,10 @@ import { normalizeSources, type CollectedItem } from './normalizer'
 import { filterValidSources } from '../company-validation'
 import { dedupeCompanies } from '../dedup'
 import { isParkedDomainProvider, detectBrokenPage, recordSourceOutcome, getSourceReputation } from '../source-quality'
+import { extractMentionedDomains } from '../company-expansion'
 import { rankSources } from './ranker'
 import { analyzeRankedSources } from './ai-analysis'
-import { ResearchResultSchema, type ResearchResult } from './types'
+import { ResearchResultSchema, type ResearchResult, type SearchResult, type SourceType } from './types'
 
 export interface ResearchServiceOptions {
   searchProvider?: SearchProvider
@@ -84,6 +85,42 @@ export class ResearchService {
     return this._aiProvider
   }
 
+  /**
+   * Vets a single URL (parked-domain check, reputation-suppression check,
+   * fetch, broken-page detection) and records the outcome — shared by both
+   * the initial search-results loop and the Company Expansion step below,
+   * so a domain discovered by text-mining a directory listing is held to
+   * exactly the same bar as one returned directly by the search engine.
+   */
+  private async collectAndVet(searchResult: SearchResult, sourceType: SourceType): Promise<CollectedItem | null> {
+    const domain = safeDomain(searchResult.url)
+
+    if (domain) {
+      if (isParkedDomainProvider(domain)) return null
+      if ((await getSourceReputation(domain)).suppressed) return null
+    }
+
+    if (isNoFetchDomain(searchResult.url)) {
+      return { searchResult, collected: null, sourceType }
+    }
+
+    const collected = await this.sourceCollector.collect(searchResult.url)
+
+    if (domain) {
+      if (!collected) {
+        await recordSourceOutcome(domain, 'failure')
+        return null
+      }
+      if (detectBrokenPage(collected).isBroken) {
+        await recordSourceOutcome(domain, 'failure')
+        return null
+      }
+      await recordSourceOutcome(domain, 'success')
+    }
+
+    return { searchResult, collected, sourceType }
+  }
+
   async run(input: RunResearchInput): Promise<ResearchResult> {
     const start = Date.now()
     const cacheKey = `${CACHE_PREFIX}:${buildQueryHash(input)}`
@@ -103,39 +140,25 @@ export class ResearchService {
 
     const collectedItems = (
       await Promise.all(
-        searchResults.map(async (searchResult): Promise<CollectedItem | null> => {
-          const sourceType = classifySourceType(searchResult.url)
-          const domain = safeDomain(searchResult.url)
+        searchResults.map(searchResult => this.collectAndVet(searchResult, classifySourceType(searchResult.url)))
+      )
+    ).filter((item): item is CollectedItem => item !== null)
 
-          if (domain) {
-            if (isParkedDomainProvider(domain)) return null
-            if ((await getSourceReputation(domain)).suppressed) return null
-          }
-
-          if (isNoFetchDomain(searchResult.url)) {
-            return { searchResult, collected: null, sourceType }
-          }
-
-          const collected = await this.sourceCollector.collect(searchResult.url)
-
-          if (domain) {
-            if (!collected) {
-              await recordSourceOutcome(domain, 'failure')
-              return null
-            }
-            if (detectBrokenPage(collected).isBroken) {
-              await recordSourceOutcome(domain, 'failure')
-              return null
-            }
-            await recordSourceOutcome(domain, 'success')
-          }
-
-          return { searchResult, collected, sourceType }
+    // Company Expansion: mine business-directory listings' own collected text for
+    // other companies they name (e.g. "Acme Corp — acmecorp.com"), and vet those
+    // domains directly — growing the candidate pool without spending extra search
+    // quota. See lib/research/company-expansion.ts for the why.
+    const expansionDomains = extractMentionedDomains(normalizeSources(collectedItems))
+    const expansionItems = (
+      await Promise.all(
+        expansionDomains.map(domain => {
+          const url = `https://${domain}`
+          return this.collectAndVet({ url, title: '', snippet: '' }, classifySourceType(url))
         })
       )
     ).filter((item): item is CollectedItem => item !== null)
 
-    const normalized = normalizeSources(collectedItems)
+    const normalized = normalizeSources([...collectedItems, ...expansionItems])
     const validated = filterValidSources(normalized)
     const deduped = dedupeCompanies(validated)
     const ranked = rankSources(deduped, { sectorHint: input.sectorHint, cityHint: input.cityHint })
@@ -149,6 +172,7 @@ export class ResearchService {
       totalSourcesCollected: normalized.length,
       totalSourcesValidated: validated.length,
       totalSourcesDeduped: deduped.length,
+      totalSourcesExpanded: expansionItems.length,
       cached: false,
       durationMs: Date.now() - start,
     }

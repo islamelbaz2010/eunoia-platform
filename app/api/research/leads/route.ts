@@ -129,6 +129,7 @@ export async function POST(request: Request) {
       total_sources_collected: result.totalSourcesCollected,
       total_sources_validated: result.totalSourcesValidated,
       total_sources_deduped: result.totalSourcesDeduped,
+      total_sources_expanded: result.totalSourcesExpanded,
     }
 
     const { data: reportRow, error: reportErr } = await sb
