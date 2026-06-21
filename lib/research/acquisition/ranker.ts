@@ -6,41 +6,64 @@ export interface RankingOptions {
 }
 
 /**
- * Deterministic, input-only scoring — same principle as
+ * Confidence Engine — deterministic, input-only scoring — same principle as
  * lib/research/sources.ts's computeConfidence(): the score is derived from
- * what was actually found (source type, taxonomy match, content depth), not
- * from the AI's own output, so the AI cannot inflate its own credibility.
+ * what was actually found, not from the AI's own output, so the AI cannot
+ * inflate its own credibility.
+ *
+ * Every source reaching this stage already passed company-validation.ts's
+ * VALID check (lib/research/acquisition/research-service.ts filters out
+ * directories/wikipedia/job-boards/forums/government/social-groups before
+ * ranking), so this stage's job isn't to re-penalize bad sources — it's to
+ * weight the *evidence quality* of sources that already cleared that bar.
+ * Each weight sums to a max of 95 (never 100 — this is evidence-based
+ * research, not a verified record, the same ceiling the rest of the
+ * codebase uses).
  */
+const WEIGHTS = {
+  /** Scaled from company-validation.ts's validationScore (0-100) — the strongest single signal. */
+  validation: 35,
+  /** Authoritativeness of the source type itself: own domain > official social profile > third-party directory. */
+  sourceType: 25,
+  sectorMatch: 15,
+  cityMatch: 15,
+  contentDepth: 5,
+} as const
+
+const SOURCE_TYPE_POINTS: Record<NormalizedSource['sourceType'], { points: number; label: string }> = {
+  company_website: { points: WEIGHTS.sourceType, label: 'Primary company website (own domain)' },
+  public_listing: { points: Math.round(WEIGHTS.sourceType * 0.6), label: 'Official social media profile (snippet only, not scraped)' },
+  business_directory: { points: Math.round(WEIGHTS.sourceType * 0.4), label: 'Third-party business directory listing' },
+}
+
 export function rankSources(sources: NormalizedSource[], options: RankingOptions = {}): RankedSource[] {
   return sources
     .map(source => {
-      let score = 40
-      const reasons: string[] = ['Found via Google Custom Search']
+      let score = 0
+      const reasons: string[] = []
 
-      if (source.sourceType === 'company_website') {
-        score += 20
-        reasons.push('Primary company website')
-      } else if (source.sourceType === 'business_directory') {
-        score += 10
-        reasons.push('Listed in a public business directory')
-      } else {
-        score += 5
-        reasons.push('Public listing page (search snippet only, not scraped)')
-      }
+      const validationScore = source.validationScore ?? 60
+      const validationPoints = Math.round((validationScore / 100) * WEIGHTS.validation)
+      score += validationPoints
+      reasons.push(`Validation score ${validationScore}/100 (+${validationPoints})`)
+
+      const sourceTypeInfo = SOURCE_TYPE_POINTS[source.sourceType]
+      score += sourceTypeInfo.points
+      reasons.push(`${sourceTypeInfo.label} (+${sourceTypeInfo.points})`)
 
       if (options.sectorHint && source.sectorKey === options.sectorHint) {
-        score += 15
-        reasons.push('Sector matches search criteria')
+        score += WEIGHTS.sectorMatch
+        reasons.push(`Industry matches search criteria (+${WEIGHTS.sectorMatch})`)
       }
 
       if (options.cityHint && source.cityKey === options.cityHint) {
-        score += 15
-        reasons.push('Location matches search criteria')
+        score += WEIGHTS.cityMatch
+        reasons.push(`Location matches search criteria (+${WEIGHTS.cityMatch})`)
       }
 
       if (source.text.length > 300) {
-        score += 5
-        reasons.push('Substantial page content collected')
+        score += WEIGHTS.contentDepth
+        reasons.push(`Substantial page content collected (+${WEIGHTS.contentDepth})`)
       }
 
       score = Math.max(0, Math.min(95, score))
