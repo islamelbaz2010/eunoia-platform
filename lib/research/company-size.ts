@@ -30,7 +30,8 @@ export function companySizeQueryModifier(bucket: string): string | undefined {
   return QUERY_MODIFIERS[bucket as CompanySizeBucket]
 }
 
-function bucketEmployeeCount(count: number): CompanySizeBucket {
+/** Exported for lib/research/acquisition/apollo-adapter.ts, which buckets a verified third-party employee count the same way a scraped headcount mention is bucketed. */
+export function bucketEmployeeCount(count: number): CompanySizeBucket {
   if (count <= 10) return '1-10'
   if (count <= 50) return '11-50'
   if (count <= 200) return '51-200'

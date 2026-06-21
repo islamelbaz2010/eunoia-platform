@@ -10,13 +10,16 @@ import { dedupeCompanies } from '../dedup'
 import { isParkedDomainProvider, detectBrokenPage, recordSourceOutcome, getSourceReputation } from '../source-quality'
 import { extractMentionedDomains } from '../company-expansion'
 import { rankSources } from './ranker'
+import { ApolloOrgEnrichAdapter, applyApolloEnrichment, type ApolloAdapter } from './apollo-adapter'
 import { analyzeRankedSources } from './ai-analysis'
-import { ResearchResultSchema, type ResearchResult, type SearchResult, type SourceType } from './types'
+import { ResearchResultSchema, type RankedSource, type ResearchResult, type SearchResult, type SourceType } from './types'
 
 export interface ResearchServiceOptions {
   searchProvider?: SearchProvider
   sourceCollector?: SourceCollector
   aiProvider?: AIProvider
+  /** Defaults to ApolloOrgEnrichAdapter, which itself no-ops when APOLLO_API_KEY isn't set — enrichment is always optional. */
+  apolloAdapter?: ApolloAdapter
 }
 
 export interface RunResearchInput {
@@ -62,11 +65,13 @@ export class ResearchService {
   private sourceCollector: SourceCollector
   private aiProviderOverride?: AIProvider
   private _aiProvider?: AIProvider
+  private apolloAdapter: ApolloAdapter
 
   constructor(options: ResearchServiceOptions = {}) {
     this.searchProvider = options.searchProvider ?? new SerpApiProvider()
     this.sourceCollector = options.sourceCollector ?? new FetchSourceCollector()
     this.aiProviderOverride = options.aiProvider
+    this.apolloAdapter = options.apolloAdapter ?? new ApolloOrgEnrichAdapter()
   }
 
   /**
@@ -123,6 +128,24 @@ export class ResearchService {
     return { searchResult, collected, sourceType }
   }
 
+  /**
+   * Apollo Enrichment: only runs the sources that survived ranking and will
+   * actually be shown to the user (the caller passes an already-sliced
+   * list), so an Apollo subscription's request volume scales with
+   * maxResults, never with how many candidates were collected upstream. A
+   * no-op (zero network calls) when APOLLO_API_KEY isn't configured.
+   */
+  private async applyApolloEnrichmentStep(sources: RankedSource[]): Promise<RankedSource[]> {
+    if (!this.apolloAdapter.isConfigured()) return sources
+
+    return Promise.all(
+      sources.map(async source => {
+        const enrichment = await this.apolloAdapter.enrichDomain(source.domain)
+        return enrichment ? applyApolloEnrichment(source, enrichment) : source
+      })
+    )
+  }
+
   async run(input: RunResearchInput): Promise<ResearchResult> {
     const start = Date.now()
     const cacheKey = `${CACHE_PREFIX}:${buildQueryHash(input)}`
@@ -168,7 +191,8 @@ export class ResearchService {
       cityHint: input.cityHint,
       companySizeHint: input.companySizeHint,
     })
-    const items = await analyzeRankedSources(ranked, input.query, this.getAIProvider(), { maxItems: maxResults })
+    const enriched = await this.applyApolloEnrichmentStep(ranked.slice(0, maxResults))
+    const items = await analyzeRankedSources(enriched, input.query, this.getAIProvider(), { maxItems: maxResults })
 
     const result: ResearchResult = {
       query: input.query,

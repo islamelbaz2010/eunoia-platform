@@ -70,6 +70,7 @@ Respond with ONLY valid JSON in this exact shape:
         confidenceScore: source.confidenceScore,
         summary: aiSummary || source.text.slice(0, 240),
         companySizeKey: source.companySizeKey,
+        apolloVerified: source.apolloVerified,
       }
       const result = ResearchResultItemSchema.safeParse(item)
       return result.success ? result.data : null
