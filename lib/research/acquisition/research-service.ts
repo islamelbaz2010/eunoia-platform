@@ -5,6 +5,7 @@ import { OpenAIProvider } from '@/services/legacy-ai-engine/providers/openai.pro
 import { SerpApiProvider, type SearchProvider } from './search-provider'
 import { FetchSourceCollector, classifySourceType, isNoFetchDomain, type SourceCollector } from './source-collector'
 import { normalizeSources, type CollectedItem } from './normalizer'
+import { filterValidSources } from '../company-validation'
 import { rankSources } from './ranker'
 import { analyzeRankedSources } from './ai-analysis'
 import { ResearchResultSchema, type ResearchResult } from './types'
@@ -102,7 +103,8 @@ export class ResearchService {
     )
 
     const normalized = normalizeSources(collectedItems)
-    const ranked = rankSources(normalized, { sectorHint: input.sectorHint, cityHint: input.cityHint })
+    const validated = filterValidSources(normalized)
+    const ranked = rankSources(validated, { sectorHint: input.sectorHint, cityHint: input.cityHint })
     const items = await analyzeRankedSources(ranked, input.query, this.getAIProvider(), { maxItems: maxResults })
 
     const result: ResearchResult = {
@@ -111,6 +113,7 @@ export class ResearchService {
       items,
       totalSourcesFound: searchResults.length,
       totalSourcesCollected: normalized.length,
+      totalSourcesValidated: validated.length,
       cached: false,
       durationMs: Date.now() - start,
     }

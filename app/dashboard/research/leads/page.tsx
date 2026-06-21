@@ -66,6 +66,7 @@ interface LeadReport {
   confidence_score: { pct: number; label: string; reason: string }
   total_sources_found?: number
   total_sources_collected?: number
+  total_sources_validated?: number
 }
 
 const SIZES = ['1-10', '11-50', '51-200', '201-500', '500+']

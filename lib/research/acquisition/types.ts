@@ -26,6 +26,7 @@ export const ResearchResultSchema = z.object({
   items: z.array(ResearchResultItemSchema),
   totalSourcesFound: z.number().int().min(0),
   totalSourcesCollected: z.number().int().min(0),
+  totalSourcesValidated: z.number().int().min(0),
   cached: z.boolean(),
   durationMs: z.number().int().min(0),
 })
@@ -51,6 +52,9 @@ export interface NormalizedSource {
   text: string
   sectorKey?: string
   cityKey?: string
+  /** Set by lib/research/company-validation.ts once a source has passed VALID classification. */
+  validationScore?: number
+  validationReason?: string
 }
 
 export interface RankedSource extends NormalizedSource {
