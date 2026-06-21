@@ -52,7 +52,7 @@ const styles = `
   .ri-empty { background: #fff; border: 1.5px dashed #E8E2DA; border-radius: 12px; padding: 24px; text-align: center; font-size: 13px; color: #6B6560; }
 `
 
-interface DecisionMaker { title: string; linkedin_search_url: string }
+interface DecisionMaker { title: string; reason: string; linkedin_search_url: string }
 type SourceType = 'company_website' | 'business_directory' | 'public_listing'
 interface Company {
   name: string; sourceUrl: string; sourceType: SourceType
@@ -221,7 +221,7 @@ export default function LeadFinderPage() {
                       <div className="ri-link-row">
                         <a className="ri-link-btn" href={c.linkedin_company_search_url} target="_blank" rel="noopener noreferrer">Search company on LinkedIn ↗</a>
                         {c.decision_makers.map((d, j) => (
-                          <a key={j} className="ri-link-btn" href={d.linkedin_search_url} target="_blank" rel="noopener noreferrer">Search {d.title} ↗</a>
+                          <a key={j} className="ri-link-btn" href={d.linkedin_search_url} target="_blank" rel="noopener noreferrer" title={d.reason}>Search {d.title} ↗</a>
                         ))}
                       </div>
                     </div>

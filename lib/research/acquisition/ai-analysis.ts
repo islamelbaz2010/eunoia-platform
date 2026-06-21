@@ -69,6 +69,7 @@ Respond with ONLY valid JSON in this exact shape:
         sourceType: source.sourceType,
         confidenceScore: source.confidenceScore,
         summary: aiSummary || source.text.slice(0, 240),
+        companySizeKey: source.companySizeKey,
       }
       const result = ResearchResultItemSchema.safeParse(item)
       return result.success ? result.data : null

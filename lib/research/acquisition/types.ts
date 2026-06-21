@@ -17,6 +17,8 @@ export const ResearchResultItemSchema = z.object({
   sourceType: z.enum(SOURCE_TYPES),
   confidenceScore: z.number().min(0).max(100),
   summary: z.string().min(1),
+  /** lib/research/company-size.ts bucket key, set only when this company's own source text stated an explicit headcount. */
+  companySizeKey: z.string().optional(),
 })
 export type ResearchResultItem = z.infer<typeof ResearchResultItemSchema>
 

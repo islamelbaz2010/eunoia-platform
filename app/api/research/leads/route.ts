@@ -7,6 +7,7 @@ import { checkPlanLimit } from '@/lib/research/plan-enforcement'
 import { PLAN_LABELS } from '@/types/plan.types'
 import { linkedInCompanySearchUrl, linkedInPeopleSearchUrl } from '@/lib/research/sources'
 import { companySizeQueryModifier } from '@/lib/research/company-size'
+import { recommendDecisionMakerTitles } from '@/lib/research/decision-makers'
 import { getResearchService, SearchProviderError, type ResearchResultItem } from '@/lib/research/acquisition'
 
 interface LeadFinderInput {
@@ -111,18 +112,33 @@ export async function POST(request: Request) {
 
     const decisionTitles = titles.split(',').map(t => t.trim()).filter(Boolean).slice(0, 3)
 
-    const companies = result.items.map(item => ({
-      name: item.title,
-      sourceUrl: item.sourceUrl,
-      sourceType: item.sourceType,
-      confidenceScore: item.confidenceScore,
-      summary: item.summary,
-      linkedin_company_search_url: linkedInCompanySearchUrl(item.title),
-      decision_makers: decisionTitles.map(title => ({
-        title,
-        linkedin_search_url: linkedInPeopleSearchUrl(`${title} ${item.title}`),
-      })),
-    }))
+    const companies = result.items.map(item => {
+      const sizeForThisCompany = item.companySizeKey ?? companySize
+      const seenTitles = new Set<string>()
+      const decision_makers = decisionTitles
+        .flatMap(title => recommendDecisionMakerTitles(title, sizeForThisCompany))
+        .filter(rec => {
+          const key = rec.title.toLowerCase()
+          if (seenTitles.has(key)) return false
+          seenTitles.add(key)
+          return true
+        })
+        .map(rec => ({
+          title: rec.title,
+          reason: rec.reason,
+          linkedin_search_url: linkedInPeopleSearchUrl(`${rec.title} ${item.title}`),
+        }))
+
+      return {
+        name: item.title,
+        sourceUrl: item.sourceUrl,
+        sourceType: item.sourceType,
+        confidenceScore: item.confidenceScore,
+        summary: item.summary,
+        linkedin_company_search_url: linkedInCompanySearchUrl(item.title),
+        decision_makers,
+      }
+    })
 
     const confidence_score = aggregateConfidence(result.items)
 
