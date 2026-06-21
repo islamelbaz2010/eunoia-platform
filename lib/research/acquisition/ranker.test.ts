@@ -43,6 +43,23 @@ describe('rankSources', () => {
     expect(withMatches.confidenceScore).toBeGreaterThan(withoutMatches.confidenceScore)
   })
 
+  it('rewards a matching company size signal', () => {
+    const [withMatch] = rankSources(
+      [source({ companySizeKey: '51-200' })],
+      { companySizeHint: '51-200' }
+    )
+    const [withoutHint] = rankSources([source({ companySizeKey: '51-200' })], {})
+
+    expect(withMatch.confidenceScore).toBeGreaterThan(withoutHint.confidenceScore)
+  })
+
+  it('does not penalize a source with no stated headcount', () => {
+    const [noHeadcount] = rankSources([source({ companySizeKey: undefined })], { companySizeHint: '51-200' })
+    const [mismatch] = rankSources([source({ companySizeKey: '1-10' })], { companySizeHint: '51-200' })
+
+    expect(noHeadcount.confidenceScore).toBe(mismatch.confidenceScore)
+  })
+
   it('rewards substantial collected content', () => {
     const [deep] = rankSources([source({ text: 'x'.repeat(500) })])
     const [shallow] = rankSources([source({ text: 'short' })])
@@ -52,8 +69,8 @@ describe('rankSources', () => {
 
   it('never exceeds the 95 ceiling even with every factor maxed', () => {
     const [best] = rankSources(
-      [source({ sourceType: 'company_website', validationScore: 90, sectorKey: 'tech', cityKey: 'cairo', text: 'x'.repeat(1000) })],
-      { sectorHint: 'tech', cityHint: 'cairo' }
+      [source({ sourceType: 'company_website', validationScore: 90, sectorKey: 'tech', cityKey: 'cairo', companySizeKey: '51-200', text: 'x'.repeat(1000) })],
+      { sectorHint: 'tech', cityHint: 'cairo', companySizeHint: '51-200' }
     )
     expect(best.confidenceScore).toBeLessThanOrEqual(95)
   })

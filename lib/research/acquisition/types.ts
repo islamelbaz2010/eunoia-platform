@@ -55,6 +55,8 @@ export interface NormalizedSource {
   text: string
   sectorKey?: string
   cityKey?: string
+  /** Set by lib/research/company-size.ts only when the source's own text states an explicit headcount — never guessed. */
+  companySizeKey?: string
   /** Set by lib/research/company-validation.ts once a source has passed VALID classification. */
   validationScore?: number
   validationReason?: string

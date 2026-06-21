@@ -3,6 +3,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { SECTORS } from '@core/data/sectors.data'
 import { CITIES, COUNTRY_LABELS } from '@core/data/cities.data'
+import { COMPANY_SIZE_BUCKETS } from '@/lib/research/company-size'
 import { downloadCSV } from '@/lib/csv-export'
 
 const styles = `
@@ -70,7 +71,6 @@ interface LeadReport {
   total_sources_deduped?: number
 }
 
-const SIZES = ['1-10', '11-50', '51-200', '201-500', '500+']
 const SOURCE_TYPE_LABELS: Record<SourceType, string> = {
   company_website: 'Company Website',
   business_directory: 'Business Directory',
@@ -80,7 +80,7 @@ const SOURCE_TYPE_LABELS: Record<SourceType, string> = {
 export default function LeadFinderPage() {
   const [industry, setIndustry] = useState('')
   const [location, setLocation] = useState('')
-  const [companySize, setCompanySize] = useState(SIZES[1])
+  const [companySize, setCompanySize] = useState<string>(COMPANY_SIZE_BUCKETS[1])
   const [titles, setTitles] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -170,7 +170,7 @@ export default function LeadFinderPage() {
               <div className="ri-field">
                 <label className="ri-label">Company Size</label>
                 <select className="ri-select" value={companySize} onChange={e => setCompanySize(e.target.value)}>
-                  {SIZES.map(s => <option key={s} value={s}>{s} employees</option>)}
+                  {COMPANY_SIZE_BUCKETS.map(s => <option key={s} value={s}>{s} employees</option>)}
                 </select>
               </div>
               <div className="ri-field">

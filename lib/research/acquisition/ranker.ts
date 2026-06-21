@@ -3,6 +3,8 @@ import type { NormalizedSource, RankedSource } from './types'
 export interface RankingOptions {
   sectorHint?: string
   cityHint?: string
+  /** lib/research/company-size.ts bucket key, e.g. "51-200". Rewards an explicit headcount match; a source with no headcount mentioned at all is neutral, never penalized. */
+  companySizeHint?: string
 }
 
 /**
@@ -22,11 +24,13 @@ export interface RankingOptions {
  */
 const WEIGHTS = {
   /** Scaled from company-validation.ts's validationScore (0-100) — the strongest single signal. */
-  validation: 35,
+  validation: 30,
   /** Authoritativeness of the source type itself: own domain > official social profile > third-party directory. */
   sourceType: 25,
   sectorMatch: 15,
   cityMatch: 15,
+  /** Low weight on purpose — most pages never state a headcount at all, so this only ever fires for a minority of sources. */
+  companySizeMatch: 5,
   contentDepth: 5,
 } as const
 
@@ -59,6 +63,11 @@ export function rankSources(sources: NormalizedSource[], options: RankingOptions
       if (options.cityHint && source.cityKey === options.cityHint) {
         score += WEIGHTS.cityMatch
         reasons.push(`Location matches search criteria (+${WEIGHTS.cityMatch})`)
+      }
+
+      if (options.companySizeHint && source.companySizeKey === options.companySizeHint) {
+        score += WEIGHTS.companySizeMatch
+        reasons.push(`Stated headcount matches requested company size (+${WEIGHTS.companySizeMatch})`)
       }
 
       if (source.text.length > 300) {

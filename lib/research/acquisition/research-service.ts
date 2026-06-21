@@ -26,6 +26,8 @@ export interface RunResearchInput {
   sectorHint?: string
   /** core/data/cities.data.ts key, same purpose. */
   cityHint?: string
+  /** lib/research/company-size.ts bucket key, same purpose — rewards a source whose own text states a matching headcount, never filters on it. */
+  companySizeHint?: string
   /** Appended verbatim to the query, e.g. `site:*.eg` */
   siteRestrict?: string
   /** Caps both the number of search results requested and the number of AI-summarized items returned. */
@@ -161,7 +163,11 @@ export class ResearchService {
     const normalized = normalizeSources([...collectedItems, ...expansionItems])
     const validated = filterValidSources(normalized)
     const deduped = dedupeCompanies(validated)
-    const ranked = rankSources(deduped, { sectorHint: input.sectorHint, cityHint: input.cityHint })
+    const ranked = rankSources(deduped, {
+      sectorHint: input.sectorHint,
+      cityHint: input.cityHint,
+      companySizeHint: input.companySizeHint,
+    })
     const items = await analyzeRankedSources(ranked, input.query, this.getAIProvider(), { maxItems: maxResults })
 
     const result: ResearchResult = {

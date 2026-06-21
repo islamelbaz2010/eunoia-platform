@@ -6,6 +6,7 @@ import { checkRateLimit, rateLimitMessage } from '@/lib/research/rate-limit'
 import { checkPlanLimit } from '@/lib/research/plan-enforcement'
 import { PLAN_LABELS } from '@/types/plan.types'
 import { linkedInCompanySearchUrl, linkedInPeopleSearchUrl } from '@/lib/research/sources'
+import { companySizeQueryModifier } from '@/lib/research/company-size'
 import { getResearchService, SearchProviderError, type ResearchResultItem } from '@/lib/research/acquisition'
 
 interface LeadFinderInput {
@@ -15,10 +16,18 @@ interface LeadFinderInput {
   titles: string
 }
 
-/** Falls back to the raw user-typed industry when it isn't a curated SECTORS key (e.g. "Call Center"), so the search query stays specific instead of degrading to the generic "Other" label. */
-function buildLeadQuery(industry: string, sectorLabel: string, cityLabel: string): string {
+/**
+ * Falls back to the raw user-typed industry when it isn't a curated SECTORS
+ * key (e.g. "Call Center"), so the search query stays specific instead of
+ * degrading to the generic "Other" label. Also biases the query toward the
+ * requested size bracket's terminology (e.g. "mid-size company") — a
+ * relevance signal, not a guarantee every result matches that size.
+ */
+function buildLeadQuery(industry: string, sectorLabel: string, cityLabel: string, companySize: string): string {
   const industryTerm = sectorLabel === SECTORS.other.en ? industry : sectorLabel
-  return `${industryTerm} companies in ${cityLabel}`
+  const sizeModifier = companySizeQueryModifier(companySize)
+  const sizedIndustryTerm = sizeModifier ? `${sizeModifier} ${industryTerm}` : industryTerm
+  return `${sizedIndustryTerm} companies in ${cityLabel}`
 }
 
 function aggregateConfidence(items: ResearchResultItem[]): { pct: number; label: 'High' | 'Medium' | 'Low'; reason: string } {
@@ -81,7 +90,7 @@ export async function POST(request: Request) {
 
     if (requestId) await sb.from('research_requests').update({ status: 'processing' }).eq('id', requestId)
 
-    const query = buildLeadQuery(industry, sector.en, city.en)
+    const query = buildLeadQuery(industry, sector.en, city.en, companySize)
 
     let result
     try {
@@ -89,6 +98,7 @@ export async function POST(request: Request) {
         query,
         sectorHint: sector === SECTORS.other ? undefined : industry,
         cityHint: city.key,
+        companySizeHint: companySize,
         maxResults: 10,
       })
     } catch (err) {

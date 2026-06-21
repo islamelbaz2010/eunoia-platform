@@ -1,5 +1,6 @@
 import { SECTORS } from '@core/data/sectors.data'
 import { ALL_CITIES } from '@core/data/cities.data'
+import { extractCompanySizeKey } from '../company-size'
 import type { CollectedSource, NormalizedSource, SearchResult, SourceType } from './types'
 
 export interface CollectedItem {
@@ -42,6 +43,7 @@ export function normalizeSources(items: CollectedItem[]): NormalizedSource[] {
       text,
       sectorKey: matchSectorKey(`${title} ${text}`),
       cityKey: matchCityKey(`${title} ${text}`),
+      companySizeKey: extractCompanySizeKey(text),
     })
   }
 
