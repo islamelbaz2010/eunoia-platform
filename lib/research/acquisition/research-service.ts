@@ -6,6 +6,7 @@ import { SerpApiProvider, type SearchProvider } from './search-provider'
 import { FetchSourceCollector, classifySourceType, isNoFetchDomain, type SourceCollector } from './source-collector'
 import { normalizeSources, type CollectedItem } from './normalizer'
 import { filterValidSources } from '../company-validation'
+import { dedupeCompanies } from '../dedup'
 import { rankSources } from './ranker'
 import { analyzeRankedSources } from './ai-analysis'
 import { ResearchResultSchema, type ResearchResult } from './types'
@@ -104,7 +105,8 @@ export class ResearchService {
 
     const normalized = normalizeSources(collectedItems)
     const validated = filterValidSources(normalized)
-    const ranked = rankSources(validated, { sectorHint: input.sectorHint, cityHint: input.cityHint })
+    const deduped = dedupeCompanies(validated)
+    const ranked = rankSources(deduped, { sectorHint: input.sectorHint, cityHint: input.cityHint })
     const items = await analyzeRankedSources(ranked, input.query, this.getAIProvider(), { maxItems: maxResults })
 
     const result: ResearchResult = {
@@ -114,6 +116,7 @@ export class ResearchService {
       totalSourcesFound: searchResults.length,
       totalSourcesCollected: normalized.length,
       totalSourcesValidated: validated.length,
+      totalSourcesDeduped: deduped.length,
       cached: false,
       durationMs: Date.now() - start,
     }

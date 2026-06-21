@@ -67,6 +67,7 @@ interface LeadReport {
   total_sources_found?: number
   total_sources_collected?: number
   total_sources_validated?: number
+  total_sources_deduped?: number
 }
 
 const SIZES = ['1-10', '11-50', '51-200', '201-500', '500+']

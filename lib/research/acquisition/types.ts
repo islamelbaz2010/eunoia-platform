@@ -27,6 +27,7 @@ export const ResearchResultSchema = z.object({
   totalSourcesFound: z.number().int().min(0),
   totalSourcesCollected: z.number().int().min(0),
   totalSourcesValidated: z.number().int().min(0),
+  totalSourcesDeduped: z.number().int().min(0),
   cached: z.boolean(),
   durationMs: z.number().int().min(0),
 })
