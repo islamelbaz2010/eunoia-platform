@@ -57,6 +57,9 @@
   "exclude": [
     "node_modules",
     "services",
-    "core"
+    "core",
+    "vitest.config.ts",
+    "**/*.test.ts",
+    "**/*.test.tsx"
   ]
 }
