@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
+import { checkRateLimit, rateLimitMessage } from '@/lib/research/rate-limit'
 
 const SECTOR_LABELS: Record<string, string> = {
   real_estate: 'Real Estate',
@@ -172,9 +173,21 @@ function buildEmailHtml(
 </html>`
 }
 
+/** Public, unauthenticated lead-capture form — keyed by IP since there's no user session to rate-limit by. */
+function getClientIp(req: NextRequest): string {
+  const forwarded = req.headers.get('x-forwarded-for')
+  if (forwarded) return forwarded.split(',')[0].trim()
+  return req.headers.get('x-real-ip') ?? 'unknown'
+}
+
 export async function POST(req: NextRequest) {
   const resend = new Resend(process.env.RESEND_API_KEY)
   try {
+    const rate = await checkRateLimit(`ratelimit:demo:${getClientIp(req)}`)
+    if (!rate.ok) {
+      return NextResponse.json({ error: rateLimitMessage(rate.resetIn) }, { status: 429 })
+    }
+
     const body = await req.json()
     const { name, phone, email, company, sector, city, competitor1, competitor2, website } = body
 

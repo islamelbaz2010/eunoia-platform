@@ -17,6 +17,10 @@ export const ResearchResultItemSchema = z.object({
   sourceType: z.enum(SOURCE_TYPES),
   confidenceScore: z.number().min(0).max(100),
   summary: z.string().min(1),
+  /** lib/research/company-size.ts bucket key, set only when this company's own source text stated an explicit headcount, or overwritten by a verified Apollo record when one was found. */
+  companySizeKey: z.string().optional(),
+  /** True only when lib/research/acquisition/apollo-adapter.ts's Apollo company database independently confirmed this domain. Always absent/false when APOLLO_API_KEY isn't configured. */
+  apolloVerified: z.boolean().optional(),
 })
 export type ResearchResultItem = z.infer<typeof ResearchResultItemSchema>
 
@@ -26,6 +30,10 @@ export const ResearchResultSchema = z.object({
   items: z.array(ResearchResultItemSchema),
   totalSourcesFound: z.number().int().min(0),
   totalSourcesCollected: z.number().int().min(0),
+  totalSourcesValidated: z.number().int().min(0),
+  totalSourcesDeduped: z.number().int().min(0),
+  /** How many of totalSourcesCollected came from the Company Expansion step (lib/research/company-expansion.ts) rather than directly from search results. */
+  totalSourcesExpanded: z.number().int().min(0),
   cached: z.boolean(),
   durationMs: z.number().int().min(0),
 })
@@ -51,9 +59,16 @@ export interface NormalizedSource {
   text: string
   sectorKey?: string
   cityKey?: string
+  /** Set by lib/research/company-size.ts only when the source's own text states an explicit headcount — never guessed. */
+  companySizeKey?: string
+  /** Set by lib/research/company-validation.ts once a source has passed VALID classification. */
+  validationScore?: number
+  validationReason?: string
 }
 
 export interface RankedSource extends NormalizedSource {
   confidenceScore: number
   rankReason: string
+  /** Set by lib/research/acquisition/apollo-adapter.ts only when Apollo's company database independently confirmed this domain — never set just because Apollo was queried. */
+  apolloVerified?: boolean
 }

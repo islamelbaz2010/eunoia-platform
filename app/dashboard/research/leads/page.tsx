@@ -3,6 +3,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { SECTORS } from '@core/data/sectors.data'
 import { CITIES, COUNTRY_LABELS } from '@core/data/cities.data'
+import { COMPANY_SIZE_BUCKETS } from '@/lib/research/company-size'
 import { downloadCSV } from '@/lib/csv-export'
 
 const styles = `
@@ -51,7 +52,7 @@ const styles = `
   .ri-empty { background: #fff; border: 1.5px dashed #E8E2DA; border-radius: 12px; padding: 24px; text-align: center; font-size: 13px; color: #6B6560; }
 `
 
-interface DecisionMaker { title: string; linkedin_search_url: string }
+interface DecisionMaker { title: string; reason: string; linkedin_search_url: string }
 type SourceType = 'company_website' | 'business_directory' | 'public_listing'
 interface Company {
   name: string; sourceUrl: string; sourceType: SourceType
@@ -66,9 +67,10 @@ interface LeadReport {
   confidence_score: { pct: number; label: string; reason: string }
   total_sources_found?: number
   total_sources_collected?: number
+  total_sources_validated?: number
+  total_sources_deduped?: number
 }
 
-const SIZES = ['1-10', '11-50', '51-200', '201-500', '500+']
 const SOURCE_TYPE_LABELS: Record<SourceType, string> = {
   company_website: 'Company Website',
   business_directory: 'Business Directory',
@@ -78,7 +80,7 @@ const SOURCE_TYPE_LABELS: Record<SourceType, string> = {
 export default function LeadFinderPage() {
   const [industry, setIndustry] = useState('')
   const [location, setLocation] = useState('')
-  const [companySize, setCompanySize] = useState(SIZES[1])
+  const [companySize, setCompanySize] = useState<string>(COMPANY_SIZE_BUCKETS[1])
   const [titles, setTitles] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -168,7 +170,7 @@ export default function LeadFinderPage() {
               <div className="ri-field">
                 <label className="ri-label">Company Size</label>
                 <select className="ri-select" value={companySize} onChange={e => setCompanySize(e.target.value)}>
-                  {SIZES.map(s => <option key={s} value={s}>{s} employees</option>)}
+                  {COMPANY_SIZE_BUCKETS.map(s => <option key={s} value={s}>{s} employees</option>)}
                 </select>
               </div>
               <div className="ri-field">
@@ -219,7 +221,7 @@ export default function LeadFinderPage() {
                       <div className="ri-link-row">
                         <a className="ri-link-btn" href={c.linkedin_company_search_url} target="_blank" rel="noopener noreferrer">Search company on LinkedIn ↗</a>
                         {c.decision_makers.map((d, j) => (
-                          <a key={j} className="ri-link-btn" href={d.linkedin_search_url} target="_blank" rel="noopener noreferrer">Search {d.title} ↗</a>
+                          <a key={j} className="ri-link-btn" href={d.linkedin_search_url} target="_blank" rel="noopener noreferrer" title={d.reason}>Search {d.title} ↗</a>
                         ))}
                       </div>
                     </div>

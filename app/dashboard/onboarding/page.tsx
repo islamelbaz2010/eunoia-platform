@@ -28,9 +28,6 @@ export default function OnboardingPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: user.email,
-          name: user.user_metadata?.full_name as string | undefined,
-          supabaseId: user.id,
           workspaceName: workspaceName.trim() || undefined,
         }),
       })

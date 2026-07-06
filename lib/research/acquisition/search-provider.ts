@@ -17,6 +17,8 @@ export interface SearchProviderOptions {
   num?: number
   /** Appended to the query verbatim, e.g. `site:*.eg` for a country-restricted search. */
   siteRestrict?: string
+  /** Enforces the per-tenant fair-share sub-quota in quota.ts — never sent to SerpAPI itself. */
+  userId?: string
 }
 
 /**
@@ -60,7 +62,7 @@ export class SerpApiProvider implements SearchProvider {
       throw new SearchProviderError('SerpAPI is not configured (SERPAPI_API_KEY missing)', this.name)
     }
 
-    const quota = await checkSearchQuota()
+    const quota = await checkSearchQuota(options.userId)
     if (!quota.ok) {
       throw new SearchProviderError(
         `Daily search quota exhausted (${quota.used}/${quota.limit} queries used today)`,

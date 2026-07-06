@@ -1,60 +1,40 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { Prisma } from '@/lib/prisma/generated'
-import { prisma } from '@/lib/prisma/client'
+import { createClient } from '@/lib/supabase/server'
+import { checkRateLimit, rateLimitMessage } from '@/lib/research/rate-limit'
+import { initUserFromSupabase } from '@/lib/prisma/init-user'
 
-// Called after Supabase signup to create Prisma User + Workspace
-// Safe to call multiple times — upsert semantics
+/**
+ * Bootstraps the Prisma User + Workspace for the CALLER'S OWN authenticated
+ * Supabase session. Identity (id/email) is always derived from the verified
+ * session below, never from the request body — a prior version trusted a
+ * client-supplied email/supabaseId, which let anyone enumerate or
+ * pre-register a Workspace+User for an arbitrary email (see
+ * AUDIT_CONSOLIDATION.md §1.1).
+ */
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json() as {
-      email?: string
-      name?: string
-      supabaseId?: string
-      workspaceName?: string
-      branchKey?: string
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user?.email) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { email, name, supabaseId, workspaceName, branchKey } = body
-
-    if (!email) {
-      return NextResponse.json({ error: 'email is required' }, { status: 400 })
+    const rate = await checkRateLimit(`ratelimit:users:init:${user.id}`)
+    if (!rate.ok) {
+      return NextResponse.json({ error: rateLimitMessage(rate.resetIn), resetIn: rate.resetIn }, { status: 429 })
     }
 
-    // Check if user already exists
-    const existing = await prisma.user.findUnique({ where: { email } })
-    if (existing) {
-      return NextResponse.json({ userId: existing.id, workspaceId: existing.workspaceId, created: false })
-    }
+    const body = await req.json().catch(() => null) as { workspaceName?: string } | null
 
-    // Create workspace + user in a transaction
-    const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-      const workspace = await tx.workspace.create({
-        data: {
-          name: workspaceName ?? `${name ?? email.split('@')[0]}'s Workspace`,
-          plan: 'STARTER',
-          ownerId: supabaseId ?? email,
-        },
-      })
-
-      const user = await tx.user.create({
-        data: {
-          id: supabaseId ?? undefined, // Use Supabase UUID as Prisma ID if available
-          email,
-          name: name ?? null,
-          role: 'ADMIN',
-          workspaceId: workspace.id,
-        },
-      })
-
-      return { user, workspace }
+    const result = await initUserFromSupabase({
+      id: user.id,
+      email: user.email,
+      name: (user.user_metadata?.full_name as string | undefined) ?? null,
+      workspaceName: body?.workspaceName?.trim() || undefined,
     })
 
-    return NextResponse.json({
-      userId: result.user.id,
-      workspaceId: result.workspace.id,
-      created: true,
-    })
+    return NextResponse.json(result)
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Failed to initialize user'
     console.error('[users/init]', message)

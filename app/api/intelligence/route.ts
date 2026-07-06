@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { checkRateLimit, rateLimitMessage } from '@/lib/research/rate-limit'
+import { checkPlanLimit } from '@/lib/research/plan-enforcement'
+import { PLAN_LABELS } from '@/types/plan.types'
 
 // ── EGYPT REAL ESTATE BENCHMARKS 2026 ──────────────────────────────
 const RE_BENCHMARKS = {
@@ -958,6 +961,37 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: `Unknown report type: ${reportType}` }, { status: 400 })
     }
 
+    const rate = await checkRateLimit(`ratelimit:intelligence:${user.id}`)
+    if (!rate.ok) {
+      return NextResponse.json({ error: rateLimitMessage(rate.resetIn), resetIn: rate.resetIn }, { status: 429 })
+    }
+
+    // `research_requests`/`reports`/`user_plans` aren't in the generated Supabase types yet
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sb = supabase as any
+
+    const planCheck = await checkPlanLimit(sb, user.id)
+    if (!planCheck.ok) {
+      return NextResponse.json(
+        {
+          error: `Monthly plan limit reached (${planCheck.used}/${planCheck.limit} reports used this month on the ${PLAN_LABELS[planCheck.plan]} plan). Upgrade your plan to continue.`,
+          used: planCheck.used,
+          limit: planCheck.limit,
+          plan: planCheck.plan,
+        },
+        { status: 403 }
+      )
+    }
+
+    const { data: reqRow } = await sb
+      .from('research_requests')
+      .insert({ user_id: user.id, module: 'market_intelligence', status: 'submitted', input: { reportType, formData }, credits_used: 1 })
+      .select('id')
+      .single()
+    const requestId = reqRow?.id as string | undefined
+
+    if (requestId) await sb.from('research_requests').update({ status: 'processing' }).eq('id', requestId)
+
     // Call OpenAI
     const { default: OpenAI } = await import('openai')
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
@@ -988,20 +1022,25 @@ export async function POST(request: Request) {
       const end = cleaned.lastIndexOf('}')
       reportData = JSON.parse(start !== -1 ? cleaned.substring(start, end + 1) : cleaned) as Record<string, unknown>
     } catch {
+      if (requestId) await sb.from('research_requests').update({ status: 'failed', error: 'Failed to parse AI response' }).eq('id', requestId)
       return NextResponse.json({ error: 'Failed to parse AI response', raw: rawText.slice(0, 500) }, { status: 500 })
     }
 
     // Save to Supabase (reports table may not be in generated types yet)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error: dbError } = await (supabase as any).from('reports').insert({
-      user_id: user.id,
-      report_type: reportType,
-      company_name: formData.companyName ?? formData.projectName ?? 'Unknown',
-      city: formData.city ?? formData.targetCity ?? '',
-      report_data: reportData,
-      created_at: new Date().toISOString(),
-    })
+    const { data: reportRow, error: dbError } = await sb
+      .from('reports')
+      .insert({
+        user_id: user.id,
+        report_type: reportType,
+        company_name: formData.companyName ?? formData.projectName ?? 'Unknown',
+        city: formData.city ?? formData.targetCity ?? '',
+        report_data: reportData,
+        created_at: new Date().toISOString(),
+      })
+      .select('id')
+      .single()
 
+    if (requestId) await sb.from('research_requests').update({ status: 'completed', result_report_id: reportRow?.id ?? null }).eq('id', requestId)
     if (dbError) console.error('[intelligence] DB error:', dbError.message)
 
     return NextResponse.json({ success: true, report: reportData })
