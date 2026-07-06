@@ -1,0 +1,62 @@
+ID,Severity,Category,Title,File,Evidence,Classification,Effort,Priority,Blocks
+SEC-01,CRITICAL,Security,Committed bcrypt password hashes in users.json,users.json,git ls-files | grep users.json,PROVEN,S,P0,Production
+SEC-02,CRITICAL,Security,All AI inference routed through halannews.com external proxy,"app/api/demo/generate/route.ts, app/api/intelligence/route.ts, app/api/research/talent/route.ts",fetch('https://halannews.com/api-proxy') in route source,PROVEN,M,P0,Production + Legal
+SEC-03,CRITICAL,Security,Authenticated iframe embedding halannews.com,app/market-intelligence/page.tsx,<iframe src=""https://halannews.com/"" in page source,PROVEN,M,P0,Trust + Security
+SEC-04,HIGH,Security,proxy.ts fail-open on missing env vars and exceptions,"proxy.ts:5-7, 42-44",return NextResponse.next() on both paths,PROVEN,S,P0,Auth bypass risk
+SEC-05,HIGH,Security,images.remotePatterns wildcard enables SSRF,next.config.ts:9-11,{ hostname: '**' } confirmed in source,PROVEN,XS,P0,SSRF
+SEC-06,HIGH,Security,Unsanitized user input in AI prompt and HTML email,app/api/demo/generate/route.ts:23-60,String interpolation of POST fields into prompt and email body,PROVEN,S,P1,Injection
+SEC-07,HIGH,Security,npm audit HIGH: form-data CRLF injection,package-lock.json (transitive),npm audit --json output,PROVEN,XS,P1,Supply chain
+SEC-08,HIGH,Security,No security headers (CSP / HSTS / X-Frame-Options),"next.config.ts, proxy.ts",Full file reads; no headers() export found,PROVEN,S,P0,XSS + Clickjacking
+SEC-09,MEDIUM,Security,Non-null assertion on nullable user.email,app/api/workspace/route.ts:15,user.email! in Prisma query,PROVEN,XS,P1 (delete the route),Runtime error risk
+SEC-10,MEDIUM,Security,demo_leads SELECT policy too permissive,supabase/leads-table.sql,USING (true) on SELECT policy,PROVEN,XS,P1,Data exposure
+SEC-11,MEDIUM,Security,No CSRF protection,All form routes,No CSRF tokens found in codebase,HIGHLY LIKELY,S,P2,CSRF
+DB-01,CRITICAL,Database,Zero Prisma migration history,prisma/ directory,"ls prisma/ = schema.prisma only; no migrations/",PROVEN,M,P0,Schema drift
+DB-02,CRITICAL,Database,Zero Supabase migration history,supabase/ directory,SQL files applied manually; no migration tool,PROVEN,M,P1,Schema drift
+DB-03,HIGH,Database,Split-brain plan type model,"types/plan.types.ts, types/workspace.types.ts, prisma/schema.prisma",3 incompatible plan type definitions in 3 files,PROVEN,M,P1,Billing
+DB-04,HIGH,Database,Missing reports.user_id index,supabase/reports-table.sql,No CREATE INDEX in SQL file; confirmed absent,PROVEN,XS,P1,Performance
+DB-05,HIGH,Database,Stale Supabase types — as any in 4 routes,"app/api/research/leads/route.ts, talent/route.ts, intelligence/route.ts, lib/research/plan-enforcement.ts",as any cast confirmed in each file,PROVEN,XS,P1,Type safety
+DB-06,MEDIUM,Database,Missing User.workspaceId index,prisma/schema.prisma,No @@index([workspaceId]) in User model,PROVEN,XS,P2,Performance
+DB-07,MEDIUM,Database,demo_leads has no email index for deduplication,supabase/leads-table.sql,No CREATE INDEX on email column,PROVEN,XS,P2,Performance
+DB-08,MEDIUM,Database,research_requests.updated_at has no auto-update trigger,supabase/research-tables.sql,No trigger defined in SQL file,PROVEN,S,P2,Data integrity
+DB-09,LOW,Database,DATABASE_URL port mismatch in .env.example,.env.example:6-7,"Port 5432 shown with pgbouncer=true; pooler port is 6543",PROVEN,XS,P2,Developer confusion
+DEP-01,CRITICAL,Deployment,npm run lint broken (next lint removed in Next 16),package.json,npm run lint exits 127; next not found,PROVEN,S,P0,No static analysis
+DEP-02,HIGH,Deployment,No CI/CD pipeline,.github/ directory,find . -name '*.yml' -path '*/.github/*' returns nothing,PROVEN,S,P1,QA
+DEP-03,HIGH,Deployment,Build pipeline: 2x npm install + 3x prisma generate,"vercel.json, package.json postinstall",vercel.json + postinstall script confirmed,PROVEN,XS,P0,Build cost
+DEP-04,HIGH,Deployment,Prisma migrate deploy missing from deploy pipeline,vercel.json,Only prisma generate in buildCommand; no migrate deploy,PROVEN,M,P0,Schema safety
+DEP-05,MEDIUM,Deployment,tsconfig.json baseUrl deprecated,tsconfig.json:47,"tsc error TS5101: Option 'baseUrl' is deprecated",PROVEN,S,P2,TS 7.0 break
+DEP-06,MEDIUM,Deployment,.env.example variable name mismatch,.env.example,"ANON_KEY vs PUBLISHABLE_KEY; SUPABASE_SERVICE_ROLE_KEY missing",PROVEN,XS,P1,Developer confusion
+DEP-07,LOW,Deployment,Node.js version not pinned,package.json,No engines field,PROVEN,XS,P2,Reproducibility
+ARCH-01,CRITICAL,Architecture,core/ and services/ excluded from TypeScript,tsconfig.json:58-59,Confirmed in exclude array; live routes import from @core/,PROVEN,S,P1,Type safety
+ARCH-02,HIGH,Architecture,Single 1051-line route handler monolith,app/api/intelligence/route.ts,wc -l = 1051,PROVEN,L,P2,Maintainability
+ARCH-03,HIGH,Architecture,lib/supabase/middleware.ts dead file,lib/supabase/middleware.ts,proxy.ts doesn't import it; reimplements logic inline,PROVEN,XS,P1,Confusion
+ARCH-04,MEDIUM,Architecture,Two disconnected data layers with no shared schema tooling,"prisma/, supabase/",Prisma for users; Supabase direct for product data; no shared migration,PROVEN,L,P2,Maintainability
+ARCH-05,MEDIUM,Architecture,halannews.com single point of failure for AI,".env.example: CLOUDFLARE_WORKER_URL","halannews.com down = AI features down; no fallback",PROVEN,M,P0,Availability
+PERF-01,HIGH,Performance,NFT bundle bloat 24.66MB in 4 functions,prisma/schema.prisma:3,Custom output path; confirmed via .nft.json inspection,PROVEN,S,P0,Cold starts + security
+PERF-02,HIGH,Performance,Missing reports.user_id index causes full-table scan,supabase/reports-table.sql,No index in SQL file,PROVEN,XS,P1,Query performance
+PERF-03,MEDIUM,Performance,No streaming on AI routes — synchronous wait,All AI routes,No ReadableStream or Vercel AI SDK streaming,PROVEN,M,P3,UX
+PERF-04,MEDIUM,Performance,analytics/page.tsx 'use client' on static content,app/dashboard/analytics/page.tsx,"'use client' at top; zero useState/useEffect confirmed",PROVEN,S,P2,Bundle size
+PERF-05,MEDIUM,Performance,Shell.tsx client boundary too high,components/dashboard/shell.tsx,Wraps every dashboard page as client boundary,PROVEN,M,P2,Bundle size
+PERF-06,MEDIUM,Performance,Header makes redundant client-side getUser() call,components/dashboard/header.tsx:17,supabase.auth.getUser() on client for avatar initial only,PROVEN,S,P2,Extra network call
+PERF-07,MEDIUM,Performance,No fetch timeout in FetchSourceCollector,lib/research/acquisition/source-collector.ts,fetch(url) with no AbortController/timeout,PROVEN,S,P1,Function timeout risk
+PERF-08,LOW,Performance,Plan enforcement makes 2 uncached Supabase calls per request,lib/research/plan-enforcement.ts,No Redis cache on plan tier,PROVEN,S,P2,Supabase load at scale
+CODE-01,HIGH,Code Quality,No working lint — zero static analysis gate,package.json + node_modules,npm run lint exits 127,PROVEN,S,P0,Code quality
+CODE-02,HIGH,Code Quality,Tests never run in CI,No .github/workflows/,find returns nothing,PROVEN,S,P1,Regressions
+CODE-03,HIGH,Code Quality,5 as any casts from stale Supabase types,"Leads, talent, intelligence routes + plan-enforcement",Direct code inspection,PROVEN,XS,P1,Type safety
+CODE-04,MEDIUM,Code Quality,Split-brain plan types (workspace.types.ts vs plan.types.ts),"types/workspace.types.ts, types/plan.types.ts",Different tier counts and shapes confirmed,PROVEN,M,P1,Correctness
+CODE-05,MEDIUM,Code Quality,Rate limit counter non-atomic (incr + separate expire),"lib/research/rate-limit.ts, quota.ts",incr() then expire() are separate calls,PROVEN,S,P2,Edge case counter leak
+CODE-06,LOW,Code Quality,Unused exports in lib/ (cacheDel, cacheGetOrSet etc.),"lib/redis/cache.ts, lib/research/source-quality.ts",Named exports never imported,PROVEN,XS,P3,Dead code
+DEAD-01,HIGH,Dead Code,app/api/workspace/route.ts — zero callers,app/api/workspace/route.ts,grep for /api/workspace returns only the route file itself,PROVEN,XS,P1,NFT bloat + confusion
+DEAD-02,HIGH,Dead Code,hooks/use-workspace.ts — only calls dead endpoint,hooks/use-workspace.ts,Only caller of /api/workspace; no UI uses this hook,PROVEN,XS,P1,Dead code
+DEAD-03,HIGH,Dead Code,services/legacy-ai-engine orchestrator+prompts (30 prompt files),services/legacy-ai-engine/,README confirms retired; no live route imports orchestrator,PROVEN,XS,P2,Confusion (keep provider)
+DEAD-04,MEDIUM,Dead Code,components/motion/fade-in.tsx + framer-motion dep,components/motion/fade-in.tsx,Zero usages under app/ confirmed,PROVEN,XS,P1,Bundle weight
+DEAD-05,MEDIUM,Dead Code,Unused packages: ai/sonner/8 Radix packages/@upstash/ratelimit,package.json,grep confirms zero imports,PROVEN,XS,P1,Bundle + vulnerabilities
+DEAD-06,LOW,Dead Code,26 root-level .md audit files,Repository root,find . -maxdepth 1 -name '*.md' | wc -l = 26,PROVEN,XS,P2,NFT bloat + confusion
+DEAD-07,LOW,Dead Code,Legacy PHP stack: api.php/auth.php/index.html/eunoia-worker.js etc.,Repository root,Files tracked in git; not wired to Next.js,PROVEN,XS,P2,NFT bloat
+DEAD-08,LOW,Dead Code,Stray binary files: IMG_0070-0073.jpeg + .xlsx + text*.txt,Repository root,du -sh confirms sizes; tracked in git,PROVEN,XS,P2,NFT bloat
+FEAT-01,HIGH,Feature,Billing/payments not implemented,No Stripe files found,No payment provider in package.json or code,PROVEN,L,P2,Monetization
+FEAT-02,HIGH,Feature,Settings page read-only (no workspace/plan/member management),app/dashboard/settings/page.tsx,Read-only email display only,PROVEN,L,P2,Product
+FEAT-03,HIGH,Feature,Admin panel missing entirely,No admin routes found,find returns no admin route,PROVEN,L,P2,Operations
+FEAT-04,MEDIUM,Feature,Market Intelligence is an iframe not a real feature,app/market-intelligence/page.tsx,Confirmed iframe to halannews.com,PROVEN,M,P0,Product + Security
+FEAT-05,MEDIUM,Feature,Analytics page shows static content only,app/dashboard/analytics/page.tsx,No real usage data in page,PROVEN,M,P2,Product
+FEAT-06,LOW,Feature,Report deletion not implemented,app/dashboard/reports/,No DELETE endpoint or UI,PROVEN,S,P2,Product
+FEAT-07,LOW,Feature,E2E tests (Playwright) not implemented,No playwright files,find returns nothing,PROVEN,L,P3,QA
