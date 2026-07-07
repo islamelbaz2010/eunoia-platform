@@ -4,6 +4,7 @@ config.php
 .env
 .env.local
 .env.*.local
+users.json
 
 # Dependencies
 node_modules/
