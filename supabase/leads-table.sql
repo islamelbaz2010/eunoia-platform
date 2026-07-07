@@ -12,8 +12,9 @@ CREATE TABLE IF NOT EXISTS demo_leads (
 
 ALTER TABLE demo_leads ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Service role can insert" ON demo_leads
-  FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Service role can insert" ON demo_leads;
+DROP POLICY IF EXISTS "Service role can select" ON demo_leads;
+DROP POLICY IF EXISTS "No public demo lead access" ON demo_leads;
 
-CREATE POLICY "Service role can select" ON demo_leads
-  FOR SELECT USING (true);
+CREATE POLICY "No public demo lead access" ON demo_leads
+  FOR ALL USING (false) WITH CHECK (false);
