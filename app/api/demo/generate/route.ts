@@ -241,8 +241,8 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Log lead (fire and forget — no DB dependency)
-    console.log('[demo-lead]', { name, phone, email, company, sector, city, ts: new Date().toISOString() })
+    // Log report generation without PII
+    console.log('[demo-lead]', { company, sector, city, ts: new Date().toISOString() })
 
     return NextResponse.json({ ok: true })
   } catch (e) {
