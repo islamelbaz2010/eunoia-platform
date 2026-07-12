@@ -51,7 +51,8 @@ Return ONLY valid JSON (no markdown, no backticks, start directly with {):
   "full_report_teaser": "One compelling sentence about what the FULL 22-section report would reveal for ${company}"
 }`
 
-  const res = await fetch('https://halannews.com/api-proxy', {
+  const proxyUrl = process.env.AI_PROXY_URL ?? 'https://halannews.com/api-proxy'
+  const res = await fetch(proxyUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
