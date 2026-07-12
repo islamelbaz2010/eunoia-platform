@@ -64,7 +64,7 @@ export default function DemoPage() {
           <div className="font-mono text-xs tracking-[0.25em] uppercase font-bold" style={{color:'#b8922a'}}>EUNOIA</div>
           <div className="text-[9px] tracking-wider text-gray-400 uppercase">Intelligence Platform</div>
         </div>
-        <div className="text-xs text-gray-400">🏢 Real Estate Developer Exhibition — June 5, 2026</div>
+        <div className="text-xs text-gray-400">🏢 Business Intelligence Demo</div>
       </div>
 
       <div className="flex-1 flex items-center justify-center p-4">
