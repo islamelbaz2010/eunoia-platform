@@ -106,7 +106,7 @@ function buildEmailHtml(
     <div style="margin:0 28px 20px;background:#fffbf0;border:1px solid #f0e0a0;border-radius:12px;padding:20px;text-align:center;">
       <div style="font-size:13px;color:#b8922a;font-weight:700;margin-bottom:8px;">درجة السوق</div>
       <div style="font-size:48px;font-weight:900;color:#b8922a;">${report.market_score ?? 72}</div>
-      <div style="font-size:11px;color:#888;">/100 — بناءً على تحليل السوق المصري 2025</div>
+      <div style="font-size:11px;color:#888;">/100 — بناءً على تحليل السوق المصري 2026</div>
     </div>
 
     <!-- Executive Summary -->
@@ -167,7 +167,7 @@ function buildEmailHtml(
     <div style="padding:20px 28px;border-top:1px solid #f0ece0;text-align:center;">
       <div style="font-family:monospace;font-size:11px;font-weight:700;color:#b8922a;letter-spacing:4px;margin-bottom:4px;">EUNOIA</div>
       <div style="font-size:10px;color:#999;">منصة الذكاء التسويقي — مصر والخليج</div>
-      <div style="font-size:10px;color:#bbb;margin-top:8px;">هذا التقرير تم توليده بالذكاء الاصطناعي بناءً على بيانات السوق المصري 2025. الأرقام تقديرية — راجع مستشارك المالي قبل اتخاذ قرارات.</div>
+      <div style="font-size:10px;color:#bbb;margin-top:8px;">هذا التقرير تم توليده بالذكاء الاصطناعي بناءً على بيانات السوق المصري 2026. الأرقام تقديرية — راجع مستشارك المالي قبل اتخاذ قرارات.</div>
     </div>
   </div>
 </body>
