@@ -1,9 +1,10 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { SECTORS } from '@core/data/sectors.data'
 import { CITIES, COUNTRY_LABELS } from '@core/data/cities.data'
 import { downloadCSV } from '@/lib/csv-export'
+import { parsePlanLimitNotice, type PlanLimitNotice } from '@/lib/research/api-error'
 
 const styles = `
   .ri-page { background: #FAF5EF; min-height: 100vh; font-family: 'Inter','Cairo','Segoe UI',sans-serif; }
@@ -26,6 +27,9 @@ const styles = `
   .ri-submit-btn:hover { opacity: 0.9; }
   .ri-submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
   .ri-error { background: #FDE8E8; border: 1px solid #F0B4B4; color: #B91C1C; border-radius: 9px; padding: 10px 14px; font-size: 12px; margin-bottom: 16px; }
+  .ri-plan-limit { background: #FFF8E8; border: 1px solid #F0DDA0; color: #6F4C08; border-radius: 12px; padding: 14px 16px; font-size: 12px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .ri-plan-limit strong { display: block; color: #3A2A08; font-size: 13px; margin-bottom: 3px; }
+  .ri-plan-limit a { flex-shrink: 0; background: #4A1042; color: #fff; text-decoration: none; font-weight: 800; border-radius: 8px; padding: 8px 12px; }
 
   .ri-disclaimer { background: #FFF8E8; border: 1px solid #F0DDA0; color: #8A6310; border-radius: 9px; padding: 10px 14px; font-size: 12px; margin-bottom: 16px; line-height: 1.5; }
   .ri-summary { background: #fff; border: 1.5px solid #E8E2DA; border-radius: 12px; padding: 16px; margin-bottom: 16px; font-size: 13px; color: #3A3430; line-height: 1.6; }
@@ -82,7 +86,17 @@ export default function TalentFinderPage() {
   const [skills, setSkills] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [planLimit, setPlanLimit] = useState<PlanLimitNotice | null>(null)
   const [report, setReport] = useState<TalentReport | null>(null)
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    setJobTitle(params.get('jobTitle') ?? '')
+    setLocation(params.get('location') ?? '')
+    setIndustry(params.get('industry') ?? '')
+    setExperience(params.get('experience') ?? EXPERIENCE_LEVELS[1])
+    setSkills(params.get('skills') ?? '')
+  }, [])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -92,6 +106,7 @@ export default function TalentFinderPage() {
     }
     setLoading(true)
     setError(null)
+    setPlanLimit(null)
     try {
       const res = await fetch('/api/research/talent', {
         method: 'POST',
@@ -99,7 +114,14 @@ export default function TalentFinderPage() {
         body: JSON.stringify({ jobTitle, location, industry, experience, skills }),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error ?? `Request failed: ${res.status}`)
+      if (!res.ok) {
+        const notice = parsePlanLimitNotice(data)
+        if (notice) {
+          setPlanLimit(notice)
+          return
+        }
+        throw new Error(data.error ?? `Request failed: ${res.status}`)
+      }
       setReport(data.report as TalentReport)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
@@ -148,6 +170,15 @@ export default function TalentFinderPage() {
           <form className="ri-form-card" onSubmit={handleSubmit}>
             <div className="ri-form-title">Research a talent market</div>
             {error && <div className="ri-error">{error}</div>}
+            {planLimit && (
+              <div className="ri-plan-limit">
+                <div>
+                  <strong>{planLimit.planLabel} plan limit reached</strong>
+                  <span>{planLimit.used}/{planLimit.limit} reports used this month. Upgrade to continue researching without interruption.</span>
+                </div>
+                <Link href="/dashboard/settings">Upgrade</Link>
+              </div>
+            )}
             <div className="ri-form-grid">
               <div className="ri-field">
                 <label className="ri-label">Job Title</label>

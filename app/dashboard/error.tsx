@@ -8,10 +8,16 @@ interface ErrorProps {
   reset: () => void
 }
 
+export function dashboardErrorReference(error: Error & { digest?: string }): string | null {
+  return error.digest ? `Reference: ${error.digest}` : null
+}
+
 export default function DashboardError({ error, reset }: ErrorProps) {
   useEffect(() => {
     console.error('[dashboard-error]', error)
   }, [error])
+
+  const reference = dashboardErrorReference(error)
 
   return (
     <div className="min-h-screen bg-midnight flex items-center justify-center p-4">
@@ -22,12 +28,10 @@ export default function DashboardError({ error, reset }: ErrorProps) {
 
         <h1 className="text-cream text-xl font-bold mb-2">Something went wrong</h1>
         <p className="text-cream/40 text-sm mb-1">حدث خطأ غير متوقع — يرجى المحاولة مرة أخرى</p>
-
-        {error.message && (
-          <p className="text-red-400/60 text-xs font-mono mt-3 mb-6 bg-red-500/5 border border-red-500/10 rounded-lg px-4 py-2">
-            {error.message}
-          </p>
-        )}
+        <p className="text-cream/50 text-sm mt-3 mb-2">
+          The issue has been logged. Please try again, or return to the dashboard.
+        </p>
+        {reference && <p className="text-cream/30 text-xs font-mono mb-6">{reference}</p>}
 
         <div className="flex items-center justify-center gap-3">
           <button

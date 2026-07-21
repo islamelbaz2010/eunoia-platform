@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import Link from 'next/link'
 
 interface Report {
   id: string
@@ -8,6 +9,14 @@ interface Report {
   city: string | null
   created_at: string
   report_data: Record<string, unknown> | null
+}
+
+interface FailedRequest {
+  id: string
+  module: 'lead_finder' | 'talent_finder' | 'market_intelligence'
+  input: Record<string, unknown> | null
+  error: string | null
+  created_at: string
 }
 
 const TYPE_ICONS: Record<string, string> = {
@@ -61,6 +70,13 @@ const styles = `
   .rh-empty-sub { font-size: 13px; color: #9A9090; }
 
   .rh-list { display: flex; flex-direction: column; gap: 8px; }
+  .rh-failed-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+  .rh-failed-card { background: #FFF8E8; border: 1.5px solid #F0DDA0; border-radius: 12px; padding: 14px 16px; }
+  .rh-failed-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .rh-failed-title { font-size: 13px; font-weight: 800; color: #3A2A08; }
+  .rh-failed-meta { font-size: 11px; color: #8A6310; margin-top: 3px; }
+  .rh-failed-error { font-size: 11px; color: #8A6310; margin-top: 8px; line-height: 1.5; }
+  .rh-retry-btn { flex-shrink: 0; background: #4A1042; color: #fff; text-decoration: none; font-size: 11px; font-weight: 800; border-radius: 8px; padding: 8px 12px; }
   .rh-report-card { background: #fff; border: 1.5px solid #E8E2DA; border-radius: 12px; padding: 14px 16px; cursor: pointer; transition: all 0.15s; }
   .rh-report-card:hover { border-color: #7C3AED; box-shadow: 0 2px 12px rgba(124,58,237,0.08); transform: translateY(-1px); }
   .rh-report-card.expanded { border-color: #7C3AED; background: #FDFAFF; }
@@ -174,7 +190,32 @@ function exportReportCSV(report: Report) {
   document.body.appendChild(a); a.click(); document.body.removeChild(a)
 }
 
-export default function ReportsClient({ reports, userEmail }: { reports: Report[]; userEmail: string }) {
+function retryHref(request: FailedRequest): string {
+  const params = new URLSearchParams()
+  for (const [key, value] of Object.entries(request.input ?? {})) {
+    if (typeof value === 'string' && value.trim()) params.set(key, value)
+  }
+  const query = params.toString()
+  if (request.module === 'lead_finder') return `/dashboard/research/leads${query ? `?${query}` : ''}`
+  if (request.module === 'talent_finder') return `/dashboard/research/talent${query ? `?${query}` : ''}`
+  return '/dashboard/real-estate'
+}
+
+function failedRequestTitle(request: FailedRequest): string {
+  if (request.module === 'lead_finder') return 'Lead Finder request failed'
+  if (request.module === 'talent_finder') return 'Talent Finder request failed'
+  return 'Market Intelligence request failed'
+}
+
+export default function ReportsClient({
+  reports,
+  failedRequests,
+  userEmail,
+}: {
+  reports: Report[]
+  failedRequests: FailedRequest[]
+  userEmail: string
+}) {
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<string>('all')
   const [expanded, setExpanded] = useState<string | null>(null)
@@ -250,6 +291,23 @@ export default function ReportsClient({ reports, userEmail }: { reports: Report[
             <button className={`rh-filter-btn${filter === 'lead_finder' ? ' active' : ''}`} onClick={() => setFilter('lead_finder')}>&#127919; Leads</button>
             <button className={`rh-filter-btn${filter === 'talent_finder' ? ' active' : ''}`} onClick={() => setFilter('talent_finder')}>&#129489;&#8205;&#128188; Talent</button>
           </div>
+
+          {failedRequests.length > 0 && (
+            <div className="rh-failed-list">
+              {failedRequests.map(request => (
+                <div key={request.id} className="rh-failed-card">
+                  <div className="rh-failed-row">
+                    <div>
+                      <div className="rh-failed-title">{failedRequestTitle(request)}</div>
+                      <div className="rh-failed-meta">{formatDate(request.created_at)}</div>
+                    </div>
+                    <Link className="rh-retry-btn" href={retryHref(request)}>Try again</Link>
+                  </div>
+                  {request.error && <div className="rh-failed-error">{request.error}</div>}
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Empty state */}
           {filtered.length === 0 && (

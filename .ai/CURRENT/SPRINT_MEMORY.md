@@ -363,3 +363,40 @@ This document covers **all messages currently available to me in this conversati
 * Any information contained exclusively in repositories, Git history, uploaded files, or external documents, which were intentionally excluded by instruction.
 
 **End of `SPRINT_MEMORY.md`**
+
+---
+
+# 2026-07-21 Implementation Continuation
+
+## Completed
+
+- Continued from the post-startup repository state without regenerating startup context.
+- Selected the next repository-controllable commercial readiness task from `COMMERCIAL_READINESS_REPORT.md`: in-dashboard usage visibility.
+- Added monthly usage visibility to `/dashboard`.
+- Added current plan and monthly usage visibility to `/dashboard/settings`.
+- Restored `npm run lint` by adding a flat ESLint config for the current Next 16 / ESLint 9 stack.
+- Added regression tests for `lib/research/plan-enforcement.ts`.
+- Added regression tests for `lib/research/rate-limit.ts`.
+- Sanitized the dashboard error boundary so raw exception messages are no longer rendered to customers.
+- Added tests for dashboard error reference behavior.
+- Added focused tests for research-service orchestration, AI-analysis closed-list behavior, and SerpAPI provider quota/error handling.
+- Added shared plan-limit API error parsing.
+- Added quota-blocked upgrade CTA handling to Lead Finder and Talent Finder.
+- Added failed-request recovery cards to report history.
+- Added retry links that prefill Lead Finder and Talent Finder from failed request input.
+- Added baseline `/privacy` and `/terms` pages with legal-review caveats.
+- Added `/api/health` for uptime monitoring without exposing environment details.
+
+## Verification
+
+- Focused quota tests passed: 2 files / 9 tests.
+- Full test suite passed: 19 files / 133 tests.
+- Lint passed.
+- Typecheck passed.
+- Production build passed.
+
+## Notes
+
+- Billing remains blocked on provider choice and secrets.
+- Production deploy branch and Vercel domain mapping remain unverified from this environment.
+- Remaining high-ROI commercial-readiness items are blocked on product/legal/ops decisions: billing provider and secrets, APM provider and credentials, admin role/access model, authenticated email sender/policy, and legal review of Privacy/Terms.

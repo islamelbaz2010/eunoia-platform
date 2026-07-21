@@ -20,5 +20,22 @@ export default async function ReportsPage() {
 
   if (error) console.error('[reports] fetch error:', error.message)
 
-  return <ReportsClient reports={reports || []} userEmail={user.email || ''} />
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: failedRequests, error: failedError } = await (supabase as any)
+    .from('research_requests')
+    .select('id, module, input, error, created_at')
+    .eq('user_id', user.id)
+    .eq('status', 'failed')
+    .order('created_at', { ascending: false })
+    .limit(10)
+
+  if (failedError) console.error('[reports] failed requests fetch error:', failedError.message)
+
+  return (
+    <ReportsClient
+      reports={reports || []}
+      failedRequests={failedRequests || []}
+      userEmail={user.email || ''}
+    />
+  )
 }

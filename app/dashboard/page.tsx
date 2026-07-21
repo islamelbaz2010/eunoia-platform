@@ -1,5 +1,7 @@
 import { Shell } from '@/components/dashboard/shell'
+import { checkPlanLimit, type PlanCheckResult } from '@/lib/research/plan-enforcement'
 import { createClient } from '@/lib/supabase/server'
+import { PLAN_LABELS } from '@/types/plan.types'
 import { FileText, TrendingUp, Clock, ArrowRight, Building2, Search, Sparkles, BarChart3 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -29,6 +31,7 @@ export default async function DashboardPage() {
   const today = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
 
   let totalReports = 0, thisMonth = 0
+  let usage: PlanCheckResult = { ok: true, used: 0, limit: 20, plan: 'STARTER' }
   let recent: Array<{ id: string; report_type: string; company_name: string | null; city: string | null; created_at: string }> = []
 
   if (user) {
@@ -41,11 +44,17 @@ export default async function DashboardPage() {
     totalReports = total ?? 0
     thisMonth = month ?? 0
     recent = recentRows ?? []
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    usage = await checkPlanLimit(supabase as any, user.id)
   }
+
+  const usageValue = usage.limit === -1 ? `${usage.used}/∞` : `${usage.used}/${usage.limit}`
+  const usagePercent = usage.limit === -1 ? 0 : Math.min(100, Math.round((usage.used / usage.limit) * 100))
 
   const STATS = [
     { label: 'Total Reports', value: totalReports, icon: FileText, accent: '#b8922a' },
     { label: 'This Month', value: thisMonth, icon: TrendingUp, accent: '#16a34a' },
+    { label: `${PLAN_LABELS[usage.plan]} Usage`, value: usageValue, icon: BarChart3, accent: usagePercent >= 80 ? '#dc2626' : '#7c3aed' },
     { label: 'Last Report', value: recent[0] ? new Date(recent[0].created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '—', icon: Clock, accent: '#2563eb' },
   ]
 
@@ -65,12 +74,17 @@ export default async function DashboardPage() {
           </Link>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: 12 }}>
           {STATS.map(({ label, value, icon: Icon, accent }) => (
             <div key={label} className="card" style={{ padding: '18px 20px' }}>
               <div style={{ width: 36, height: 36, borderRadius: 10, background: `${accent}14`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}><Icon size={17} color={accent} /></div>
               <div style={{ fontSize: 22, fontWeight: 700, color: '#1a1612', lineHeight: 1 }}>{value}</div>
               <div style={{ fontSize: 11, color: '#9e8e7e', marginTop: 4 }}>{label}</div>
+              {label.endsWith('Usage') && usage.limit !== -1 && (
+                <div style={{ height: 6, background: '#f1eadf', borderRadius: 999, overflow: 'hidden', marginTop: 12 }}>
+                  <div style={{ width: `${usagePercent}%`, height: '100%', background: accent, borderRadius: 999 }} />
+                </div>
+              )}
             </div>
           ))}
         </div>
