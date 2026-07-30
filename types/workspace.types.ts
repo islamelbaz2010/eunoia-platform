@@ -11,7 +11,7 @@
 // them into one canonical model is a future task that requires a billing provider
 // decision — until then, plan.types.ts is the authoritative enforcement model.
 
-export type Plan = 'STARTER' | 'PROFESSIONAL' | 'ENTERPRISE'
+export type Plan = 'STARTER' | 'PROFESSIONAL' | 'AGENCY' | 'ENTERPRISE'
 export type Role = 'ADMIN' | 'AGENCY' | 'SALES' | 'VIEWER'
 
 export interface Workspace {
