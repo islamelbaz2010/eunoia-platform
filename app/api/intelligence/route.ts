@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase/server'
 import { checkRateLimit, rateLimitMessage } from '@/lib/research/rate-limit'
 import { checkPlanLimit } from '@/lib/research/plan-enforcement'
 import { PLAN_LABELS } from '@/types/plan.types'
+import { runDecisionEngine, collectEvidence, optionId } from '@/lib/decision-intelligence'
+import type { UniversalDecisionReport, RawEvidenceInput } from '@/lib/decision-intelligence'
 
 // ── EGYPT REAL ESTATE BENCHMARKS 2026 ──────────────────────────────
 const RE_BENCHMARKS = {
@@ -922,6 +924,79 @@ Return ONLY valid JSON (no markdown, start with {):
 }`
 }
 
+// ── DI ENGINE HELPERS ────────────────────────────────────────────────
+// Build strategy options for the DI Engine based on report type
+
+function buildDIOptions(reportType: string, formData: Record<string, string>) {
+  const subject = formData.companyName ?? formData.projectName ?? reportType
+  switch (reportType) {
+    case 'feasibility':
+      return [
+        { id: optionId('proceed'),   label: 'Proceed with project',        description: `Move forward with the development project for ${subject}` },
+        { id: optionId('revise'),    label: 'Revise project parameters',   description: 'Adjust pricing, timeline, or cost structure before proceeding' },
+        { id: optionId('defer'),     label: 'Defer decision',              description: 'Postpone the project pending further market research or funding' },
+      ]
+    case 'campaign_roi':
+      return [
+        { id: optionId('optimize'),     label: 'Optimize current campaigns',   description: `Improve CPL and targeting for ${subject} within current budget` },
+        { id: optionId('restructure'),  label: 'Restructure campaign approach', description: 'Change channel mix and creative strategy' },
+        { id: optionId('scale_budget'), label: 'Scale marketing budget',       description: 'Increase investment in best-performing channels' },
+      ]
+    case 'market_entry':
+      return [
+        { id: optionId('enter_now'),    label: 'Enter market now',            description: `Begin operations in ${formData.targetCity ?? 'target market'} immediately` },
+        { id: optionId('enter_phased'), label: 'Enter with phased approach',  description: 'Start with a test budget before full commitment' },
+        { id: optionId('hold'),         label: 'Hold market entry',           description: 'Postpone until budget or market conditions improve' },
+      ]
+    case 'lead_gen':
+      return [
+        { id: optionId('qualify_better'),    label: 'Improve lead qualification', description: 'Tighten criteria to increase deal conversion rate' },
+        { id: optionId('increase_volume'),   label: 'Increase lead volume',       description: 'Generate more leads to offset current qualification rate' },
+        { id: optionId('optimize_pipeline'), label: 'Optimize sales pipeline',    description: 'Improve follow-up and nurture sequences for existing leads' },
+      ]
+    default: // full_analysis
+      return [
+        { id: optionId('invest_growth'),        label: 'Invest in marketing growth',     description: 'Increase marketing spend and expand capabilities' },
+        { id: optionId('optimize_existing'),    label: 'Optimize existing marketing',    description: 'Improve ROI of current channels without increasing budget' },
+        { id: optionId('restructure_strategy'), label: 'Restructure marketing strategy', description: 'Revamp the overall marketing approach' },
+      ]
+  }
+}
+
+function buildDIEvidence(decisionId: string, reportType: string, formData: Record<string, string>) {
+  const now = new Date().toISOString()
+  const rawItems: RawEvidenceInput[] = [
+    {
+      title: 'Client-submitted analysis parameters',
+      content: formData as Record<string, unknown>,
+      sourceType: 'user_input',
+      sourceLabel: 'User form submission',
+      retrievedAt: now,
+      confidence: 0.85,
+      tags: { reportType, domain: 'market_intelligence' },
+    },
+    {
+      title: 'Egypt Real Estate Market Benchmarks 2026',
+      content: {
+        developer_cpl_meta: '300-800 EGP',
+        developer_cpl_google: '500-1200 EGP',
+        broker_cpl_meta: '200-600 EGP',
+        market_growth_annual: '18%',
+        market_size: 'EGP 600B Egypt real estate 2026',
+        developer_avg_margin: '20-35%',
+        developer_net_margin: '10-20%',
+      },
+      sourceType: 'internal_data',
+      sourceLabel: 'Eunoia Egypt Real Estate Benchmark Database 2026',
+      retrievedAt: now,
+      confidence: 0.80,
+      tags: { domain: 'real_estate', market: 'egypt', year: '2026' },
+    },
+  ]
+  return collectEvidence({ decisionId, items: rawItems }).collection
+}
+// ── END DI ENGINE HELPERS ─────────────────────────────────────────────
+
 // ── MAIN ROUTE ───────────────────────────────────────────────────────
 
 export async function POST(request: Request) {
@@ -992,6 +1067,35 @@ export async function POST(request: Request) {
 
     if (requestId) await sb.from('research_requests').update({ status: 'processing' }).eq('id', requestId)
 
+    // Run Decision Intelligence Engine — fail-safe: DI failure never breaks narration
+    let decisionReport: UniversalDecisionReport | null = null
+    try {
+      const diDecisionId = requestId ?? `di-${Date.now()}`
+      const diResult = runDecisionEngine({
+        input: {
+          subject: {
+            domain: 'market_intelligence',
+            name: formData.companyName ?? formData.projectName ?? reportType,
+            metadata: { reportType } as Record<string, unknown>,
+          },
+          context: {
+            question: `What is the optimal decision for this ${reportType.replace(/_/g, ' ')} analysis?`,
+            parameters: formData as Record<string, unknown>,
+            constraints: [],
+            objectives: ['maximize_roi', 'minimize_risk', 'optimize_market_position'],
+          },
+          options: buildDIOptions(reportType, formData),
+          requestedBy: 'user',
+          requestedByUserId: user.id,
+        },
+        evidence: buildDIEvidence(diDecisionId, reportType, formData),
+        rules: [],
+      })
+      decisionReport = diResult.report
+    } catch (err) {
+      console.error('[intelligence/di]', err)
+    }
+
     // Call OpenAI
     const { default: OpenAI } = await import('openai')
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
@@ -1043,7 +1147,14 @@ export async function POST(request: Request) {
     if (requestId) await sb.from('research_requests').update({ status: 'completed', result_report_id: reportRow?.id ?? null }).eq('id', requestId)
     if (dbError) console.error('[intelligence] DB error:', dbError.message)
 
-    return NextResponse.json({ success: true, report: reportData })
+    return NextResponse.json({
+      success: true,
+      report: reportData,
+      ...(decisionReport && {
+        decisionReport,
+        trustScore: decisionReport.trustScore,
+      }),
+    })
   } catch (err) {
     console.error('[intelligence] Error:', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

@@ -12,7 +12,7 @@
  */
 
 import type { Decision, DecisionOption, DecisionRecommendation } from './decision.types'
-import type { ConfidenceScore } from './confidence.types'
+import type { ConfidenceScore, TrustScore } from './confidence.types'
 import type { ValidationResult } from './validation.types'
 import type { DecisionExplainability } from './explainability.types'
 import type { RuleEvaluationResult } from './rules.types'
@@ -138,6 +138,7 @@ export interface UniversalDecisionReport {
   readonly options: DecisionOption[]
   readonly optionScoring: OptionScoringRow[]
   readonly confidence: ConfidenceScore
+  readonly trustScore: TrustScore
   readonly evidence: EvidenceCollection
   readonly evidenceSummary: ReportEvidenceSummary
   readonly ruleEvaluations: RuleEvaluationResult[]

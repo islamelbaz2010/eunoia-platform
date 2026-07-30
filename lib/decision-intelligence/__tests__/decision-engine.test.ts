@@ -191,4 +191,22 @@ describe('runDecisionEngine — integration', () => {
     const highFlags = result.report.riskFlags.filter(f => f.severity === 'HIGH')
     expect(highFlags.length).toBeGreaterThanOrEqual(1)
   })
+
+  it('report.trustScore has correct shape and valid band', () => {
+    const result = runDecisionEngine({
+      input: validInput,
+      evidence: makeEvidence(3),
+      rules: [],
+    })
+    const { trustScore } = result.report
+    expect(trustScore).toBeDefined()
+    expect(typeof trustScore.score).toBe('number')
+    expect(trustScore.score).toBeGreaterThanOrEqual(0)
+    expect(trustScore.score).toBeLessThanOrEqual(100)
+    expect(['LOW', 'MEDIUM', 'HIGH', 'VERY_HIGH']).toContain(trustScore.band)
+    expect(typeof trustScore.label).toBe('string')
+    expect(trustScore.label.length).toBeGreaterThan(0)
+    expect(typeof trustScore.isRuleDetermined).toBe('boolean')
+    expect(trustScore.score).toBe(result.report.confidence.overall)
+  })
 })

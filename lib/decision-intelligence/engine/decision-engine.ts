@@ -34,7 +34,7 @@ import type {
   DecisionStatusEvent,
   OptionId,
 } from '../types/decision.types'
-import type { ConfidenceScore, ConfidenceInput } from '../types/confidence.types'
+import type { ConfidenceScore, ConfidenceInput, TrustScore } from '../types/confidence.types'
 import type { UniversalDecisionReport, ReportMetadata, ReportId } from '../types/report.types'
 import type { DecisionExplainability } from '../types/explainability.types'
 
@@ -294,6 +294,20 @@ function assembleReport(
     keyEvidenceIds: explainability.why.topSupportingEvidenceIds,
   }
 
+  const TRUST_LABELS: Record<string, string> = {
+    VERY_HIGH: 'Very High Confidence',
+    HIGH:      'High Confidence',
+    MEDIUM:    'Moderate Confidence',
+    LOW:       'Low Confidence',
+    VERY_LOW:  'Low Confidence',
+  }
+  const trustScore: TrustScore = {
+    score: confidence.overall,
+    band: (confidence.band === 'VERY_LOW' ? 'LOW' : confidence.band) as TrustScore['band'],
+    label: TRUST_LABELS[confidence.band] ?? 'Low Confidence',
+    isRuleDetermined: executiveSummary.isRuleDetermined,
+  }
+
   const riskFlags = []
   if (confidence.band === 'LOW' || confidence.band === 'VERY_LOW') {
     riskFlags.push({
@@ -322,6 +336,7 @@ function assembleReport(
     options,
     optionScoring,
     confidence,
+    trustScore,
     evidence,
     evidenceSummary,
     ruleEvaluations: ruleResults,

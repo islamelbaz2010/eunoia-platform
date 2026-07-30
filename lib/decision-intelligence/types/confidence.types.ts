@@ -182,3 +182,21 @@ export interface ConfidenceInput {
   readonly consistency: EvidenceConsistencyInput
   readonly ruleCompliance: RuleComplianceInput
 }
+
+// ---------------------------------------------------------------------------
+// Trust score — consumer-facing view of confidence for report rendering
+// ---------------------------------------------------------------------------
+
+/**
+ * TrustScore is a simplified, consumer-facing projection of ConfidenceScore.
+ * It collapses VERY_LOW into LOW (four bands instead of five) and adds a
+ * human-readable label for direct display in reports and API responses.
+ */
+export interface TrustScore {
+  /** Overall confidence score in [0, 100]. Identical to ConfidenceScore.overall. */
+  readonly score: number
+  readonly band: 'LOW' | 'MEDIUM' | 'HIGH' | 'VERY_HIGH'
+  readonly label: string
+  /** True when the recommendation was produced by deterministic rules alone. */
+  readonly isRuleDetermined: boolean
+}
