@@ -400,3 +400,169 @@ This document covers **all messages currently available to me in this conversati
 - Billing remains blocked on provider choice and secrets.
 - Production deploy branch and Vercel domain mapping remain unverified from this environment.
 - Remaining high-ROI commercial-readiness items are blocked on product/legal/ops decisions: billing provider and secrets, APM provider and credentials, admin role/access model, authenticated email sender/policy, and legal review of Privacy/Terms.
+
+---
+
+# 2026-07-21 Decision Intelligence Architecture Sprint (Session 3)
+
+## Completed
+
+- Added `lib/supabase/admin.ts` — Supabase admin client using `SUPABASE_SERVICE_ROLE_KEY`.
+- Added `lib/admin/auth.ts` — admin identity check via `ADMIN_EMAILS` env var (comma-separated).
+- Added `lib/admin/audit.ts` — best-effort audit log writer for plan/account events.
+- Added `/api/account/export` — authenticated full data export (reports, research, plan) as JSON download.
+- Added `/api/account/delete` — authenticated account deletion using Supabase admin API (auth cascade deletes all app data).
+- Added `app/dashboard/settings/account-actions.tsx` — client component with Download My Data + Delete Account (with confirmation dialog).
+- Updated `/dashboard/settings` to include AccountActions section.
+- Added `/api/admin/check` — lightweight admin identity check for the sidebar.
+- Added `/api/admin/users` — admin-only user list with plan + this-month usage (reads via service role key).
+- Added `/api/admin/users/[id]/plan` — admin-only PATCH to change a user's plan with audit log write.
+- Added `/dashboard/admin` — Admin Console page with user list, stats, search, and plan management dropdown.
+- Updated Sidebar to conditionally show Admin Console link (fetches `/api/admin/check` on mount).
+- Added quota warning banner to `/dashboard` (yellow at ≥80%, red at 100%).
+- Added `supabase/audit-log.sql` — table definition for audit events; must be run in Supabase SQL Editor.
+- Wired audit log writes to plan-change and account-delete routes.
+- Replaced single-step onboarding with 2-step flow: workspace setup → product tour (3 module cards + CTA).
+- Converted `/dashboard/analytics` to server component; added live "Your Research Activity" stats from research_requests + reports.
+- Removed dead duplicate `PLAN_LIMITS`/`PLAN_LABELS` from `workspace.types.ts` and documented the plan model architecture split.
+
+## Verification
+
+- `npm run typecheck` — passed.
+- `npm run lint` — passed.
+- `npm test` — passed, 19 files / 133 tests.
+- `npm run build` — passed; pre-existing Turbopack/Prisma tracing warning unchanged.
+
+## New Environment Variables Required
+
+- `SUPABASE_SERVICE_ROLE_KEY` — required for admin console and account deletion.
+- `ADMIN_EMAILS` — comma-separated list of admin email addresses.
+
+## New SQL to Run in Supabase
+
+- `supabase/audit-log.sql` — creates `audit_log` table with RLS (users can see own events; admin writes use service role).
+
+## Remaining Work
+
+- Billing provider decision → Stripe checkout + webhook to write `user_plans`.
+- APM provider → structured error monitoring.
+- Sender/domain → authenticated user email notifications.
+- Legal review → update Privacy Policy and Terms placeholder text.
+- All remaining items are blocked on external decisions.
+
+---
+
+# 2026-07-21 Decision Intelligence Architecture Sprint (Session 3)
+
+## Completed
+
+- Implemented the full Decision Intelligence Architecture from scratch in `lib/decision-intelligence/`.
+- **Type System (7 files):** decision lifecycle with branded IDs and append-only audit trail; 6-type evidence model with authority weights; 5-dimension confidence model (weights validated at module load); business rules with 11 condition operators and 4 action types; 5-stage validation pipeline; 4-part explainability structures (WHY/WHY_NOT/EVIDENCE/RULES); Universal Decision Report v1.0.0 schema.
+- **Evidence Subsystem:** collector validates items, computes exponential freshness decay per source type, detects contradictions via reference weights; weighter normalises item weights (source authority × freshness × confidence) so all weights in a collection sum to 1.0.
+- **Confidence Engine:** computes all 5 dimensions from pure numeric inputs; identifies weakest/strongest; classifies output into VERY_HIGH/HIGH/MEDIUM/LOW/VERY_LOW bands.
+- **Rules Engine:** evaluates rules in priority order; AND within condition groups; OR between groups; 11 condition operators including regex matching.
+- **Validation Engine:** 5-stage ordered pipeline (structural → business → evidence → confidence → consistency); halts on any blocking FAIL; skips remaining stages; returns PASSED/FAILED/PARTIAL status.
+- **Explainability Engine:** generates all 4 explanation types deterministically from computed scores — zero AI calls.
+- **Decision Engine:** top-level orchestrator; produces Decision + ConfidenceScore + RuleEvaluationResults + DecisionExplainability + UniversalDecisionReport in a single call.
+- **Public API:** `lib/decision-intelligence/index.ts` re-exports all public types and functions.
+- **Test Suite (5 files, 61 tests):** evidence-collector, evidence-weighter, confidence-engine, rules-engine, validation-engine, decision-engine — all integration paths covered.
+
+## Verification
+
+- `npm run typecheck` — passed.
+- `npm run lint` — passed.
+- `npm test` — passed, 25 files / 194 tests (61 new).
+- `npm run build` — passed; pre-existing Turbopack/Prisma tracing warning unchanged.
+
+## Architecture Decisions
+
+1. **Branded ID types** — `DecisionId`, `EvidenceId`, `OptionId`, `ReportId` are nominal string types to prevent accidental ID mixing across subsystems.
+2. **Exponential freshness decay** — each source type has a configured half-life (hours); `ai_analysis` decays in 48h, `human_validation` in 720h.
+3. **Weight sum invariant** — `weightEvidence()` always returns weights that sum to 1.0 (or 1/n for equal weights if all raw weights are 0).
+4. **Confidence weight sum validation** — `CONFIDENCE_DIMENSION_WEIGHTS` sum is validated at module load time; throws if the invariant is broken.
+5. **No AI in the engine** — the explainability engine generates all explanations from computed scores. AI narration is an optional layer the caller adds on top.
+6. **Halt-and-skip pipeline** — when a validation stage fails with `blocking: true`, subsequent stages are added as SKIP records (preserving the full stage list for audit purposes).
+7. **Universal Report schema v1.0.0** — fully self-contained; a recipient who has never seen the underlying data can fully understand the decision from the report alone.
+
+## Next Steps
+
+- Wire Decision Engine into Real Estate analysis, Lead Finder, and Talent Finder modules.
+- Add Supabase table for decisions + reports (persistence layer).
+- Build Decision Report UI component consuming `UniversalDecisionReport`.
+- Add AI narration layer: GPT-4o-mini enriches `DecisionOption.aiAnalysis` after rule scores are computed (calculate-then-narrate pattern).
+
+---
+
+# Session Record — 2026-07-21 (Continuation: Documentation + Architecture Sprints)
+
+## Scope
+
+Two consecutive documentation/architecture-only sprints. Zero production code modified.
+
+**Sprint A — Final Executive Documentation Sprint (resumed from prior context):**
+
+Produced 9 canonical documents completing the Executive Operating Layer:
+
+- `docs/MVP_DEFINITION.md` — What IS/IS NOT MVP; required/optional/deferred modules; 11-step acceptance criteria
+- `docs/CRITICAL_PATH.md` — 12-step dependency chain from infrastructure to commercial launch; action lists per step; exit criteria references
+- `docs/PROJECT_DEPENDENCY_DAG.md` — Full module registry (M01–M42); dependency graph; reverse-dependency "what breaks if X removed" analysis; build order; single points of failure
+- `docs/EXECUTION_RULEBOOK.md` — 21 mandatory rules across 6 parts (chain of dependency, code discipline, testing, knowledge management, security, isolation)
+- `docs/EXIT_CRITERIA.md` — Definition of Done for every sprint (global + per-sprint criteria); MVP Gate criteria; verifiable commands
+- `docs/ADR_REGISTER.md` — 8 ADRs (3 active, 1 discovering a defect, 4 pending requiring founder decision)
+- `docs/PRODUCTION_CHECKLIST.md` — 12-section launch readiness gate (infrastructure, env vars, auth, core functionality, plan enforcement, billing, security, email, legal, monitoring, performance, disaster recovery)
+- `docs/PROJECT_KPIS.md` — Quantified targets across Technical, Infrastructure, Documentation, Testing, Commercial, AI/DI, Security, and Observability dimensions; health score targets per sprint milestone
+- `docs/EXECUTION_ROADMAP.md` — 12-sprint plan with status, effort, health score delta, dependencies, unblocks, and exit criteria references
+
+Plus Phase 12 Final Validation and 10-point Final Report (returned inline, not a file).
+
+**Sprint B — Final Architecture Sprint:**
+
+Produced 1 canonical architecture document:
+
+- `docs/DECISION_INTELLIGENCE_ARCHITECTURE.md` — 9-stage complete intelligence pipeline with ASCII diagrams; DVE defined as independent architectural component; 13 validation dimensions defined; canonical decision report section map; product identity canonicalized; 6-point architecture final report
+
+## Key Decisions and Findings
+
+1. **DVE named as independent architectural component for the first time.** The Decision Validation Engine (DVE) was previously documented only as step 4 of 6 inside `decision-engine.ts`. It is now an independent architectural component with its own inputs, outputs, lifecycle, failure modes, success modes, and relationships. The DVE is the quality gate that determines whether a DIE output becomes a customer-facing Validated Decision.
+
+2. **Product identity canonicalized.** "The platform sells Validated Decisions, not AI reports." This is now a permanent architectural constraint in `docs/DECISION_INTELLIGENCE_ARCHITECTURE.md` Part V. An implementation that delivers REJECTED decisions to customers, or bypasses DVE validation, is architecturally incorrect.
+
+3. **Trust Score defined as required new field.** `UniversalDecisionReport` does not yet have a `trustScore` field. This is now defined architecturally as `TrustScore` (Dimension 13) — a post-DVE aggregate trust metric across all 13 validation dimensions. Must be added to `report.types.ts` in Sprint 4.
+
+4. **13 validation dimensions defined.** Mapped across the 5 existing DVE stages: Evidence Quality, Evidence Coverage, Data Freshness, Source Diversity, Source Credibility, Business Rule Coverage, Contradiction Detection, Confidence Calibration, Decision Stability (new), Bias Detection (future), Risk Consistency (defined), Explainability Completeness (defined), Overall Trust Score (new type required).
+
+5. **North Star Metric clarified.** The metric counts "Validated Decisions" (DVE-passed) not "Decision Intelligence Engine outputs." A REJECTED decision must not count.
+
+6. **14 architectural integration gaps documented.** None new — all were known. But now organized as a formal gap list in the architecture document: Data Adapters (3), Business Rules (3), AI Narration Layer (1), Route wiring (3), decisions table (1), Trust Score field (1), DecisionReportCard UI (1), DVE rejection handling (1).
+
+7. **4 pending ADR decisions identified** requiring founder input: billing provider (ADR-PENDING-003), APM provider (ADR-PENDING-004), proxy env var unification (ADR-PENDING-002), Prisma Workspace.plan field (ADR-PENDING-001).
+
+8. **One genuine duplicate identified.** `docs/DEPENDENCY_GRAPH.md` (Canonicalization Sprint) and `docs/PROJECT_DEPENDENCY_DAG.md` (Final Executive Sprint) overlap in scope. DAG is more complete; DEPENDENCY_GRAPH.md is historical context.
+
+9. **Bootstrap validation confirmed partially fixed.** A new AI session reading `docs/PROJECT_EXECUTION_MASTER.md` first now has ~90% continuity. Remaining 10% risk is stale `.ai/CURRENT/` files — addressed by Sprint 2 (Knowledge Base Repair).
+
+## Documentation State
+
+Total docs in `docs/`: 26 files (25 pre-existing + 1 new architecture document).
+
+| Trust Level | Documents |
+|---|---|
+| CANONICAL | NORTH_STAR, PROJECT_EXECUTION_MASTER, MVP_DEFINITION, CRITICAL_PATH, EXECUTION_ROADMAP, EXECUTION_RULEBOOK, EXIT_CRITERIA, ADR_REGISTER, PRODUCTION_CHECKLIST, PROJECT_KPIS, PROJECT_DEPENDENCY_DAG, DECISION_INTELLIGENCE_ARCHITECTURE |
+| AUTHORITATIVE | All remaining docs/ files |
+| SUPERSEDED | MASTER_PROJECT_MEMORY.md, CURRENT_SYSTEM_MAP.md, README.md (stale URLs) |
+
+## What Remains Open
+
+1. Supabase project is DELETED — platform is non-operational (user action required)
+2. MASTER_PROJECT_MEMORY.md is still stale — says DI is "Pre-Implementation" (Sprint 2 fixes)
+3. CURRENT_SYSTEM_MAP.md is still obsolete (Sprint 2 fixes)
+4. 14 DI integration gaps — all deferred to Sprint 4
+5. Billing provider not decided (ADR-PENDING-003)
+6. APM provider not decided (ADR-PENDING-004)
+7. All production env vars unset in Vercel
+
+## Verification
+
+- No `tsc`, `lint`, or `vitest` run this session — documentation sprint; no code changed.
+- All 25 pre-existing docs verified as produced; 1 new doc verified.
+- 26 total files in `docs/` confirmed by `ls` command.

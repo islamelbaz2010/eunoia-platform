@@ -371,3 +371,83 @@ The following cannot be established from the provided Sprint Memory and are ther
 * Git history.
 * External documentation.
 * Any decisions made outside the supplied Sprint Memory. 
+
+---
+
+# DELTA — 2026-07-21 (Sessions 4–5)
+
+> This delta corrects critical stale claims in this file. Sections above this delta were written before Sessions 3–5. They remain for history. For current state, trust this delta and `docs/PROJECT_EXECUTION_MASTER.md`.
+
+## Project Identity (CORRECTION)
+
+- **Project name:** `eunoia-platform` (NOT "UNKNOWN")
+- **Package name:** `eunoia-intelligence-web`
+- **Production URL:** `https://intelligence.eunoiazones.com` (NOT `ai.halannews.com`)
+- **Framework:** Next.js 16.2.6, React 19, TypeScript 5.8 strict, Tailwind 4
+- **Deployment:** Vercel (serverless)
+
+## Decision Intelligence Engine Status (CRITICAL CORRECTION)
+
+**MASTER_PROJECT_MEMORY.md sections 13–15 above say "Current Phase: Pre-Implementation" and "Remaining Work: Define the Decision Intelligence Engine." THESE ARE WRONG.**
+
+**Actual status as of 2026-07-21:**
+
+- `lib/decision-intelligence/` — FULLY IMPLEMENTED
+- 15 source files, 6 test files, 61 tests ALL PASSING
+- All 7 type definition files: COMPLETE
+- Evidence subsystem (collector + weighter): COMPLETE
+- Confidence engine (5 dimensions): COMPLETE
+- Rules engine (11 operators, 4 actions): COMPLETE
+- Validation engine (5-stage pipeline, halt-and-skip): COMPLETE
+- Explainability engine (4 explanation types, zero AI calls): COMPLETE
+- Decision engine (top-level orchestrator): COMPLETE
+- Public barrel index: COMPLETE
+- Architecture finalized: `docs/DECISION_INTELLIGENCE_ARCHITECTURE.md`
+
+**What is NOT done:** Integration into API routes, UI components, Supabase persistence, business rules for any domain, AI narration layer, Trust Score field.
+
+## Test Infrastructure Status (CORRECTION)
+
+Sections of `CURRENT_SYSTEM_MAP.md` (a different file, also stale) claimed no test framework exists. This is false.
+
+- **Test framework:** Vitest 4.1.9 (in devDependencies)
+- **Test count:** 25 files / 194 tests — ALL PASSING
+- **`npm test` script:** EXISTS and runs Vitest
+
+## Research Module Status (CORRECTION)
+
+`CURRENT_SYSTEM_MAP.md` listed company-validation, dedup, source-quality, company-expansion, and ApolloAdapter as "confirmed absent." All exist. `lib/research/` contains ~20 modules.
+
+## Root Middleware Status (CORRECTION)
+
+`proxy.ts` at repository root exports a function named `proxy` (not `middleware`). Next.js does not execute it as middleware. **The platform has no active root middleware.** Sprint 3 corrects this (rename to `middleware.ts`, rename function).
+
+## Infrastructure Status (CURRENT)
+
+- **Supabase project:** DELETED — DNS returns NXDOMAIN — platform non-operational
+- **Most env vars in Vercel:** MISSING or pointing to deleted project
+
+## Current Phase (CORRECTION)
+
+NOT "Decision Intelligence Foundation — Pre-Implementation."
+
+**Current phase:** Documentation and Architecture Complete. Awaiting Infrastructure Recovery.
+
+- All implementation work blocked on Supabase restoration (user action)
+- Immediately executable: Sprint 2 (Knowledge Base Repair — update stale `.ai/CURRENT/` files)
+- Next implementation sprint after Supabase: Sprint 3 (root middleware), then Sprint 4 (DI Real Estate integration)
+
+## Canonical Documentation (NEW)
+
+`docs/` directory now contains 26 files — the Executive Operating Layer. Every future session should read `docs/PROJECT_EXECUTION_MASTER.md` first, not this file.
+
+Trust hierarchy: `docs/PROJECT_EXECUTION_MASTER.md` > `docs/` > `SPRINT_MEMORY.md` appendix > this file.
+
+## DVE as Independent Architectural Component (NEW)
+
+The Decision Validation Engine (DVE) is `validation-engine.ts` — the 5-stage pipeline (structural → business → evidence → confidence → consistency) that determines whether a Decision Intelligence output becomes a Validated Decision or is REJECTED.
+
+**The platform sells Validated Decisions, not AI reports.** DVE is mandatory for all DI integrations. REJECTED decisions must not reach customers.
+
+---
+*Delta appended 2026-07-21 by END_SESSION procedure. Source: Sessions 4–5 verified work.*

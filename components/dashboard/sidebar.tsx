@@ -1,7 +1,8 @@
 'use client'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { BarChart3, FileText, Settings, TrendingUp, LogOut, X, Building2, Search } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { BarChart3, FileText, Settings, TrendingUp, LogOut, X, Building2, Search, ShieldCheck } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 
@@ -17,6 +18,14 @@ const NAV = [
 export function Sidebar({ open = false, onClose }: { open?: boolean; onClose?: () => void }) {
   const pathname = usePathname()
   const router = useRouter()
+  const [isAdmin, setIsAdmin] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/admin/check')
+      .then(r => r.json())
+      .then((d: { isAdmin?: boolean }) => { if (d.isAdmin) setIsAdmin(true) })
+      .catch(() => {/* non-critical */})
+  }, [])
 
   async function handleSignOut() {
     await createClient().auth.signOut()
@@ -69,6 +78,23 @@ export function Sidebar({ open = false, onClose }: { open?: boolean; onClose?: (
               </li>
             )
           })}
+          {isAdmin && (
+            <li>
+              <Link
+                href="/dashboard/admin"
+                onClick={onClose}
+                className={cn(
+                  'flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[13px] font-medium no-underline transition-all duration-150 border-l-2',
+                  pathname.startsWith('/dashboard/admin')
+                    ? 'text-gold bg-accent border-gold'
+                    : 'text-muted-foreground border-transparent hover:text-foreground hover:bg-secondary'
+                )}
+              >
+                <ShieldCheck size={14} />
+                Admin Console
+              </Link>
+            </li>
+          )}
         </ul>
       </nav>
 

@@ -1,3 +1,16 @@
+// Workspace (Prisma-backed) types — used by /api/workspace and lib/prisma/init-user.ts.
+//
+// Architecture note: there are two separate plan models in this codebase:
+//   1. Workspace Plan (this file) — Prisma/PostgreSQL, tracks multi-user workspace seats.
+//      The live workspace route (/api/workspace) and use-workspace hook use these types.
+//   2. UserPlan (types/plan.types.ts) — Supabase, tracks per-user research-request quotas.
+//      All enforcement (plan-enforcement.ts, research routes) uses plan.types.ts.
+//
+// The two models exist because the Prisma schema was designed for a workspace-seat
+// model that was never fully wired to the live Supabase enforcement layer. Reconciling
+// them into one canonical model is a future task that requires a billing provider
+// decision — until then, plan.types.ts is the authoritative enforcement model.
+
 export type Plan = 'STARTER' | 'PROFESSIONAL' | 'ENTERPRISE'
 export type Role = 'ADMIN' | 'AGENCY' | 'SALES' | 'VIEWER'
 
@@ -24,18 +37,6 @@ export interface WorkspaceWithMembers extends Workspace {
   _count: {
     reports: number
   }
-}
-
-export const PLAN_LIMITS: Record<Plan, { reportsPerMonth: number; members: number }> = {
-  STARTER: { reportsPerMonth: 20, members: 2 },
-  PROFESSIONAL: { reportsPerMonth: 100, members: 10 },
-  ENTERPRISE: { reportsPerMonth: -1, members: -1 }, // unlimited
-}
-
-export const PLAN_LABELS: Record<Plan, string> = {
-  STARTER: 'Starter',
-  PROFESSIONAL: 'Professional',
-  ENTERPRISE: 'Enterprise',
 }
 
 export const ROLE_LABELS: Record<Role, string> = {

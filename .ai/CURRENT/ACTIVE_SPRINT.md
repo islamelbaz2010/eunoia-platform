@@ -12,6 +12,7 @@ Convert existing server-side enforcement and operational hygiene into customer-v
 
 ## Completed
 
+**Session 1:**
 - Usage meter on the main dashboard.
 - Plan and monthly usage summary in Settings.
 - Working `npm run lint` command for the current Next/ESLint stack.
@@ -24,18 +25,59 @@ Convert existing server-side enforcement and operational hygiene into customer-v
 - Baseline Privacy Policy and Terms pages.
 - Public `/api/health` endpoint with regression coverage.
 
+**Session 2:**
+- Account data export (`/api/account/export` → Download My Data in Settings).
+- Account deletion (`/api/account/delete` + confirmation dialog in Settings).
+- Admin/ops console (`/dashboard/admin`) with user list, usage, and plan management.
+- Admin API routes (`/api/admin/check`, `/api/admin/users`, `/api/admin/users/[id]/plan`).
+- Admin Console sidebar link (shown only to admin users via `/api/admin/check`).
+- Quota warning banner on dashboard at ≥80% and 100% usage.
+- Audit log infrastructure (`supabase/audit-log.sql`, `lib/admin/audit.ts`).
+- Audit log wired to plan-change and account-delete events.
+- 2-step onboarding product tour.
+- Market Intelligence page upgraded with live per-user research stats.
+- Plan model architecture documented and dead code removed from workspace.types.ts.
+
+## Completed (Decision Intelligence Sprint)
+
+**Session 3 — Decision Intelligence Architecture:**
+- Created `lib/decision-intelligence/` directory structure with 4 subdirectories.
+- Created 7 type files in `lib/decision-intelligence/types/`:
+  - `decision.types.ts` — Decision lifecycle (DRAFT→EVALUATING→VALIDATED→COMPLETED|REJECTED|ARCHIVED), branded IDs, audit trail
+  - `evidence.types.ts` — Multi-type evidence model (6 source types, authority weights, freshness, references)
+  - `confidence.types.ts` — 5-dimension confidence model (weights sum to 1.0, validated at module load)
+  - `rules.types.ts` — Deterministic business rules (conditions, operators, PASS/FAIL/WARN/REQUIRE_OVERRIDE)
+  - `validation.types.ts` — 5-stage validation pipeline (structural→business→evidence→confidence→consistency)
+  - `explainability.types.ts` — WHY/WHY_NOT/EVIDENCE/RULES explanation structures
+  - `report.types.ts` — Universal Decision Report v1.0.0 schema
+  - `index.ts` — Types barrel export
+- Created 2 evidence subsystem files in `lib/decision-intelligence/evidence/`:
+  - `evidence-collector.ts` — Validates items, computes freshness via exponential decay, detects contradictions
+  - `evidence-weighter.ts` — Normalizes weights using source authority × freshness × confidence formula
+- Created 5 engine files in `lib/decision-intelligence/engine/`:
+  - `confidence-engine.ts` — Computes all 5 confidence dimensions, identifies weakest/strongest
+  - `rules-engine.ts` — Evaluates rules in priority order, AND within groups, OR between groups
+  - `validation-engine.ts` — Runs 5-stage pipeline, halts on blocking failures, skips remaining stages
+  - `explainability-engine.ts` — Builds WHY/WHY_NOT/EVIDENCE/RULES explanations deterministically (no AI calls)
+  - `decision-engine.ts` — Top-level orchestrator: rules → weights → confidence → validation → recommendation → explainability → report
+- Created `lib/decision-intelligence/index.ts` — Public API barrel
+- Created 4 test files in `lib/decision-intelligence/__tests__/`:
+  - `evidence-collector.test.ts` — 10 tests
+  - `evidence-weighter.test.ts` — 8 tests
+  - `confidence-engine.test.ts` — 10 tests
+  - `rules-engine.test.ts` — 12 tests
+  - `validation-engine.test.ts` — 8 tests
+  - `decision-engine.test.ts` — 13 tests
+
 ## In Progress
 
-- Blocker resolution for billing, admin access, APM, notification policy, and legal review.
-
-## Not Started
-
-- None for the current unblocked commercial-readiness slice.
+- None.
 
 ## Blocked
 
 - Stripe or equivalent billing integration: requires provider decision and secrets.
 - APM/structured monitoring integration: requires provider decision and project token/DSN.
-- Admin/ops console: requires administrator role and access-control decision.
+- Admin/ops console at runtime: requires `SUPABASE_SERVICE_ROLE_KEY` + `ADMIN_EMAILS` in production env.
 - Authenticated user notification emails: requires sender/domain and notification policy decision.
 - Final Privacy Policy and Terms: requires legal review.
+- `supabase/audit-log.sql`: must be applied in Supabase SQL Editor before audit logging is active.

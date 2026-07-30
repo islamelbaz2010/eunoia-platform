@@ -2,6 +2,7 @@ import { Shell } from '@/components/dashboard/shell'
 import { checkPlanLimit } from '@/lib/research/plan-enforcement'
 import { createClient } from '@/lib/supabase/server'
 import { PLAN_LABELS } from '@/types/plan.types'
+import { AccountActions } from './account-actions'
 
 export default async function SettingsPage() {
   const supabase = await createClient()
@@ -70,6 +71,8 @@ export default async function SettingsPage() {
             Contact <span className="text-gold/80">hello@eunoia.eg</span> to upgrade your plan or add team members.
           </p>
         </div>
+
+        <AccountActions />
       </div>
     </Shell>
   )

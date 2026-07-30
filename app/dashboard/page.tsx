@@ -60,6 +60,27 @@ export default async function DashboardPage() {
 
   return (
     <Shell title="Dashboard" subtitle={`${greeting}, ${firstName}`}>
+      {usagePercent >= 80 && usage.limit !== -1 && (
+        <div style={{
+          background: usagePercent >= 100 ? '#fef2f2' : '#fffbeb',
+          borderBottom: `1px solid ${usagePercent >= 100 ? '#fecaca' : '#fde68a'}`,
+          color: usagePercent >= 100 ? '#dc2626' : '#92400e',
+          fontSize: 13,
+          fontWeight: 500,
+          padding: '10px 24px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+        }}>
+          <span>{usagePercent >= 100 ? '🚫' : '⚠️'}</span>
+          {usagePercent >= 100
+            ? `You've used all ${usage.limit} reports on your ${PLAN_LABELS[usage.plan]} plan this month. `
+            : `You've used ${usage.used} of ${usage.limit} reports (${usagePercent}%) on your ${PLAN_LABELS[usage.plan]} plan. `}
+          <a href="/dashboard/settings" style={{ color: 'inherit', fontWeight: 700, textDecoration: 'underline' }}>
+            Upgrade plan
+          </a>
+        </div>
+      )}
       <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 24, maxWidth: 1100, margin: '0 auto' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
           <div>

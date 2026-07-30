@@ -34,7 +34,7 @@
     "clsx": "^2.1.1",
     "framer-motion": "^12.40.0",
     "lucide-react": "^0.488.0",
-    "next": "^16.2.6",
+    "next": "^16.2.12",
     "next-intl": "^4.1.0",
     "openai": "^4.96.2",
     "prisma": "^6.19.3",

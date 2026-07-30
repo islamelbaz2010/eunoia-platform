@@ -1,12 +1,14 @@
 export type UserPlan = 'STARTER' | 'PROFESSIONAL' | 'AGENCY' | 'ENTERPRISE'
 
 /**
- * Per-user plan enforcement (research_requests/reports are user_id-scoped in
- * the live Supabase data model — see FINAL_PLATFORM_AUDIT.md). Deliberately
- * separate from types/workspace.types.ts's Workspace-level Plan/PLAN_LIMITS,
- * which is a Prisma-backed concept never wired into the live research
- * routes. Reconciling the two (workspace seats vs. per-user usage) is a
- * Priority 3 decision in MASTER_EXECUTION_PLAN.md, not resolved here.
+ * Per-user plan enforcement — the authoritative model for all research quota
+ * and billing decisions. Research routes (leads, talent, intelligence) and
+ * plan-enforcement.ts all reference these limits exclusively.
+ *
+ * The workspace-seat model in types/workspace.types.ts (Prisma-backed) is a
+ * parallel concept that is not yet wired to live enforcement. When a billing
+ * provider is chosen, these two models should be unified — see the architecture
+ * note in workspace.types.ts.
  */
 export const PLAN_LIMITS: Record<UserPlan, { reportsPerMonth: number }> = {
   STARTER: { reportsPerMonth: 20 },

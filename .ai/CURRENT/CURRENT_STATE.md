@@ -4,47 +4,75 @@
 
 ## Phase
 
-Commercial readiness implementation, continuing from the existing production SaaS repository state while preserving the canonical Decision Intelligence foundation memory.
+**Documentation and Architecture Complete. Awaiting Infrastructure Recovery.**
+
+All documentation sprints are complete. The Executive Operating Layer is in place. The Decision Intelligence Architecture is finalized. No further documentation sprints are required before implementation begins.
+
+The platform is non-operational due to Supabase project deletion. Infrastructure Recovery (Sprint 1) is the prerequisite for all implementation work.
 
 ## Current Milestone
 
-Close the highest-ROI repository-controllable commercial readiness gaps from `.ai/AUDIT/COMMERCIAL_READINESS_REPORT.md`.
+**Pre-Sprint 1: Infrastructure Recovery** — Founder must create new Supabase project, apply 6 SQL migrations, and set all Vercel environment variables before any implementation sprint can proceed.
+
+Immediately executable (no external dependencies): **Sprint 2 — Knowledge Base Repair** (documentation only; can be done now).
 
 ## Completed This Session
 
-- Added authenticated monthly usage visibility to `/dashboard`.
-- Added plan and monthly usage visibility to `/dashboard/settings`.
-- Restored lint execution for the Next 16 / ESLint 9 stack with a flat ESLint config.
-- Added regression tests for `lib/research/plan-enforcement.ts`.
-- Added regression tests for `lib/research/rate-limit.ts`.
-- Sanitized `app/dashboard/error.tsx` so customer-facing dashboard errors no longer render raw exception messages.
-- Added tests for the dashboard error reference helper.
-- Added focused tests for `research-service.ts`, `ai-analysis.ts`, and `search-provider.ts`.
-- Added quota-blocked upgrade CTA handling to Lead Finder and Talent Finder.
-- Added shared API error parsing for plan-limit payloads.
-- Added failed-request recovery visibility in `/dashboard/reports`.
-- Added retry links that prefill Lead Finder and Talent Finder from failed request inputs.
-- Added baseline `/privacy` and `/terms` pages with legal-review caveats.
-- Added `/api/health` for public liveness checks without exposing environment details.
+**Session 4 — Final Executive Documentation Sprint (resumed from prior context):**
+- `docs/MVP_DEFINITION.md` — What IS/IS NOT MVP; 11-step acceptance criteria
+- `docs/CRITICAL_PATH.md` — 12-step dependency chain with action lists
+- `docs/PROJECT_DEPENDENCY_DAG.md` — M01–M42 module registry; dependency graph; reverse analysis
+- `docs/EXECUTION_RULEBOOK.md` — 21 mandatory rules governing all sprints and contributors
+- `docs/EXIT_CRITERIA.md` — Verifiable Definition of Done per sprint
+- `docs/ADR_REGISTER.md` — 8 ADRs (3 active, 1 defect-documenting, 4 pending founder decision)
+- `docs/PRODUCTION_CHECKLIST.md` — 12-section launch readiness gate
+- `docs/PROJECT_KPIS.md` — Quantified targets across all dimensions
+- `docs/EXECUTION_ROADMAP.md` — 12-sprint plan with effort, health score delta, and dependencies
+- Phase 12 Final Validation and 10-point Final Report (inline)
+
+**Session 5 — Final Architecture Sprint:**
+- `docs/DECISION_INTELLIGENCE_ARCHITECTURE.md` — Complete 9-stage intelligence pipeline; DVE as independent architectural component; 13 validation dimensions; canonical report section map; product identity canonicalized; 6-point architecture final report
+
+**Prior sessions (prior context):**
+- Sessions 1–2: Commercial Readiness sprint (usage meters, settings, admin console, account export/delete, onboarding, analytics, audit log, health check, legal pages)
+- Session 3: Decision Intelligence Architecture implementation (15-file library, 61 tests, all passing)
+- Platform State Assessment (5 docs), Canonicalization Sprint (9 docs), prior Executive docs (NORTH_STAR, PROJECT_EXECUTION_MASTER)
 
 ## Verification
 
-- `npx vitest run lib/research/plan-enforcement.test.ts lib/research/rate-limit.test.ts` — passed, 9 tests.
-- `npm test` — passed, 19 files / 133 tests.
-- `npm run lint` — passed.
-- `npm run typecheck` — passed.
-- `npm run build` — passed; existing Turbopack warning remains around Prisma/generated tracing from `app/api/workspace/route.ts`.
+- `npm run typecheck` — last verified passing (Session 3, 2026-07-21)
+- `npm run lint` — last verified passing (Session 3, 2026-07-21)
+- `npm test` — last verified: 25 files / 194 tests ALL PASSING (Session 3, 2026-07-21)
+- `npm run build` — last verified passing (Session 3, 2026-07-21)
+- No code changed in Sessions 4–5 (documentation only)
 
 ## Open Blockers
 
-- Billing integration remains blocked on provider choice, checkout/webhook configuration, and secrets.
-- Admin/ops console remains blocked on administrator role/access-control decisions.
-- Structured logging/APM remains blocked on provider choice and credentials.
-- Authenticated user email notifications remain blocked on sender/domain and notification policy decisions.
-- Final Privacy Policy and Terms remain blocked on legal review.
-- Live Supabase migration/application status cannot be verified from this local environment.
-- Production branch/domain mapping remains unverified without Vercel dashboard access.
+**Operator action required:**
+- Supabase project DELETED — DNS returns NXDOMAIN; platform non-operational
+- All Vercel production env vars unset or pointing to deleted project
+- `SUPABASE_SERVICE_ROLE_KEY` not in Vercel production env
+- `ADMIN_EMAILS` not in Vercel production env
+- `supabase/audit-log.sql` must be applied in Supabase SQL Editor
+- `AI_PROXY_URL` not in `.env.example` or Vercel (undocumented second proxy env var)
+
+**Founder decision required:**
+- Billing provider (ADR-PENDING-003 in `docs/ADR_REGISTER.md`)
+- APM/monitoring provider (ADR-PENDING-004)
+- Proxy env var unification: CLOUDFLARE_WORKER_URL vs AI_PROXY_URL (ADR-PENDING-002)
+- Prisma Workspace.plan field: remove or sync? (ADR-PENDING-001)
+
+**Implementation not started:**
+- DI integration: 14 gaps documented in `docs/DECISION_INTELLIGENCE_ARCHITECTURE.md`
+- Billing integration: Sprint 6
+- Root middleware: Sprint 3 (rename proxy.ts → middleware.ts)
+- Trust Score field in UniversalDecisionReport: Sprint 4
+- Business rules for all 3 domains: Sprint 4 (requires founder domain input)
 
 ## Next Action
 
-Blocked on product/legal/ops decisions before the next high-ROI commercial-readiness items can be implemented safely.
+**For any new AI session:** Read `docs/PROJECT_EXECUTION_MASTER.md` first. Then `docs/CRITICAL_PATH.md`. Do NOT trust `MASTER_PROJECT_MEMORY.md` for current DI status.
+
+**Executable now (no dependencies):** Sprint 2 — Knowledge Base Repair. Update 5 stale `.ai/CURRENT/` files.
+
+**After Supabase is restored:** Sprint 1 (infrastructure verification) → Sprint 3 (root middleware) → Sprint 4 (DI Real Estate integration) → Sprint 5 (plan enforcement) → Sprint 6 (billing).
