@@ -1761,14 +1761,18 @@ export async function POST(request: Request) {
         city: formData.city ?? formData.targetCity ?? '',
         report_data: reportData,
         decision_report: decisionReport ?? null,
-        trust_score: decisionReport?.trustScore ?? null,
+        trust_score: decisionReport?.trustScore?.score ?? null,
         created_at: new Date().toISOString(),
       })
       .select('id')
       .single()
 
     if (requestId) await sb.from('research_requests').update({ status: 'completed', result_report_id: reportRow?.id ?? null }).eq('id', requestId)
-    if (dbError) console.error('[intelligence] DB error:', dbError.message)
+
+    if (dbError) {
+      console.error('[intelligence] DB error:', dbError.message)
+      return NextResponse.json({ success: false, error: 'Report generation succeeded but failed to save. Please try again.' }, { status: 500 })
+    }
 
     // Suppress GPT-embedded confidence_score: only the DI engine confidence reaches the client
     // to prevent contradictory signals in investment committee reports.

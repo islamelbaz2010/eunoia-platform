@@ -118,10 +118,18 @@ function formatDate(iso: string): string {
 }
 
 function getConfidence(report: Report): number {
-  if (report.decision_report?.confidence != null) {
-    return typeof report.decision_report.confidence === 'number' ? report.decision_report.confidence : 0
+  const dr = report.decision_report as Record<string, unknown> | null | undefined
+  if (dr?.confidence != null) {
+    const c = dr.confidence
+    if (typeof c === 'number') return c
+    if (typeof c === 'object' && c !== null && typeof (c as Record<string, unknown>).overall === 'number') {
+      return (c as Record<string, unknown>).overall as number
+    }
   }
-  return 0
+  // Fallback: historical reports store confidence in report_data.confidence_score.pct
+  const rd = report.report_data as Record<string, unknown> | null | undefined
+  const cs = rd?.confidence_score as { pct?: number } | undefined
+  return cs?.pct ?? 0
 }
 
 function getExportFilename(report: Report): string {
