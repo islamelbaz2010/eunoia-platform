@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import ReportsClient from './reports-client'
 
 export const metadata = {
-  title: 'Report History | Eunoia Intelligence',
+  title: 'My Reports | Eunoia Decision Intelligence',
 }
 
 export default async function ReportsPage() {
@@ -13,7 +13,7 @@ export default async function ReportsPage() {
 
   const { data: reports, error } = await supabase
     .from('reports')
-    .select('id, report_type, company_name, city, created_at, report_data')
+    .select('id, report_type, company_name, city, created_at, report_data, decision_report')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
     .limit(50)
