@@ -38,7 +38,7 @@ export default function LoginPage() {
   return (
     <div className="bg-surface border border-white/8 rounded-2xl p-8 shadow-xl">
       <h1 className="text-cream text-2xl font-bold mb-1">Welcome back</h1>
-      <p className="text-cream/50 text-sm mb-6">Sign in to your intelligence dashboard</p>
+      <p className="text-cream/50 text-sm mb-6">Sign in to your Decision Intelligence Platform</p>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>

@@ -51,7 +51,7 @@ export default function ResearchHubPage() {
         <div className="ri-topbar">
           <div className="ri-topbar-inner">
             <div>
-              <div className="ri-brand-tag">EUNOIA INTELLIGENCE</div>
+              <div className="ri-brand-tag">EUNOIA</div>
               <div className="ri-brand-title">Research Intelligence Hub</div>
               <div className="ri-brand-sub">AI-powered research modules for sales and hiring teams</div>
             </div>

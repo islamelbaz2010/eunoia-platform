@@ -2,7 +2,7 @@ import { Shell } from '@/components/dashboard/shell'
 import { checkPlanLimit, type PlanCheckResult } from '@/lib/research/plan-enforcement'
 import { createClient } from '@/lib/supabase/server'
 import { PLAN_LABELS } from '@/types/plan.types'
-import { FileText, TrendingUp, Clock, ArrowRight, Building2, Search, Sparkles, BarChart3 } from 'lucide-react'
+import { FileText, TrendingUp, Clock, ArrowRight, Sparkles, BarChart3 } from 'lucide-react'
 import Link from 'next/link'
 
 const TYPE_LABELS: Record<string, string> = {
@@ -15,12 +15,6 @@ const TYPE_LABELS: Record<string, string> = {
   talent_finder: 'Talent Finder',
 }
 
-const MODULES = [
-  { href: '/dashboard/reports', icon: FileText, label: 'Reports', desc: 'Browse your full report history' },
-  { href: '/dashboard/real-estate', icon: Building2, label: 'Real Estate', desc: 'Feasibility, launch & campaign intelligence' },
-  { href: '/dashboard/research', icon: Search, label: 'Research Intelligence', desc: 'Lead Finder & Talent Finder' },
-  { href: '/dashboard/analytics', icon: BarChart3, label: 'Market Intelligence', desc: 'Egypt market & industry trends' },
-]
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -52,10 +46,10 @@ export default async function DashboardPage() {
   const usagePercent = usage.limit === -1 ? 0 : Math.min(100, Math.round((usage.used / usage.limit) * 100))
 
   const STATS = [
-    { label: 'Total Reports', value: totalReports, icon: FileText, accent: '#b8922a' },
+    { label: 'Total Assessments', value: totalReports, icon: FileText, accent: '#b8922a' },
     { label: 'This Month', value: thisMonth, icon: TrendingUp, accent: '#16a34a' },
     { label: `${PLAN_LABELS[usage.plan]} Usage`, value: usageValue, icon: BarChart3, accent: usagePercent >= 80 ? '#dc2626' : '#7c3aed' },
-    { label: 'Last Report', value: recent[0] ? new Date(recent[0].created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '—', icon: Clock, accent: '#2563eb' },
+    { label: 'Last Assessment', value: recent[0] ? new Date(recent[0].created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '—', icon: Clock, accent: '#2563eb' },
   ]
 
   return (
@@ -88,10 +82,10 @@ export default async function DashboardPage() {
               {greeting},{' '}
               <span style={{ background: 'linear-gradient(135deg,#b8922a,#d4aa45)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>{firstName}</span>
             </h2>
-            <p style={{ fontSize: 13, color: '#9e8e7e', marginTop: 4 }}>{today} · AI Research &amp; Intelligence Platform</p>
+            <p style={{ fontSize: 13, color: '#9e8e7e', marginTop: 4 }}>{today} · Decision Intelligence Platform</p>
           </div>
           <Link href="/dashboard/real-estate" style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'linear-gradient(135deg,#b8922a,#d4aa45)', color: '#fff', fontSize: 13, fontWeight: 700, padding: '10px 18px', borderRadius: 12, textDecoration: 'none', whiteSpace: 'nowrap', flexShrink: 0 }}>
-            <Sparkles size={15} />New Report
+            <Sparkles size={15} />New Assessment
           </Link>
         </div>
 
@@ -110,23 +104,10 @@ export default async function DashboardPage() {
           ))}
         </div>
 
-        <div>
-          <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#9e8e7e', fontWeight: 600, marginBottom: 10 }}>Platform Modules</div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 10 }}>
-            {MODULES.map(({ href, icon: Icon, label, desc }) => (
-              <Link key={href} href={href} className="card" style={{ padding: 16, textDecoration: 'none', display: 'block' }}>
-                <Icon size={16} color="#b8922a" style={{ marginBottom: 8 }} />
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1612', marginBottom: 2 }}>{label}</div>
-                <div style={{ fontSize: 11, color: '#9e8e7e' }}>{desc}</div>
-              </Link>
-            ))}
-          </div>
-        </div>
-
         {recent.length > 0 ? (
           <div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-              <span style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#9e8e7e', fontWeight: 600 }}>Recent Reports</span>
+              <span style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#9e8e7e', fontWeight: 600 }}>Recent Assessments</span>
               <Link href="/dashboard/reports" style={{ fontSize: 12, color: '#b8922a', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>View all <ArrowRight size={11} /></Link>
             </div>
             <div style={{ background: '#fff', border: '1px solid #e8e0d4', borderRadius: 14, overflow: 'hidden' }}>
@@ -147,10 +128,10 @@ export default async function DashboardPage() {
         ) : (
           <div style={{ background: '#fff', border: '1px solid #e8e0d4', borderRadius: 16, padding: 40, textAlign: 'center' }}>
             <div style={{ fontSize: 44, marginBottom: 12 }}>📊</div>
-            <h3 style={{ fontSize: 16, fontWeight: 600, color: '#1a1612', marginBottom: 6 }}>No reports yet</h3>
-            <p style={{ fontSize: 13, color: '#9e8e7e', marginBottom: 20 }}>Generate your first report from Real Estate or Research Intelligence</p>
+            <h3 style={{ fontSize: 16, fontWeight: 600, color: '#1a1612', marginBottom: 6 }}>No assessments yet</h3>
+            <p style={{ fontSize: 13, color: '#9e8e7e', marginBottom: 20 }}>Start your first assessment to receive your Decision Report.</p>
             <Link href="/dashboard/real-estate" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'linear-gradient(135deg,#b8922a,#d4aa45)', color: '#fff', fontSize: 13, fontWeight: 700, padding: '11px 22px', borderRadius: 12, textDecoration: 'none' }}>
-              <Sparkles size={15} />New Report
+              <Sparkles size={15} />New Assessment
             </Link>
           </div>
         )}

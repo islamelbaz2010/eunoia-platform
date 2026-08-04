@@ -1,5 +1,7 @@
 'use client'
 import { useState } from 'react'
+import { SignatureReport } from '@/components/executive-report/SignatureReport'
+import type { ExecutiveBusinessReport } from '@/lib/executive-report/types'
 
 type ReportType = 'feasibility' | 'campaign_roi' | 'market_entry' | 'lead_gen' | 'full_analysis'
 
@@ -227,7 +229,7 @@ const CITIES = [
 ]
 
 const REPORT_CARDS = [
-  { id:'feasibility'   as ReportType, icon:'📐', ar:'دراسة الجدوى العقارية',   en:'Feasibility Study',       desc:'NPV · IRR · 3 سيناريوهات · تحليل حساسية · risk scorecard',                     time:'2 min', badge:'الأعلى دقة',   badgeColor:'#0D9488' },
+  { id:'feasibility'   as ReportType, icon:'📐', ar:'دراسة الجدوى العقارية',   en:'Feasibility Study',       desc:'NPV · IRR · 3 سيناريوهات · تحليل حساسية · risk scorecard',                     time:'2 min', badge:'الأعلى ثقة',   badgeColor:'#0D9488' },
   { id:'campaign_roi'  as ReportType, icon:'📊', ar:'تدقيق أداء الحملات',      en:'Campaign ROI Audit',      desc:'CPL vs Egypt benchmarks 2026 · channel analysis · 3 optimizations',              time:'1 min', badge:'الأكثر طلباً', badgeColor:'#F0A020' },
   { id:'market_entry'  as ReportType, icon:'🗺️', ar:'استخبارات دخول السوق',    en:'Market Entry Intel',      desc:'Market attractiveness · competition · expected CPL · 90-day plan',               time:'2 min', badge:null,           badgeColor:null },
   { id:'lead_gen'      as ReportType, icon:'🎯', ar:'استخبارات توليد العملاء',  en:'Lead Generation Intel',   desc:'Lead quality · qualification rate · WhatsApp script · channel diagnosis',         time:'1 min', badge:null,           badgeColor:null },
@@ -303,7 +305,7 @@ function FeasibilityForm({ onSubmit, loading }:{ onSubmit:(d:Record<string,strin
     units:'', unitArea:'', landArea:'', sellPriceSqm:'', buildCostSqm:'', landCost:'',
     buildMonths:'48', salesMonths:'24', adminPct:'8',
     downPaymentPct:'20', finishLevel:'تشطيب متوسط (7,000–9,500 EGP/م²)', cashSalesPct:'30',
-    realSellSqm:'', realBuildSqm:'', realSalesPace:''
+    equityAmount:'', realSellSqm:'', realBuildSqm:'', realSalesPace:''
   })
   const f=(k:string,v:string)=>setD(p=>({...p,[k]:v}))
   return (
@@ -347,13 +349,14 @@ function FeasibilityForm({ onSubmit, loading }:{ onSubmit:(d:Record<string,strin
         <F label="مصروفات إدارية %" labelEn="Admin & Mktg %" type="number" value={d.adminPct} onChange={v=>f('adminPct',v)} placeholder="8" />
         <F label="نسبة المقدم %" labelEn="Down Payment %" type="number" value={d.downPaymentPct} onChange={v=>f('downPaymentPct',v)} placeholder="20" />
         <F label="نسبة الكاش %" labelEn="Cash Sales %" type="number" value={d.cashSalesPct} onChange={v=>f('cashSalesPct',v)} placeholder="30" />
+        <F label="رأس المال المتاح (EGP)" labelEn="Available Equity Capital" type="number" value={d.equityAmount} onChange={v=>f('equityAmount',v)} placeholder="30,000,000" hint="تُستخدم في تقييم فجوة التمويل" />
       </div>
       <OptBox ar="مقارنة بالسوق" en="Market Comparison">
         <F label="سعر بيع السوق/م² (EGP)" labelEn="Market Sell Price" type="number" value={d.realSellSqm} onChange={v=>f('realSellSqm',v)} placeholder="48000" />
         <F label="تكلفة بناء السوق/م² (EGP)" labelEn="Market Build Cost" type="number" value={d.realBuildSqm} onChange={v=>f('realBuildSqm',v)} placeholder="21000" />
         <F label="معدل بيع مشاريع مشابهة (وحدة/شهر)" labelEn="Market Sales Pace" type="number" value={d.realSalesPace} onChange={v=>f('realSalesPace',v)} placeholder="5" />
       </OptBox>
-      <SubmitBtn loading={loading} ar="توليد دراسة الجدوى" en="Generate Feasibility Report" />
+      <SubmitBtn loading={loading} ar="توليد تقرير القرار" en="Generate Decision Report" />
     </form>
   )
 }
@@ -384,7 +387,7 @@ function CampaignROIForm({ onSubmit, loading }:{ onSubmit:(d:Record<string,strin
         <F label="إنفاق Google (EGP)" labelEn="Google Spend" type="number" value={d.googleSpend} onChange={v=>f('googleSpend',v)} placeholder="45,000" />
         <F label="إنفاق TikTok (EGP)" labelEn="TikTok Spend" type="number" value={d.tiktokSpend} onChange={v=>f('tiktokSpend',v)} placeholder="15,000" />
       </OptBox>
-      <SubmitBtn loading={loading} ar="توليد تقرير الأداء" en="Generate ROI Audit" />
+      <SubmitBtn loading={loading} ar="توليد تقرير القرار" en="Generate Decision Report" />
     </form>
   )
 }
@@ -407,7 +410,7 @@ function MarketEntryForm({ onSubmit, loading }:{ onSubmit:(d:Record<string,strin
         {value:'12 شهر',label:'🎯 12 شهر / 12 Months — Strategic'},
         {value:'18+ شهر',label:'🏗️ 18+ شهر / 18+ Months — Long-Term'},
       ]} />
-      <SubmitBtn loading={loading} ar="توليد تقرير دخول السوق" en="Generate Market Entry Report" />
+      <SubmitBtn loading={loading} ar="توليد تقرير القرار" en="Generate Decision Report" />
     </form>
   )
 }
@@ -437,7 +440,7 @@ function LeadGenForm({ onSubmit, loading }:{ onSubmit:(d:Record<string,string>)=
         <F label="الإنفاق الإعلاني/شهر (EGP)" labelEn="Monthly Ad Spend" type="number" value={d.adSpend} onChange={v=>f('adSpend',v)} placeholder="120,000" />
         <F label="CPL الحالي (EGP)" labelEn="Current CPL" type="number" value={d.cpl} onChange={v=>f('cpl',v)} placeholder="600" />
       </OptBox>
-      <SubmitBtn loading={loading} ar="توليد تقرير العملاء" en="Generate Lead Gen Report" />
+      <SubmitBtn loading={loading} ar="توليد تقرير القرار" en="Generate Decision Report" />
     </form>
   )
 }
@@ -470,9 +473,18 @@ function FullAnalysisForm({ onSubmit, loading }:{ onSubmit:(d:Record<string,stri
         <F label="عدد العملاء/شهر" labelEn="Monthly Leads" type="number" value={d.leads} onChange={v=>f('leads',v)} placeholder="250" />
         <F label="الإيرادات الشهرية (EGP)" labelEn="Monthly Revenue" type="number" value={d.revenue} onChange={v=>f('revenue',v)} placeholder="5,000,000" />
       </OptBox>
-      <SubmitBtn loading={loading} ar="توليد التحليل الشامل" en="Generate Full Analysis" />
+      <SubmitBtn loading={loading} ar="توليد تقرير القرار" en="Generate Decision Report" />
     </form>
   )
+}
+
+// ── REPORT TYPE DISPLAY NAMES ─────────────────────────────────────
+const REPORT_TYPE_DISPLAY: Record<string, { ar: string; en: string }> = {
+  feasibility:   { ar: 'دراسة الجدوى العقارية',   en: 'Feasibility Study' },
+  campaign_roi:  { ar: 'تدقيق أداء الحملات',      en: 'Campaign ROI Audit' },
+  market_entry:  { ar: 'استخبارات دخول السوق',    en: 'Market Entry Intel' },
+  lead_gen:      { ar: 'استخبارات توليد العملاء',  en: 'Lead Generation Intel' },
+  full_analysis: { ar: 'التحليل التسويقي الشامل', en: 'Full Marketing Analysis' },
 }
 
 // ── LABEL HELPER ─────────────────────────────────────────────────
@@ -505,9 +517,17 @@ function exportPDF(title: string) {
   }, 1500)
 }
 
+const EXPORT_TYPE_PREFIX: Record<string, string> = {
+  feasibility:   'feasibility',
+  campaign_roi:  'campaign-roi',
+  market_entry:  'market-entry',
+  lead_gen:      'lead-gen',
+  full_analysis: 'full-analysis',
+}
+
 function exportCSV(report: Record<string,unknown>, title: string, lang: 'ar'|'en') {
   const rows: string[][] = [
-    ['Eunoia Zones Intelligence Platform'],
+    ['Eunoia Decision Intelligence Platform'],
     [title],
     ['Date / التاريخ', new Date().toLocaleDateString('en-EG')],
     [],
@@ -531,9 +551,13 @@ function exportCSV(report: Record<string,unknown>, title: string, lang: 'ar'|'en
   }
   flatten(report)
   const csv = '﻿' + rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n')
+  const typePrefix = EXPORT_TYPE_PREFIX[report.report_type as string] || String(report.report_type)
+  const projectSlug = String(report.company || report.project_name || report.target_market || 'assessment')
+    .toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').slice(0, 40)
+  const dateStr = new Date().toISOString().split('T')[0]
   const a = Object.assign(document.createElement('a'), {
     href: URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8;'})),
-    download: `${title}-${new Date().toISOString().split('T')[0]}.csv`
+    download: `${typePrefix}-${projectSlug}-${dateStr}.csv`
   })
   document.body.appendChild(a); a.click(); document.body.removeChild(a)
   void lang
@@ -574,33 +598,41 @@ function ReportView({ report, lang, onBack, onRegen }:{
   const pct = conf?.pct ?? 0
   const pctColor = pct >= 80 ? '#10B981' : pct >= 65 ? '#F0A020' : '#9A9090'
   const confBadge = pct >= 80
-    ? (lang==='ar' ? '🎯 دقة عالية' : '🎯 High Accuracy')
+    ? (lang==='ar' ? '🎯 ثقة عالية' : '🎯 High Confidence')
     : pct >= 65
-    ? (lang==='ar' ? '📊 دقة جيدة' : '📊 Good Accuracy')
-    : (lang==='ar' ? '⚠️ بيانات محدودة' : '⚠️ Limited Data')
+    ? (lang==='ar' ? '📊 ثقة جيدة' : '📊 Good Confidence')
+    : (lang==='ar' ? '⚠️ أدلة محدودة' : '⚠️ Limited Evidence')
   const verdict = report.verdict as string|undefined
   const verdictColor = verdict?.includes('مجدي') && !verdict?.includes('مشروط') ? '#0D9488'
     : verdict?.includes('مشروط') ? '#F0A020'
     : verdict ? '#D4183D'
     : '#7C3AED'
-  const title = `${report.report_type as string} — ${(report.company||report.project_name||report.target_market||'') as string}`
+  const typeInfo = REPORT_TYPE_DISPLAY[report.report_type as string] || { ar: String(report.report_type), en: String(report.report_type) }
+  const typeName = lang === 'ar' ? typeInfo.ar : typeInfo.en
+  const title = `${typeName} — ${(report.company||report.project_name||report.target_market||'') as string}`
 
   return (
     <div className="ei-report" id="ei-report-output">
       {/* Action buttons */}
       <div className="ei-report-actions">
-        <button onClick={onBack} className="ei-action-btn">&#8592; {lang==='ar'?'تقرير جديد':'New Report'}</button>
-        <button onClick={onRegen} className="ei-action-btn">&#x1F504; {lang==='ar'?'إعادة التوليد':'Regenerate'}</button>
+        <button onClick={onBack} className="ei-action-btn">&#8592; {lang==='ar'?'تقييم جديد':'New Assessment'}</button>
+        <button onClick={()=>{ if(window.confirm(lang==='ar'?'إعادة توليد التقرير؟ سيستهلك هذا رصيد AI ويستبدل التقرير الحالي.':'Regenerate this report? This will use AI credits and replace the current report.')) onRegen() }} className="ei-action-btn">&#x1F504; {lang==='ar'?'إعادة التوليد':'Regenerate'}</button>
         <button onClick={()=>exportCSV(report, title, lang)} className="ei-action-btn green">&#x1F4CA; Excel</button>
         <button onClick={()=>exportPDF(title)} className="ei-action-btn red">&#x1F5A8;&#xFE0F; {lang==='ar'?'طباعة / PDF':'Print / PDF'}</button>
+      </div>
+      <div style={{fontSize:11,color:'#6B6560',padding:'4px 0 8px',textAlign:lang==='ar'?'right':'left'}}>
+        ✓ {lang==='ar'?'تم حفظ التقرير في':'Report saved to'}{' '}
+        <a href="/dashboard/reports" style={{color:'#7C3AED',fontWeight:700,textDecoration:'underline'}}>
+          {lang==='ar'?'تقاريري':'My Reports'}
+        </a>
       </div>
 
       {/* Report header */}
       <div className="ei-report-header">
         <div className="ei-rh-top">
           <div>
-            <div className="ei-rh-tag">EUNOIA ZONES · INTELLIGENCE PLATFORM</div>
-            <div className="ei-rh-title">{report.report_type as string}</div>
+            <div className="ei-rh-tag">EUNOIA · DECISION INTELLIGENCE PLATFORM</div>
+            <div className="ei-rh-title">{typeName}</div>
             <div className="ei-rh-company">
               {(report.company||report.project_name||report.target_market||'') as string}
               {(report.city as string) && <span style={{color:'rgba(255,255,255,0.3)',margin:'0 6px'}}>·</span>}
@@ -609,7 +641,7 @@ function ReportView({ report, lang, onBack, onRegen }:{
           </div>
           <div className="ei-rh-conf">
             <div className="ei-rh-conf-pct" style={{color:pctColor}}>{pct}%</div>
-            <div className="ei-rh-conf-label">{lang==='ar'?'دقة التقرير':'Accuracy'}</div>
+            <div className="ei-rh-conf-label">{lang==='ar'?'ثقة القرار':'Confidence'}</div>
             <div className="ei-rh-conf-badge">{confBadge}</div>
           </div>
         </div>
@@ -975,11 +1007,6 @@ function ReportView({ report, lang, onBack, onRegen }:{
         </Sec>
       )}
 
-      {/* JSON toggle */}
-      <details className="ei-json-toggle">
-        <summary className="ei-json-summary">{lang==='ar'?'عرض البيانات الكاملة':'Show Full JSON Data'} &#x25BE;</summary>
-        <pre className="ei-json-pre">{JSON.stringify(report, null, 2)}</pre>
-      </details>
     </div>
   )
 }
@@ -987,23 +1014,25 @@ function ReportView({ report, lang, onBack, onRegen }:{
 // ── MAIN PAGE ────────────────────────────────────────────────────
 
 export default function RealEstateIntelligencePage() {
-  const [lang, setLang]         = useState<'ar'|'en'>('ar')
-  const [selected, setSelected] = useState<ReportType|null>(null)
-  const [loading, setLoading]   = useState(false)
-  const [report, setReport]     = useState<Record<string,unknown>|null>(null)
-  const [error, setError]       = useState<string|null>(null)
-  const [lastForm, setLastForm] = useState<Record<string,string>|null>(null)
+  const [lang, setLang]                   = useState<'ar'|'en'>('ar')
+  const [selected, setSelected]           = useState<ReportType|null>(null)
+  const [loading, setLoading]             = useState(false)
+  const [report, setReport]               = useState<Record<string,unknown>|null>(null)
+  const [executiveReport, setExecutiveReport] = useState<ExecutiveBusinessReport|null>(null)
+  const [error, setError]                 = useState<string|null>(null)
+  const [lastForm, setLastForm]           = useState<Record<string,string>|null>(null)
 
   async function handleSubmit(formData: Record<string,string>) {
-    setLoading(true); setError(null); setReport(null); setLastForm(formData)
+    setLoading(true); setError(null); setReport(null); setExecutiveReport(null); setLastForm(formData)
     try {
       const res = await fetch('/api/intelligence', {
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({reportType:selected, formData})
       })
-      const data = await res.json()
-      if (!res.ok) throw new Error((data as {error?:string}).error || `HTTP ${res.status}`)
-      setReport((data as {report:Record<string,unknown>}).report)
+      const data = await res.json() as { report?: Record<string,unknown>; executiveReport?: ExecutiveBusinessReport; error?: string }
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`)
+      if (data.report) setReport(data.report)
+      if (data.executiveReport) setExecutiveReport(data.executiveReport)
     } catch(e) {
       setError(e instanceof Error ? e.message : (lang==='ar'?'حدث خطأ غير متوقع':'Unexpected error'))
     } finally { setLoading(false) }
@@ -1020,9 +1049,9 @@ export default function RealEstateIntelligencePage() {
         <div className="ei-topbar">
           <div className="ei-topbar-inner">
             <div className="ei-brand">
-              <div className="ei-brand-tag">EUNOIA ZONES</div>
-              <div className="ei-brand-title">{lang==='ar'?'محرك الاستخبارات العقارية':'Real Estate Intelligence Engine'}</div>
-              <div className="ei-brand-sub">{lang==='ar'?'5 تقارير متخصصة · معايير السوق المصري 2026 · حسابات مالية دقيقة':'5 Specialized Reports · Egypt Market Benchmarks 2026 · Precise Financial Calculations'}</div>
+              <div className="ei-brand-tag">EUNOIA</div>
+              <div className="ei-brand-title">{lang==='ar'?'محرك تقييم الجدوى العقارية':'Real Estate Assessment Engine'}</div>
+              <div className="ei-brand-sub">Decision Intelligence Platform</div>
             </div>
             <div className="ei-lang-toggle">
               <button className={`ei-lang-btn${lang==='ar'?' active':''}`} onClick={()=>setLang('ar')}>عربي</button>
@@ -1066,7 +1095,7 @@ export default function RealEstateIntelligencePage() {
                   <div className="ei-form-header-title">{lang==='ar'?card?.ar:card?.en}</div>
                   <div className="ei-form-header-sub">{lang==='ar'?card?.en:card?.ar}</div>
                 </div>
-                <button className="ei-form-close" onClick={()=>{setSelected(null);setReport(null);setError(null)}}>&#x00D7;</button>
+                <button className="ei-form-close" onClick={()=>{setSelected(null);setReport(null);setExecutiveReport(null);setError(null)}}>&#x00D7;</button>
               </div>
               <div className="ei-form-body">
                 {loading ? (
@@ -1078,7 +1107,10 @@ export default function RealEstateIntelligencePage() {
                       {[1,2,3,4].map(i=><div key={i} className="ei-skel-bar" style={{height:52}} />)}
                     </div>
                     <div style={{textAlign:'center',fontSize:12,color:'#9A9090',padding:'8px 0'}}>
-                      &#x231B; {lang==='ar'?'جاري تحليل بيانات السوق المصري...':'Analyzing Egyptian market data...'}
+                      &#x231B; {lang==='ar'
+                        ? `جاري توليد تقرير القرار... مدة التحليل حوالي ${card?.time}. الرجاء عدم إغلاق هذه الصفحة.`
+                        : `Generating your Decision Report... Estimated wait: ${card?.time}. Please do not close this page.`
+                      }
                     </div>
                   </div>
                 ) : (
@@ -1095,8 +1127,16 @@ export default function RealEstateIntelligencePage() {
             </div>
           )}
 
-          {/* Report output */}
-          {report && (
+          {/* Report output — Signature Report (with executiveReport) or legacy ReportView */}
+          {executiveReport && report && (
+            <SignatureReport
+              executiveReport={executiveReport}
+              narration={report}
+              onBack={()=>{setReport(null);setExecutiveReport(null);setSelected(null);setError(null)}}
+              onRegen={()=>{if(lastForm) handleSubmit(lastForm)}}
+            />
+          )}
+          {report && !executiveReport && (
             <ReportView
               report={report} lang={lang}
               onBack={()=>{setReport(null);setSelected(null);setError(null)}}

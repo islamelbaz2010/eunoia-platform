@@ -5,14 +5,15 @@ import { useEffect, useState } from 'react'
 import { BarChart3, FileText, Settings, TrendingUp, LogOut, X, Building2, Search, ShieldCheck } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
+import { PILOT_FEATURES } from '@/lib/features/pilot-features'
 
 const NAV = [
-  { href: '/dashboard',               label: 'Dashboard',           icon: BarChart3,   exact: true },
-  { href: '/dashboard/reports',       label: 'Reports',             icon: FileText },
-  { href: '/dashboard/real-estate',   label: 'Real Estate',         icon: Building2 },
-  { href: '/dashboard/research',      label: 'Research Intelligence', icon: Search },
-  { href: '/dashboard/analytics',     label: 'Market Intelligence', icon: TrendingUp },
-  { href: '/dashboard/settings',      label: 'Settings',            icon: Settings },
+  { href: '/dashboard',             label: 'Dashboard',   icon: BarChart3, exact: true },
+  { href: '/dashboard/real-estate', label: 'Assessments', icon: Building2 },
+  { href: '/dashboard/reports',     label: 'My Reports',  icon: FileText  },
+  ...(PILOT_FEATURES.RESEARCH_INTELLIGENCE ? [{ href: '/dashboard/research',  label: 'Research Intelligence', icon: Search     }] : []),
+  ...(PILOT_FEATURES.MARKET_INTELLIGENCE   ? [{ href: '/dashboard/analytics', label: 'Market Intelligence',   icon: TrendingUp }] : []),
+  { href: '/dashboard/settings',    label: 'Settings',    icon: Settings  },
 ]
 
 export function Sidebar({ open = false, onClose }: { open?: boolean; onClose?: () => void }) {
@@ -45,7 +46,7 @@ export function Sidebar({ open = false, onClose }: { open?: boolean; onClose?: (
         <Link href="/dashboard" onClick={onClose} className="no-underline">
           <div className="font-mono text-[11px] tracking-[0.28em] uppercase font-bold text-gold">EUNOIA</div>
           <div className="h-px my-1" style={{ background: 'linear-gradient(90deg, #b8922a, #d4aa45, transparent)' }} />
-          <div className="text-[9px] tracking-[0.15em] uppercase text-muted-foreground">Research &amp; Intelligence</div>
+          <div className="text-[9px] tracking-[0.15em] uppercase text-muted-foreground">Decision Intelligence Platform</div>
         </Link>
         <button
           onClick={onClose}

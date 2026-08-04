@@ -16,12 +16,12 @@ const playfair = Playfair_Display({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Eunoia Intelligence',
-    template: '%s — Eunoia Intelligence',
+    default: 'Eunoia',
+    template: '%s — Eunoia',
   },
-  description: 'AI-powered marketing intelligence for MENA businesses. Generate sector-specific marketing reports, competitor analysis, and growth strategies.',
-  keywords: ['marketing intelligence', 'AI reports', 'Egypt marketing', 'MENA digital marketing'],
-  authors: [{ name: 'Eunoia Agency' }],
+  description: 'Decision Intelligence Platform for Egypt Real Estate. Submit your project and receive a structured Decision Report with confidence scoring and evidence.',
+  keywords: ['decision intelligence', 'Egypt real estate', 'feasibility study', 'property assessment', 'real estate Egypt'],
+  authors: [{ name: 'Eunoia' }],
   robots: { index: false, follow: false },
 }
 

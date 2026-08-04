@@ -68,7 +68,7 @@ export function Header({ title, subtitle, onMenuClick, sidebarOpen }: {
           style={{ background: 'linear-gradient(135deg,#b8922a,#d4aa45)', color: '#fff' }}
         >
           <Plus size={13} strokeWidth={2.5} />
-          New Report
+          New Assessment
         </Link>
 
         {/* Avatar */}

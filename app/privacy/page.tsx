@@ -1,7 +1,7 @@
 import Link from 'next/link'
 
 export const metadata = {
-  title: 'Privacy Policy | Eunoia Intelligence',
+  title: 'Privacy Policy | Eunoia',
 }
 
 const styles = {
@@ -50,7 +50,7 @@ export default function PrivacyPage() {
   return (
     <main style={styles.page}>
       <article style={styles.shell}>
-        <div style={styles.eyebrow}>Eunoia Intelligence</div>
+        <div style={styles.eyebrow}>Eunoia</div>
         <h1 style={styles.h1}>Privacy Policy</h1>
         <p style={styles.muted}>Last updated: 21 July 2026. This page is a product-facing baseline and should be reviewed by legal counsel before broad commercial rollout.</p>
 

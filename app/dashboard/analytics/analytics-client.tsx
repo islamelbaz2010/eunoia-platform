@@ -112,7 +112,7 @@ export function AnalyticsClient({ stats }: { stats: UserStats | null }) {
         <div className="mi-topbar">
           <div className="mi-topbar-inner">
             <div>
-              <div className="mi-brand-tag">EUNOIA INTELLIGENCE</div>
+              <div className="mi-brand-tag">EUNOIA</div>
               <div className="mi-brand-title">Market Intelligence Hub</div>
               <div className="mi-brand-sub">Your research activity + curated Egypt market insights</div>
             </div>

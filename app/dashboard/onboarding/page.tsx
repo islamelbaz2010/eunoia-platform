@@ -4,14 +4,16 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
+import { PILOT_FEATURES } from '@/lib/features/pilot-features'
 
-const TOUR_STEPS = [
+const ALL_TOUR_STEPS = [
   {
     icon: '🏗️',
-    title: 'Real Estate Intelligence',
+    title: 'Feasibility Assessment',
     desc: 'Run feasibility studies, campaign ROI audits, and market entry analysis for any property or real estate project in Egypt.',
     href: '/dashboard/real-estate',
-    cta: 'Start a Feasibility Study',
+    cta: 'Start a Feasibility Assessment',
+    pilotEnabled: true,
   },
   {
     icon: '🎯',
@@ -19,6 +21,7 @@ const TOUR_STEPS = [
     desc: 'Discover and rank companies in any industry that match your ideal customer profile — with scored leads ready for outreach.',
     href: '/dashboard/research/leads',
     cta: 'Find Leads Now',
+    pilotEnabled: PILOT_FEATURES.RESEARCH_INTELLIGENCE,
   },
   {
     icon: '🧑‍💼',
@@ -26,8 +29,11 @@ const TOUR_STEPS = [
     desc: 'Get salary benchmarks, role availability, and qualified candidate profiles for any position in the Egyptian market.',
     href: '/dashboard/research/talent',
     cta: 'Explore Talent Market',
+    pilotEnabled: PILOT_FEATURES.RESEARCH_INTELLIGENCE,
   },
 ]
+
+const TOUR_STEPS = ALL_TOUR_STEPS.filter(s => s.pilotEnabled)
 
 export default function OnboardingPage() {
   const router = useRouter()
@@ -80,7 +86,7 @@ export default function OnboardingPage() {
           </div>
           <div>
             <div className="text-cream font-semibold">Eunoia</div>
-            <div className="text-cream/40 text-xs">Intelligence Platform</div>
+            <div className="text-cream/40 text-xs">Decision Intelligence Platform</div>
           </div>
         </div>
 

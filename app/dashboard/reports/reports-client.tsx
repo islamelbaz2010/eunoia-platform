@@ -9,6 +9,7 @@ interface Report {
   city: string | null
   created_at: string
   report_data: Record<string, unknown> | null
+  decision_report: { confidence?: number; recommendation?: string; trust_score?: number } | null
 }
 
 interface FailedRequest {
@@ -116,10 +117,25 @@ function formatDate(iso: string): string {
   })
 }
 
-function getConfidence(report_data: Record<string, unknown> | null): number {
-  if (!report_data) return 0
-  const cs = report_data.confidence_score as { pct?: number } | undefined
-  return cs?.pct ?? 0
+function getConfidence(report: Report): number {
+  if (report.decision_report?.confidence != null) {
+    return typeof report.decision_report.confidence === 'number' ? report.decision_report.confidence : 0
+  }
+  return 0
+}
+
+function getExportFilename(report: Report): string {
+  const TYPE_PREFIX: Record<string, string> = {
+    feasibility:   'feasibility',
+    campaign_roi:  'campaign-roi',
+    market_entry:  'market-entry',
+    lead_gen:      'lead-gen',
+    full_analysis: 'full-analysis',
+  }
+  const prefix = TYPE_PREFIX[report.report_type] || report.report_type
+  const slug = (report.company_name || 'assessment')
+    .toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').slice(0, 40)
+  return `${prefix}-${slug}-${report.created_at.split('T')[0]}.csv`
 }
 
 function getVerdict(report_data: Record<string, unknown> | null): string | null {
@@ -176,7 +192,7 @@ function getKeyMetrics(type: string, data: Record<string, unknown> | null): Arra
 
 function exportReportCSV(report: Report) {
   const rows = [
-    ['Eunoia Zones Intelligence Platform'],
+    ['Eunoia Decision Intelligence Platform'],
     [report.report_type, report.company_name || '', report.city || ''],
     [formatDate(report.created_at)],
     [],
@@ -185,7 +201,7 @@ function exportReportCSV(report: Report) {
   const csv = '﻿' + rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n')
   const a = Object.assign(document.createElement('a'), {
     href: URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' })),
-    download: `${report.report_type}-${report.company_name || 'report'}-${report.created_at.split('T')[0]}.csv`
+    download: getExportFilename(report)
   })
   document.body.appendChild(a); a.click(); document.body.removeChild(a)
 }
@@ -236,7 +252,7 @@ export default function ReportsClient({
     return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
   }).length
   const avgConf = reports.length > 0
-    ? Math.round(reports.reduce((sum, r) => sum + getConfidence(r.report_data), 0) / reports.length)
+    ? Math.round(reports.reduce((sum, r) => sum + getConfidence(r), 0) / reports.length)
     : 0
 
   return (
@@ -247,8 +263,8 @@ export default function ReportsClient({
         <div className="rh-topbar">
           <div className="rh-topbar-inner">
             <div>
-              <div className="rh-brand-tag">EUNOIA ZONES</div>
-              <div className="rh-brand-title">سجل التقارير / Report History</div>
+              <div className="rh-brand-tag">EUNOIA</div>
+              <div className="rh-brand-title">تقاريري / My Reports</div>
               <div className="rh-brand-sub">{userEmail}</div>
             </div>
             <button className="rh-back-btn" onClick={() => window.history.back()}>
@@ -262,7 +278,7 @@ export default function ReportsClient({
           <div className="rh-stats">
             <div className="rh-stat">
               <div className="rh-stat-num">{totalReports}</div>
-              <div className="rh-stat-label">إجمالي التقارير / Total Reports</div>
+              <div className="rh-stat-label">إجمالي التقييمات / Total Assessments</div>
             </div>
             <div className="rh-stat">
               <div className="rh-stat-num">{thisMonth}</div>
@@ -270,7 +286,7 @@ export default function ReportsClient({
             </div>
             <div className="rh-stat">
               <div className="rh-stat-num" style={{ color: avgConf >= 75 ? '#0D9488' : '#F0A020' }}>{avgConf}%</div>
-              <div className="rh-stat-label">متوسط الدقة / Avg Accuracy</div>
+              <div className="rh-stat-label">متوسط الثقة / Avg Confidence</div>
             </div>
           </div>
 
@@ -288,8 +304,6 @@ export default function ReportsClient({
             <button className={`rh-filter-btn${filter === 'market_entry' ? ' active' : ''}`} onClick={() => setFilter('market_entry')}>&#128506; سوق</button>
             <button className={`rh-filter-btn${filter === 'lead_gen' ? ' active' : ''}`} onClick={() => setFilter('lead_gen')}>&#127919; عملاء</button>
             <button className={`rh-filter-btn${filter === 'full_analysis' ? ' active' : ''}`} onClick={() => setFilter('full_analysis')}>&#127942; شامل</button>
-            <button className={`rh-filter-btn${filter === 'lead_finder' ? ' active' : ''}`} onClick={() => setFilter('lead_finder')}>&#127919; Leads</button>
-            <button className={`rh-filter-btn${filter === 'talent_finder' ? ' active' : ''}`} onClick={() => setFilter('talent_finder')}>&#129489;&#8205;&#128188; Talent</button>
           </div>
 
           {failedRequests.length > 0 && (
@@ -314,12 +328,12 @@ export default function ReportsClient({
             <div className="rh-empty">
               <div className="rh-empty-icon">{search || filter !== 'all' ? '&#128269;' : '&#128203;'}</div>
               <div className="rh-empty-title">
-                {search || filter !== 'all' ? 'لا نتائج / No results' : 'لا توجد تقارير بعد / No reports yet'}
+                {search || filter !== 'all' ? 'لا نتائج / No results' : 'لا توجد تقييمات بعد / No assessments yet'}
               </div>
               <div className="rh-empty-sub">
                 {search || filter !== 'all'
                   ? 'جرب بحثاً مختلفاً / Try different search'
-                  : 'ولّد تقريرك الأول من صفحة العقارات / Generate your first report from Real Estate page'}
+                  : 'ابدأ تقييمك الأول من قسم التقييمات / Start your first assessment from the Assessments section'}
               </div>
             </div>
           )}
@@ -327,7 +341,7 @@ export default function ReportsClient({
           {/* Report list */}
           <div className="rh-list">
             {filtered.map(report => {
-              const conf = getConfidence(report.report_data)
+              const conf = getConfidence(report)
               const confColor = conf >= 80 ? '#0D9488' : conf >= 65 ? '#F0A020' : '#9A9090'
               const verdict = getVerdict(report.report_data)
               const verdictColor = verdict && !verdict.includes('مشروط') && verdict.includes('مجدي')
@@ -396,12 +410,6 @@ export default function ReportsClient({
                           onClick={() => window.print()}
                         >
                           &#128424; Print / PDF
-                        </button>
-                        <button
-                          className="rh-expand-btn"
-                          onClick={() => navigator.clipboard.writeText(JSON.stringify(report.report_data, null, 2))}
-                        >
-                          &#128203; Copy JSON
                         </button>
                       </div>
                     </div>

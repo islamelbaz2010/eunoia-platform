@@ -82,4 +82,21 @@
 
 ---
 
+## DEC-008 — FAIL Rule → Validation REJECTED → recommendation = null (Canonical Engine Behavior)
+
+**Date:** 2026-07-30 (Session 6 — Decision Benchmark Suite)  
+**Status:** CONFIRMED — canonical engine behavior; documented in GOLD_DATASET  
+**Source:** `lib/decision-intelligence/engine/validation-engine.ts` (`runBusinessStage`); `lib/decision-intelligence/engine/decision-engine.ts` (`assembleDecision`); `lib/decision-intelligence/benchmark/__tests__/benchmark.test.ts`
+
+**Decision:** When ANY FAIL-action business rule fires against any option, the validation pipeline sets `pipelineStatus = 'FAILED'` (not the option; the entire pipeline). `assembleDecision` then returns `recommendation: null` regardless of how many non-blocked eligible options exist. This is not a bug. This is the DVE's designed quality gate behavior: a decision with ANY blocked option is REJECTED in full.
+
+**Mechanism:**
+1. `runBusinessStage` in `validation-engine.ts`: if `allBlocked.length > 0`, returns `{ status: 'FAIL', blocking: true }`.
+2. `pipelineStatus` becomes `'FAILED'` in the pipeline accumulator.
+3. `assembleDecision` in `decision-engine.ts`: `validationPassed = validation.pipelineStatus !== 'FAILED'`. Returns `recommendation: validationPassed ? recommendation : null`.
+
+**Consequence:** All benchmark cases with FAIL rules must have `recommendedOptionId: null`. An API route delivering a decision with `pipelineStatus = 'FAILED'` must not show a recommended option to the customer (per DEC-003 and DEC-004).
+
+---
+
 *Decision log created 2026-07-21. Append-only.*

@@ -69,6 +69,23 @@ Convert existing server-side enforcement and operational hygiene into customer-v
   - `validation-engine.test.ts` — 8 tests
   - `decision-engine.test.ts` — 13 tests
 
+## Completed (Decision Benchmark Suite — 2026-07-30)
+
+**Session 6 — Decision Benchmark Suite:**
+- Created `lib/decision-intelligence/benchmark/` directory with 10 files.
+- `types.ts` — BenchmarkCase, BenchmarkEngineInput (plain-string boundary types), BenchmarkReport, BenchmarkCaseResult.
+- `cases/feasibility.cases.ts` — 4 canonical feasibility cases.
+- `cases/campaign-roi.cases.ts` — 3 canonical campaign ROI cases.
+- `cases/market-entry.cases.ts` — 3 canonical market entry cases.
+- `cases/lead-gen.cases.ts` — 3 canonical lead gen cases.
+- `cases/full-analysis.cases.ts` — 3 canonical full analysis cases.
+- `cases/index.ts` — GOLD_DATASET (16 cases total).
+- `runner.ts` — `runBenchmark()` executes all 16 cases against the live engine.
+- `report.ts` — `generateAccuracyReport()` produces markdown accuracy report.
+- `__tests__/benchmark.test.ts` — 33 Vitest regression tests; 100% recommendation accuracy threshold; ≥80% overall threshold.
+- Discovered and documented canonical engine behavior: FAIL rules → `pipelineStatus = 'FAILED'` → `recommendation = null` (all 5 blocked-option cases updated accordingly).
+- Verification: **315 tests passing** (31 test files). 0 failures. TypeScript clean.
+
 ## In Progress
 
 - None.

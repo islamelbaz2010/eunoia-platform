@@ -1,7 +1,7 @@
 import Link from 'next/link'
 
 export const metadata = {
-  title: 'Terms of Service | Eunoia Intelligence',
+  title: 'Terms of Service | Eunoia',
 }
 
 const styles = {
@@ -50,7 +50,7 @@ export default function TermsPage() {
   return (
     <main style={styles.page}>
       <article style={styles.shell}>
-        <div style={styles.eyebrow}>Eunoia Intelligence</div>
+        <div style={styles.eyebrow}>Eunoia</div>
         <h1 style={styles.h1}>Terms of Service</h1>
         <p style={styles.muted}>Last updated: 21 July 2026. This baseline page documents current product expectations and requires legal review before broad commercial rollout.</p>
 

@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Sign In — Eunoia Intelligence',
-  description: 'AI-powered marketing intelligence for MENA businesses',
+  title: 'Sign In — Eunoia',
+  description: 'Decision Intelligence Platform for Egypt Real Estate',
 }
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
@@ -15,11 +15,11 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
               <span className="text-midnight font-bold text-sm">E</span>
             </div>
             <span className="text-cream font-semibold text-xl tracking-tight">
-              Eunoia Intelligence
+              Eunoia
             </span>
           </div>
           <p className="text-cream/50 text-sm">
-            AI-powered marketing intelligence for MENA businesses
+            Decision Intelligence Platform
           </p>
         </div>
         {children}
