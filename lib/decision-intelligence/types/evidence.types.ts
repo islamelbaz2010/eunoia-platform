@@ -45,6 +45,36 @@ export type EvidenceSourceType =
  * carries the highest epistemic authority. ai_analysis ranks low because it is
  * a derived inference, not a primary observation.
  */
+// ---------------------------------------------------------------------------
+// Evidence category — the semantic domain an evidence item covers
+// ---------------------------------------------------------------------------
+
+/**
+ * Semantic category for an evidence item.
+ *
+ * Categories are used for:
+ * - Coverage analysis: detecting which domains of evidence are missing
+ * - Conflict detection: flagging items in the same category that disagree
+ * - Duplicate detection: identifying near-duplicate items
+ * - Confidence adjustment: penalizing decisions with missing critical categories
+ *
+ * - `financial`:      NPV, ROI, costs, revenues, profit projections
+ * - `market_data`:    CPL benchmarks, lead data, market size, growth rates
+ * - `user_provided`:  data directly entered by the user (raw form input)
+ * - `operational`:    capacity, timeline, process efficiency metrics
+ * - `benchmark`:      validated industry or market benchmarks
+ * - `risk_data`:      volatility indicators, risk factors, scenario data
+ * - `competitive`:    competitor activity, market share, differentiation data
+ */
+export type EvidenceCategory =
+  | 'financial'
+  | 'market_data'
+  | 'user_provided'
+  | 'operational'
+  | 'benchmark'
+  | 'risk_data'
+  | 'competitive'
+
 export const EVIDENCE_SOURCE_AUTHORITY: Record<EvidenceSourceType, number> = {
   human_validation: 1.00,
   internal_data:    0.90,
@@ -100,6 +130,12 @@ export interface EvidenceItem {
    */
   readonly tags: Record<string, string>
   readonly createdAt: string  // ISO-8601
+  /**
+   * Semantic category of this evidence item.
+   * Used for coverage analysis, duplicate detection, and confidence adjustment.
+   * If not specified, the coverage analyser treats this item as uncategorized.
+   */
+  readonly category?: EvidenceCategory
 }
 
 export interface EvidenceReference {
@@ -128,6 +164,70 @@ export interface EvidenceCollectionStats {
   readonly averageConfidence: number
   /** Count of items that contradict at least one other item in this collection. */
   readonly contradictionCount: number
+  /**
+   * Coverage analysis for this collection.
+   * Present when the caller provides expected categories or when the
+   * evidence-coverage analyser is run against this collection.
+   */
+  readonly coverageReport?: EvidenceCoverageReport
+}
+
+// ---------------------------------------------------------------------------
+// Evidence coverage analysis — Sprint A2
+// ---------------------------------------------------------------------------
+
+/**
+ * A pair of evidence items whose content appears to contradict each other.
+ */
+export interface ConflictPair {
+  readonly evidenceIdA: string
+  readonly evidenceIdB: string
+  /** Human-readable description of why these two items conflict. */
+  readonly conflictDescription: string
+  /** How seriously this conflict affects decision quality. */
+  readonly severity: 'HIGH' | 'MEDIUM' | 'LOW'
+}
+
+/**
+ * A hint about evidence that is expected but absent from the collection.
+ */
+export interface MissingEvidenceHint {
+  readonly category: EvidenceCategory
+  /** Short description of what is missing. */
+  readonly description: string
+  /** How much the absence of this evidence degrades decision quality. */
+  readonly impact: 'HIGH' | 'MEDIUM' | 'LOW'
+}
+
+/**
+ * Full coverage analysis for an evidence collection.
+ *
+ * Produced by `analyzeEvidenceCoverage()` and attached to the
+ * EvidenceCollectionStats so confidence engines can penalize decisions
+ * with insufficient evidence coverage.
+ */
+export interface EvidenceCoverageReport {
+  /** Categories present in the collection. */
+  readonly categoriesCovered: EvidenceCategory[]
+  /** Categories expected but absent from the collection. */
+  readonly categoriesMissing: EvidenceCategory[]
+  /**
+   * Coverage score in [0, 100].
+   * 100 = all expected categories present.
+   * 0  = no relevant evidence.
+   */
+  readonly coverageScore: number
+  /**
+   * Groups of evidence IDs that are likely duplicates.
+   * Each inner array contains IDs of items that cover the same information.
+   */
+  readonly duplicateGroups: string[][]
+  /** Pairs of items whose content appears to conflict. */
+  readonly conflictPairs: ConflictPair[]
+  /** Hints for what evidence should be added to improve decision quality. */
+  readonly missingEvidenceHints: MissingEvidenceHint[]
+  /** True if critical categories are covered sufficiently for a reliable decision. */
+  readonly sufficientForDecision: boolean
 }
 
 // ---------------------------------------------------------------------------

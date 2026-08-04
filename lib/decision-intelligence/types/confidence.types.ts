@@ -91,6 +91,13 @@ export interface EvidenceQualityInput {
   /** Count of items with source type === 'human_validation'. */
   readonly humanEvidenceCount: number
   readonly totalEvidenceCount: number
+  /**
+   * Evidence coverage score from the coverage analysis (0–1, optional).
+   * When provided, low coverage penalises the quality dimension to reflect
+   * that missing evidence categories degrade decision quality even if present
+   * items are individually high quality.
+   */
+  readonly coverageScore?: number
 }
 
 // ---------------------------------------------------------------------------
@@ -159,6 +166,22 @@ export interface ConfidenceScore {
   /** The dimension with the highest weighted score. */
   readonly strongestDimension: ConfidenceDimension
   readonly computedAt: string  // ISO-8601
+  /**
+   * True when evidence and rule coverage is sufficient to issue a reliable
+   * recommendation. False triggers `INSUFFICIENT_EVIDENCE` in the validation
+   * pipeline rather than forcing a potentially wrong recommendation.
+   *
+   * Set to false when:
+   *   - overall < 25 (critically low confidence)
+   *   - evidence coverage score < 30 (critical evidence categories missing)
+   *   - no evidence at all (totalEvidenceCount === 0)
+   */
+  readonly sufficientForDecision: boolean
+  /**
+   * Evidence coverage score in [0, 100] from the coverage analysis.
+   * Present when coverage analysis was run as part of this calculation.
+   */
+  readonly coverageScore?: number
 }
 
 export type ConfidenceBand = 'VERY_HIGH' | 'HIGH' | 'MEDIUM' | 'LOW' | 'VERY_LOW'

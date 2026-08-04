@@ -71,14 +71,17 @@ describe('computeConfidenceScore', () => {
     expect(violated.overall).toBeLessThan(perfect.overall)
   })
 
-  it('returns 100 rules score when no rules apply', () => {
+  it('returns 50 rules score when no rules apply (uncertain, not falsely compliant)', () => {
+    // Zero rules = unknown compliance. Returning 100 would falsely inflate confidence.
+    // 50 signals "uncertain" — cannot verify compliance without domain rules.
     const noRules: ConfidenceInput = {
       ...perfectInput,
       ruleCompliance: { totalRulesEvaluated: 0, passedRules: 0, criticalViolationCount: 0, warningCount: 0 },
     }
     const score = computeConfidenceScore(noRules)
     const rulesDim = score.dimensions.find(d => d.dimension === 'rule_compliance')
-    expect(rulesDim?.rawScore).toBe(100)
+    expect(rulesDim?.rawScore).toBe(50)
+    expect(rulesDim?.primaryFactor).toBe('no_rules_evaluated')
   })
 
   it('handles empty input without throwing', () => {

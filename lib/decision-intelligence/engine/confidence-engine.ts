@@ -55,7 +55,7 @@ function computeVolumeScore(
 function computeQualityScore(
   input: ConfidenceInput['quality'],
 ): Omit<DimensionScore, 'weightedScore'> {
-  const { averageAuthorityScore, aiEvidenceCount, humanEvidenceCount, totalEvidenceCount } = input
+  const { averageAuthorityScore, aiEvidenceCount, humanEvidenceCount, totalEvidenceCount, coverageScore } = input
 
   const authorityComponent = averageAuthorityScore  // already in [0, 1]
 
@@ -65,10 +65,21 @@ function computeQualityScore(
   // AI-only collection → penalty of 0.2; human-only → bonus of 0.1 over neutral
   const sourceCompositionComponent = Math.max(0, Math.min(1, 0.7 + humanRatio * 0.3 - aiRatio * 0.2))
 
-  const rawScore = Math.round((authorityComponent * 0.6 + sourceCompositionComponent * 0.4) * 100)
+  // Coverage penalty: missing required evidence categories reduces quality score.
+  // When coverageScore is 0 (no relevant evidence), apply maximum penalty (0.3 reduction).
+  // When coverageScore is 100 (all expected categories covered), no penalty.
+  const coverageComponent = coverageScore !== undefined
+    ? Math.max(0, Math.min(1, coverageScore / 100))
+    : 1.0  // no penalty when coverage analysis wasn't run
+
+  // Blend: authority 50%, source composition 30%, coverage 20%
+  const blendedScore = authorityComponent * 0.50 + sourceCompositionComponent * 0.30 + coverageComponent * 0.20
+
+  const rawScore = Math.round(blendedScore * 100)
 
   const primaryFactor =
     totalEvidenceCount === 0 ? 'no_evidence'
+    : coverageScore !== undefined && coverageScore < 40 ? 'missing_evidence_categories'
     : aiRatio > 0.7 ? 'ai_heavy'
     : humanRatio > 0.3 ? 'human_validated'
     : 'mixed_sources'
@@ -78,7 +89,7 @@ function computeQualityScore(
     rawScore,
     weight: CONFIDENCE_DIMENSION_WEIGHTS['evidence_quality'],
     primaryFactor,
-    supportingMetrics: { averageAuthorityScore, aiRatio, humanRatio },
+    supportingMetrics: { averageAuthorityScore, aiRatio, humanRatio, coverageScore: coverageScore ?? -1 },
   }
 }
 
@@ -152,11 +163,14 @@ function computeRuleComplianceScore(
   const { totalRulesEvaluated, passedRules, criticalViolationCount, warningCount } = input
 
   if (totalRulesEvaluated === 0) {
+    // No rules = unknown compliance, not perfect compliance.
+    // Returning 100 would falsely inflate confidence when zero domain logic is applied.
+    // 50 signals "uncertain" — cannot verify compliance without rules.
     return {
       dimension: 'rule_compliance',
-      rawScore: 100,
+      rawScore: 50,
       weight: CONFIDENCE_DIMENSION_WEIGHTS['rule_compliance'],
-      primaryFactor: 'no_rules_applicable',
+      primaryFactor: 'no_rules_evaluated',
       supportingMetrics: {},
     }
   }
@@ -220,6 +234,11 @@ export function computeConfidenceScore(input: ConfidenceInput): ConfidenceScore 
   const weakest = dimensions.reduce((min, d) => d.weightedScore < min.weightedScore ? d : min)
   const strongest = dimensions.reduce((max, d) => d.weightedScore > max.weightedScore ? d : max)
 
+  const coverageScore = input.quality.coverageScore
+  const noEvidence = input.volume.totalEvidenceCount === 0
+  const coverageCriticallyLow = coverageScore !== undefined && coverageScore < 30
+  const sufficientForDecision = !noEvidence && !coverageCriticallyLow && overall >= 25
+
   return {
     overall,
     dimensions,
@@ -227,5 +246,7 @@ export function computeConfidenceScore(input: ConfidenceInput): ConfidenceScore 
     weakestDimension: weakest.dimension,
     strongestDimension: strongest.dimension,
     computedAt: new Date().toISOString(),
+    sufficientForDecision,
+    coverageScore,
   }
 }

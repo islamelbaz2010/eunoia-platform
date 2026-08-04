@@ -98,21 +98,36 @@ function runBusinessStage(
 
   const allBlocked = ruleResults.filter(r => r.summary.isBlocked)
   const allWarnings = ruleResults.filter(r => r.summary.warnRules > 0)
+  const totalOptions = new Set(ruleResults.map(r => r.optionId)).size
+  const eligibleOptions = totalOptions - allBlocked.length
 
-  checks.push({
-    id: 'biz-no-blocking-rules',
-    name: 'No blocking rule violations',
-    description: 'No business rule with action FAIL must have fired.',
-    status: allBlocked.length === 0 ? 'PASS' : 'FAIL',
-    message: allBlocked.length === 0
-      ? 'All options passed business rule evaluation'
-      : `${allBlocked.length} option(s) blocked by business rules`,
-    details: {
-      blockedOptionIds: allBlocked.map(r => r.optionId),
-      blockingRuleIds: allBlocked.flatMap(r => r.summary.blockingRuleIds),
-    },
-    blocking: true,
-  })
+  // P0.1 FIX: Only block the pipeline when ALL options are blocked.
+  // When eligible options remain, emit WARN so the engine can recommend from them.
+  if (allBlocked.length === 0) {
+    checks.push({
+      id: 'biz-no-blocking-rules',
+      name: 'No blocking rule violations',
+      description: 'No business rule with action FAIL must have fired.',
+      status: 'PASS',
+      message: 'All options passed business rule evaluation',
+      details: { blockedOptionIds: [], blockingRuleIds: [] },
+      blocking: false,
+    })
+  } else if (eligibleOptions > 0) {
+    checks.push({
+      id: 'biz-no-blocking-rules',
+      name: 'No blocking rule violations',
+      description: 'No business rule with action FAIL must have fired.',
+      status: 'WARN',
+      message: `${allBlocked.length} option(s) blocked by business rules — ${eligibleOptions} eligible option(s) remain`,
+      details: {
+        blockedOptionIds: allBlocked.map(r => r.optionId),
+        blockingRuleIds: allBlocked.flatMap(r => r.summary.blockingRuleIds),
+        eligibleOptionCount: eligibleOptions,
+      },
+      blocking: false,
+    })
+  }
 
   if (allWarnings.length > 0) {
     checks.push({
@@ -126,8 +141,7 @@ function runBusinessStage(
     })
   }
 
-  // If ALL options are blocked, that is a harder failure
-  const totalOptions = new Set(ruleResults.map(r => r.optionId)).size
+  // Only a hard FAIL when ALL options are blocked — no eligible option can be recommended
   if (totalOptions > 0 && allBlocked.length === totalOptions) {
     checks.push({
       id: 'biz-all-options-blocked',

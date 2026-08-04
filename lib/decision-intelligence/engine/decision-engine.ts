@@ -21,7 +21,7 @@
  */
 
 import { randomUUID } from 'crypto'
-import type { BusinessRule, RuleEvaluationResult } from '../types/rules.types'
+import type { BusinessRule, RuleEvaluationResult, RuleFacts } from '../types/rules.types'
 import type { EvidenceCollection, EvidenceWeight } from '../types/evidence.types'
 import type { ValidationThresholds } from '../types/validation.types'
 import type {
@@ -46,6 +46,8 @@ import { computeConfidenceScore } from './confidence-engine'
 import { evaluateRules, filterRulesForDomain } from './rules-engine'
 import { runValidationPipeline } from './validation-engine'
 import { generateExplainability } from './explainability-engine'
+import { runScenarioAnalysis } from './scenario-engine'
+import type { ScenarioAnalysis } from '../types/scenario.types'
 
 // ---------------------------------------------------------------------------
 // Engine input / output
@@ -65,6 +67,8 @@ export interface DecisionEngineResult {
   readonly evidenceWeights: EvidenceWeight[]
   readonly explainability: DecisionExplainability
   readonly report: UniversalDecisionReport
+  /** Sprint A4: Scenario intelligence — what-if analysis and decision stability. */
+  readonly scenarioAnalysis?: ScenarioAnalysis
 }
 
 // ---------------------------------------------------------------------------
@@ -80,14 +84,9 @@ function buildOptionsWithRuleScores(
     const rr = ruleResultsByOptionId.get(id as string)
     const summary = rr?.summary
 
-    let ruleScore = 100
-    if (summary) {
-      const { totalRules, failedRules, warnRules } = summary
-      if (totalRules > 0) {
-        const passedFraction = (totalRules - failedRules - warnRules * 0.5) / totalRules
-        ruleScore = Math.max(0, Math.round(passedFraction * 100))
-      }
-    }
+    // Use the weighted rule score from the rules engine (Sprint A1).
+    // Falls back to 100 when no rules were evaluated (no domain knowledge applied).
+    const ruleScore = summary?.weightedRuleScore ?? 100
 
     return {
       id,
@@ -183,9 +182,12 @@ function buildConfidenceInput(
 
   const uniqueSourceTypes = new Set(evidence.items.map(i => i.source.type)).size
 
+  // Pass coverage score to quality dimension (Sprint A3)
+  const coverageScore = evidence.stats.coverageReport?.coverageScore
+
   return {
     volume: { totalEvidenceCount, uniqueSourceTypeCount: uniqueSourceTypes },
-    quality: { averageAuthorityScore: avgAuthority, aiEvidenceCount: aiCount, humanEvidenceCount: humanCount, totalEvidenceCount },
+    quality: { averageAuthorityScore: avgAuthority, aiEvidenceCount: aiCount, humanEvidenceCount: humanCount, totalEvidenceCount, coverageScore },
     freshness: { weightedAverageFreshness: wAvgFreshness, maxAgeHours: maxAgeHrs },
     consistency: { contradictionCount, totalEvidenceCount, consensusRatio },
     ruleCompliance: { totalRulesEvaluated, passedRules, criticalViolationCount, warningCount },
@@ -369,29 +371,31 @@ export function runDecisionEngine(args: DecisionEngineInput): DecisionEngineResu
   // 1. Evaluate rules per option
   const domainRules = filterRulesForDomain(rules, input.subject.domain)
   const ruleResultsByOptionId = new Map<string, RuleEvaluationResult>()
+  const baseFacts: Record<string, RuleFacts> = {}
 
   for (const rawOption of input.options) {
     const oid = rawOption.id ?? randomUUID()
-    const facts = {
+    const facts: RuleFacts = {
       decisionId: decId as string,
       optionId: oid,
       subject: input.subject as unknown as Record<string, unknown>,
       context: input.context as unknown as Record<string, unknown>,
       parameters: (input.context.parameters ?? {}) as Record<string, unknown>,
     }
+    baseFacts[oid] = facts
     const rr = evaluateRules(domainRules, facts)
     ruleResultsByOptionId.set(oid, rr)
   }
 
   const ruleResults = Array.from(ruleResultsByOptionId.values())
 
-  // 2. Build options with computed rule scores
+  // 2. Build options with computed rule scores (uses weightedRuleScore from A1)
   const options = buildOptionsWithRuleScores(input.options, ruleResultsByOptionId)
 
   // 3. Compute evidence weights
   const evidenceWeights = weightEvidence(evidence.items)
 
-  // 4. Compute confidence score
+  // 4. Compute confidence score (coverage-aware per A3)
   const confidenceInput = buildConfidenceInput(evidence, evidenceWeights, ruleResults)
   const confidence = computeConfidenceScore(confidenceInput)
 
@@ -432,6 +436,25 @@ export function runDecisionEngine(args: DecisionEngineInput): DecisionEngineResu
   // 9. Assemble report
   const report = assembleReport(decision, options, confidence, evidence, ruleResults, validation, explainability)
 
+  // 10. Sprint A4: Run scenario analysis (fail-safe — never breaks the main result)
+  let scenarioAnalysis: ScenarioAnalysis | undefined
+  try {
+    if (domainRules.length > 0) {
+      scenarioAnalysis = runScenarioAnalysis({
+        decisionId: decId as string,
+        options,
+        rules: domainRules,
+        baseFacts,
+        baseRuleResults: ruleResults.map(rr => ({
+          optionId: rr.optionId,
+          results: rr.results,
+        })),
+      })
+    }
+  } catch {
+    // Scenario analysis is non-critical — decision result is still valid without it
+  }
+
   return {
     decision,
     confidence,
@@ -439,5 +462,6 @@ export function runDecisionEngine(args: DecisionEngineInput): DecisionEngineResu
     evidenceWeights,
     explainability,
     report,
+    scenarioAnalysis,
   }
 }

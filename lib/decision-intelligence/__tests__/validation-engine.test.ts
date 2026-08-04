@@ -48,7 +48,7 @@ describe('runValidationPipeline', () => {
     const result = runValidationPipeline({
       decisionId: 'd1',
       input: validInput,
-      evidence: makeEvidence(1),
+      evidence: makeEvidence(3),
       confidence: makeConfidence(),
       ruleResults: [],
     })
@@ -167,7 +167,7 @@ describe('runValidationPipeline', () => {
       evidence: freshEvidence,
       confidence: conf,
       ruleResults: [],
-      thresholds: { minimumConfidenceScore: 1 },
+      thresholds: { minimumConfidenceScore: 1, minimumEvidenceCount: 1 },
     })
 
     // At minimum, no FAILED status

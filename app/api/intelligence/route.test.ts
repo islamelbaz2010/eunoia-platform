@@ -4,7 +4,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 // All mocks that are referenced inside vi.mock() factories MUST be hoisted.
 // ---------------------------------------------------------------------------
 
-const { mockRunDecisionEngine, mockOpenAICreate, mockSupabase, makeChain } = vi.hoisted(() => {
+const { mockRunDecisionEngine, mockOpenAICreate, mockSupabase, makeChain, mockBuildExecutiveReport } = vi.hoisted(() => {
   const makeChain = () => {
     const chain: Record<string, unknown> = {}
     const methods = ['insert', 'update', 'select']
@@ -26,6 +26,7 @@ const { mockRunDecisionEngine, mockOpenAICreate, mockSupabase, makeChain } = vi.
   return {
     mockRunDecisionEngine: vi.fn(),
     mockOpenAICreate: vi.fn(),
+    mockBuildExecutiveReport: vi.fn(),
     mockSupabase,
     makeChain,
   }
@@ -35,6 +36,7 @@ const { mockRunDecisionEngine, mockOpenAICreate, mockSupabase, makeChain } = vi.
 vi.mock('@/lib/decision-intelligence', () => ({
   runDecisionEngine: mockRunDecisionEngine,
   optionId: (id: string) => id,
+  ruleId:   (id: string) => id,
   collectEvidence: vi.fn().mockReturnValue({
     collection: {
       decisionId: 'di-test-123',
@@ -73,6 +75,11 @@ vi.mock('@/lib/research/rate-limit', () => ({
 // Plan enforcement — allow through by default
 vi.mock('@/lib/research/plan-enforcement', () => ({
   checkPlanLimit: vi.fn().mockResolvedValue({ ok: true, used: 1, limit: 10, plan: 'STARTER' }),
+}))
+
+// Executive report builder
+vi.mock('@/lib/executive-report', () => ({
+  buildExecutiveReport: mockBuildExecutiveReport,
 }))
 
 import { POST } from './route'
@@ -169,6 +176,7 @@ beforeEach(() => {
   mockOpenAICreate.mockResolvedValue({
     choices: [{ message: { content: AI_NARRATION } }],
   })
+  mockBuildExecutiveReport.mockReturnValue({ schemaVersion: '2.0.0', reportType: 'market_entry', sections: {} })
 })
 
 // ---------------------------------------------------------------------------
@@ -223,5 +231,62 @@ describe('POST /api/intelligence — Decision Intelligence integration', () => {
     expect(body.trustScore.score).toBe(72)
     expect(body.trustScore.band).toBe('HIGH')
     expect(body.trustScore).toEqual(body.decisionReport.trustScore)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Executive Business Report integration tests (AC-21)
+// ---------------------------------------------------------------------------
+
+describe('POST /api/intelligence — Executive Business Report (AC-21)', () => {
+  it('AC-21a: executiveReport is present in response when DI Engine and builder both succeed', async () => {
+    mockRunDecisionEngine.mockReturnValue({ report: mockDIReport })
+    mockBuildExecutiveReport.mockReturnValue({
+      schemaVersion: '2.0.0',
+      reportType: 'market_entry',
+      sections: { executiveSummary: { headline: 'Test headline' } },
+    })
+
+    const req = { json: vi.fn().mockResolvedValue(validBody) } as unknown as Request
+    const res = await POST(req)
+    const body = await res.json()
+
+    expect(res.status).toBe(200)
+    expect(body.executiveReport).toBeDefined()
+    expect(body.executiveReport.schemaVersion).toBe('2.0.0')
+    expect(body.executiveReport.reportType).toBe('market_entry')
+  })
+
+  it('AC-21b: executiveReport is absent when decisionReport is null (DI failed)', async () => {
+    mockRunDecisionEngine.mockImplementation(() => { throw new Error('DI failure') })
+
+    const req = { json: vi.fn().mockResolvedValue(validBody) } as unknown as Request
+    const res = await POST(req)
+    const body = await res.json()
+
+    expect(res.status).toBe(200)
+    expect(body.success).toBe(true)
+    // Narration still returned
+    expect(body.report).toBeDefined()
+    // executiveReport absent — DI failed so builder was never called
+    expect(body.executiveReport).toBeUndefined()
+    expect(mockBuildExecutiveReport).not.toHaveBeenCalled()
+  })
+
+  it('AC-21c: response is 200 with narration report even when builder throws', async () => {
+    mockRunDecisionEngine.mockReturnValue({ report: mockDIReport })
+    mockBuildExecutiveReport.mockImplementation(() => { throw new Error('Builder internal error') })
+
+    const req = { json: vi.fn().mockResolvedValue(validBody) } as unknown as Request
+    const res = await POST(req)
+    const body = await res.json()
+
+    expect(res.status).toBe(200)
+    expect(body.success).toBe(true)
+    // Narration and DI report still returned
+    expect(body.report).toBeDefined()
+    expect(body.decisionReport).toBeDefined()
+    // executiveReport absent — builder threw
+    expect(body.executiveReport).toBeUndefined()
   })
 })

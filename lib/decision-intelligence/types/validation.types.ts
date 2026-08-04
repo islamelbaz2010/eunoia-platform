@@ -107,20 +107,20 @@ export interface ValidationSummary {
 // ---------------------------------------------------------------------------
 
 export interface ValidationThresholds {
-  /** Minimum number of evidence items required. Default: 1. */
+  /** Minimum number of evidence items required. Default: 3. */
   readonly minimumEvidenceCount: number
-  /** Minimum acceptable overall confidence score (0–100). Default: 30. */
+  /** Minimum acceptable overall confidence score (0–100). Default: 40. */
   readonly minimumConfidenceScore: number
   /**
    * Maximum allowable contradiction ratio in evidence (0–1).
    * Above this threshold the consistency stage fails.
-   * Default: 0.5.
+   * Default: 0.3.
    */
   readonly maximumContradictionRatio: number
 }
 
 export const DEFAULT_VALIDATION_THRESHOLDS: ValidationThresholds = {
-  minimumEvidenceCount: 1,
-  minimumConfidenceScore: 30,
-  maximumContradictionRatio: 0.5,
+  minimumEvidenceCount: 3,
+  minimumConfidenceScore: 40,
+  maximumContradictionRatio: 0.3,
 }

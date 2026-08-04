@@ -14,8 +14,10 @@ import type {
   EvidenceCollectionStats,
   EvidenceSourceType,
   EvidenceReference,
+  EvidenceCategory,
 } from '../types/evidence.types'
 import { evidenceId } from '../types/evidence.types'
+import { analyzeEvidenceCoverage } from './evidence-coverage'
 
 // ---------------------------------------------------------------------------
 // Freshness half-lives — how quickly each source type becomes stale
@@ -58,11 +60,22 @@ export interface RawEvidenceInput {
   readonly confidence?: number
   readonly references?: Omit<EvidenceReference, never>[]
   readonly tags?: Record<string, string>
+  /**
+   * Semantic category of this evidence item.
+   * Used for coverage analysis, duplicate detection, and confidence adjustment.
+   */
+  readonly category?: EvidenceCategory
 }
 
 export interface CollectEvidenceOptions {
   readonly decisionId: string
   readonly items: RawEvidenceInput[]
+  /**
+   * Report type for coverage analysis (e.g. 'feasibility', 'campaign_roi').
+   * When provided, the coverage analyser uses the expected categories for
+   * this report type to compute the coverage score and missing hints.
+   */
+  readonly reportType?: string
 }
 
 export interface CollectEvidenceResult {
@@ -197,6 +210,7 @@ export function collectEvidence(options: CollectEvidenceOptions): CollectEvidenc
       references: raw.references ?? [],
       tags: raw.tags ?? {},
       createdAt: new Date().toISOString(),
+      category: raw.category,
     }
 
     validItems.push(item)
@@ -204,10 +218,15 @@ export function collectEvidence(options: CollectEvidenceOptions): CollectEvidenc
 
   const contradicted = detectContradictions(validItems)
 
+  // Run coverage analysis when items are present
+  const coverageReport = validItems.length > 0
+    ? analyzeEvidenceCoverage(validItems, { reportType: options.reportType })
+    : undefined
+
   const collection: EvidenceCollection = {
     decisionId,
     items: validItems,
-    stats: computeStats(validItems, contradicted.size),
+    stats: { ...computeStats(validItems, contradicted.size), coverageReport },
     collectedAt: new Date().toISOString(),
   }
 

@@ -3,8 +3,10 @@ import { createClient } from '@/lib/supabase/server'
 import { checkRateLimit, rateLimitMessage } from '@/lib/research/rate-limit'
 import { checkPlanLimit } from '@/lib/research/plan-enforcement'
 import { PLAN_LABELS } from '@/types/plan.types'
-import { runDecisionEngine, collectEvidence, optionId } from '@/lib/decision-intelligence'
-import type { UniversalDecisionReport, RawEvidenceInput } from '@/lib/decision-intelligence'
+import { runDecisionEngine, collectEvidence, optionId, ruleId } from '@/lib/decision-intelligence'
+import type { UniversalDecisionReport, RawEvidenceInput, BusinessRule } from '@/lib/decision-intelligence'
+import { buildExecutiveReport } from '@/lib/executive-report'
+import type { ExecutiveBusinessReport } from '@/lib/executive-report'
 
 // ── EGYPT REAL ESTATE BENCHMARKS 2026 ──────────────────────────────
 const RE_BENCHMARKS = {
@@ -76,6 +78,8 @@ interface CashflowResult {
   npv: number
   paybackYears: number
   annualCashflows: number[]
+  peakCashShortfall: number
+  availableCapitalProxy: number
   isViable: boolean
   viabilityReason: string
 }
@@ -175,6 +179,17 @@ function calculateCashflow(data: Record<string, string>): CashflowResult {
     if (cumulative >= 0 && paybackYears === projectYears) paybackYears = y
   }
 
+  // Peak financing gap: absolute value of the worst cumulative cash shortfall
+  let cumulativeSum = 0
+  let worstCumulative = 0
+  for (const cf of annualCashflows) {
+    cumulativeSum += cf
+    if (cumulativeSum < worstCumulative) worstCumulative = cumulativeSum
+  }
+  const peakCashShortfall = Math.abs(worstCumulative)
+  // Available capital proxy: form input if provided, else 30% of total cost (Egypt RE dev financing norm)
+  const availableCapitalProxy = parseFloat(data.equityAmount || '0') || totalCost * 0.30
+
   const isViable = netProfit > 0 && npv > 0 && roiAnnual > 0.08
   let viabilityReason = ''
   if (!isViable) {
@@ -196,7 +211,8 @@ function calculateCashflow(data: Record<string, string>): CashflowResult {
     salesAndMarketingCost, totalCost,
     grossProfit, taxAmount, netProfit,
     roi, roiAnnual, npv, paybackYears,
-    annualCashflows, isViable, viabilityReason,
+    annualCashflows, peakCashShortfall, availableCapitalProxy,
+    isViable, viabilityReason,
   }
 }
 
@@ -963,7 +979,81 @@ function buildDIOptions(reportType: string, formData: Record<string, string>) {
   }
 }
 
-function buildDIEvidence(decisionId: string, reportType: string, formData: Record<string, string>) {
+// ── COMPUTED DI METRICS ──────────────────────────────────────────────
+// Extract deterministic domain metrics per report type.
+// These numbers flow into both the DI evidence collection and the rule
+// evaluation context so that rules can evaluate facts like
+// parameters.computed_npv rather than raw user-input strings.
+
+interface ComputedDIMetrics {
+  // feasibility
+  computed_npv?: number
+  computed_roi_annual?: number          // fraction (0.12 = 12%)
+  computed_net_profit?: number
+  computed_is_viable?: boolean
+  computed_financing_gap_exceeded?: boolean
+  // campaign_roi / full_analysis
+  computed_cpl_gap_pct?: number         // positive = above Egypt benchmark
+  computed_wasted_budget_monthly?: number
+  // market_entry
+  computed_budget_sufficient?: boolean
+  computed_monthly_leads_at_budget?: number
+  computed_market_attractiveness_high?: boolean
+  computed_break_even_months?: number
+  // lead_gen
+  computed_qual_rate_pct?: number
+  computed_cac_gap_ratio?: number       // cacCurrent / benchCAC
+  // full_analysis
+  computed_marketing_score?: number
+}
+
+function computeDIMetrics(reportType: string, formData: Record<string, string>): ComputedDIMetrics {
+  switch (reportType) {
+    case 'feasibility': {
+      const cf = calculateCashflow(formData)
+      return {
+        computed_npv:                    cf.npv,
+        computed_roi_annual:             cf.roiAnnual,
+        computed_net_profit:             cf.netProfit,
+        computed_is_viable:              cf.isViable,
+        computed_financing_gap_exceeded: cf.peakCashShortfall > cf.availableCapitalProxy,
+      }
+    }
+    case 'campaign_roi': {
+      const c = calculateCampaignROI(formData)
+      return {
+        computed_cpl_gap_pct:           c.cplGapPct,
+        computed_wasted_budget_monthly: c.wastedBudget,
+      }
+    }
+    case 'market_entry': {
+      const m = calculateMarketEntry(formData)
+      return {
+        computed_budget_sufficient:          m.budgetSufficiency === 'كافي للاختبار',
+        computed_monthly_leads_at_budget:    m.monthlyLeadsAtBudget,
+        computed_market_attractiveness_high: m.mult >= 1.2,
+        computed_break_even_months:          m.breakEvenMonths,
+      }
+    }
+    case 'lead_gen': {
+      const lg = calculateLeadGen(formData)
+      return {
+        computed_qual_rate_pct: lg.qualifiedPct,
+        computed_cac_gap_ratio: lg.cacCurrent > 0 ? lg.cacCurrent / lg.benchCAC : 0,
+      }
+    }
+    case 'full_analysis': {
+      const fa = calculateFullAnalysis(formData)
+      return {
+        computed_marketing_score: fa.marketingScore,
+        computed_cpl_gap_pct:    fa.cplGap,
+      }
+    }
+    default: return {}
+  }
+}
+
+function buildDIEvidence(decisionId: string, reportType: string, formData: Record<string, string>, metrics: ComputedDIMetrics) {
   const now = new Date().toISOString()
   const rawItems: RawEvidenceInput[] = [
     {
@@ -974,6 +1064,7 @@ function buildDIEvidence(decisionId: string, reportType: string, formData: Recor
       retrievedAt: now,
       confidence: 0.85,
       tags: { reportType, domain: 'market_intelligence' },
+      category: 'user_provided',
     },
     {
       title: 'Egypt Real Estate Market Benchmarks 2026',
@@ -985,15 +1076,534 @@ function buildDIEvidence(decisionId: string, reportType: string, formData: Recor
         market_size: 'EGP 600B Egypt real estate 2026',
         developer_avg_margin: '20-35%',
         developer_net_margin: '10-20%',
+        roi_benchmark_min_annual: 0.08,
+        roi_benchmark_max_annual: 0.15,
+        cpl_benchmark_developer_egp: 550,
+        cpl_benchmark_broker_egp: 400,
       },
       sourceType: 'internal_data',
       sourceLabel: 'Eunoia Egypt Real Estate Benchmark Database 2026',
       retrievedAt: now,
-      confidence: 0.80,
+      confidence: 0.88,
       tags: { domain: 'real_estate', market: 'egypt', year: '2026' },
+      category: 'benchmark',
     },
   ]
+
+  // Domain-specific computed evidence items — deterministic, high confidence
+  switch (reportType) {
+    case 'feasibility':
+      if (metrics.computed_npv !== undefined) {
+        rawItems.push({
+          title: 'Deterministic Financial Analysis — NPV, ROI, Net Profit',
+          content: {
+            npv:                metrics.computed_npv,
+            roi_annual_pct:     (metrics.computed_roi_annual ?? 0) * 100,
+            net_profit:         metrics.computed_net_profit,
+            is_viable:          metrics.computed_is_viable,
+          },
+          sourceType: 'internal_data',
+          sourceLabel: 'Eunoia Cashflow Engine v1 — Deterministic DCF Calculation',
+          retrievedAt: now,
+          confidence: 0.93,
+          tags: { domain: 'real_estate', analysis: 'cashflow', method: 'deterministic' },
+          category: 'financial',
+        })
+        rawItems.push({
+          title: 'Project ROI vs Egypt Market Benchmark (8–15% Annual)',
+          content: {
+            project_roi_annual_pct:  (metrics.computed_roi_annual ?? 0) * 100,
+            benchmark_minimum_pct:   8,
+            benchmark_target_pct:    15,
+            meets_minimum_benchmark: (metrics.computed_roi_annual ?? 0) >= 0.08,
+            npv_positive:            (metrics.computed_npv ?? 0) > 0,
+          },
+          sourceType: 'internal_data',
+          sourceLabel: 'Egypt Real Estate ROI Benchmark Comparison 2026',
+          retrievedAt: now,
+          confidence: 0.90,
+          tags: { domain: 'real_estate', type: 'benchmark_comparison' },
+          category: 'benchmark',
+        })
+      }
+      break
+
+    case 'campaign_roi':
+      if (metrics.computed_cpl_gap_pct !== undefined) {
+        rawItems.push({
+          title: 'Campaign CPL Performance vs Egypt Benchmark 2026',
+          content: {
+            cpl_gap_pct:                 metrics.computed_cpl_gap_pct,
+            wasted_budget_monthly_egp:   metrics.computed_wasted_budget_monthly,
+            benchmark_cpl_developer_egp: 550,
+            benchmark_cpl_broker_egp:    400,
+            at_or_below_benchmark:       (metrics.computed_cpl_gap_pct ?? 1) <= 0,
+          },
+          sourceType: 'internal_data',
+          sourceLabel: 'Eunoia Campaign ROI Calculator — Benchmark Analysis',
+          retrievedAt: now,
+          confidence: 0.88,
+          tags: { domain: 'real_estate', type: 'campaign_analysis' },
+          category: 'market_data',
+        })
+      }
+      break
+
+    case 'market_entry':
+      if (metrics.computed_budget_sufficient !== undefined) {
+        rawItems.push({
+          title: 'Market Entry Budget Sufficiency and Lead Forecast',
+          content: {
+            budget_sufficient_for_test:  metrics.computed_budget_sufficient,
+            monthly_leads_at_budget:     metrics.computed_monthly_leads_at_budget,
+            market_attractiveness_high:  metrics.computed_market_attractiveness_high,
+            break_even_months:           metrics.computed_break_even_months,
+            minimum_lead_threshold:      15,
+          },
+          sourceType: 'internal_data',
+          sourceLabel: 'Eunoia Market Entry Calculator',
+          retrievedAt: now,
+          confidence: 0.87,
+          tags: { domain: 'real_estate', type: 'market_entry_analysis' },
+          category: 'market_data',
+        })
+      }
+      break
+
+    case 'lead_gen':
+      if (metrics.computed_qual_rate_pct !== undefined) {
+        rawItems.push({
+          title: 'Lead Qualification Rate and CAC vs Egypt Benchmark',
+          content: {
+            qualification_rate_pct: metrics.computed_qual_rate_pct,
+            benchmark_rate_pct:     20,
+            cac_gap_ratio:          metrics.computed_cac_gap_ratio,
+            meets_qual_benchmark:   (metrics.computed_qual_rate_pct ?? 0) >= 20,
+          },
+          sourceType: 'internal_data',
+          sourceLabel: 'Eunoia Lead Gen Intelligence Calculator',
+          retrievedAt: now,
+          confidence: 0.85,
+          tags: { domain: 'real_estate', type: 'lead_gen_analysis' },
+          category: 'operational',
+        })
+      }
+      break
+
+    case 'full_analysis':
+      if (metrics.computed_marketing_score !== undefined) {
+        rawItems.push({
+          title: 'Composite Marketing Performance Score (0–100)',
+          content: {
+            marketing_score:  metrics.computed_marketing_score,
+            performance_tier: metrics.computed_marketing_score >= 70 ? 'advanced' : metrics.computed_marketing_score >= 45 ? 'intermediate' : 'beginner',
+            cpl_gap_pct:      metrics.computed_cpl_gap_pct,
+          },
+          sourceType: 'internal_data',
+          sourceLabel: 'Eunoia Full Analysis Performance Calculator',
+          retrievedAt: now,
+          confidence: 0.82,
+          tags: { domain: 'real_estate', type: 'full_analysis' },
+          category: 'operational',
+        })
+      }
+      break
+  }
+
   return collectEvidence({ decisionId, items: rawItems }).collection
+}
+
+// ── DOMAIN BUSINESS RULES ────────────────────────────────────────────
+// One rule set per report type.  Rules access fact values via dot-notation
+// paths into RuleFacts.parameters (e.g. parameters.computed_npv).
+// FAIL rules block the option from being recommended.
+// WARN rules reduce the option's rule score by 0.5 each.
+// All thresholds reflect Egypt real estate market benchmarks 2026.
+
+function buildDIRules(reportType: string): BusinessRule[] {
+  switch (reportType) {
+
+    case 'feasibility':
+      return [
+        {
+          id: ruleId('feasibility-financing-gap-blocks-proceed'),
+          name: 'Peak financing gap exceeds available capital — blocks proceed',
+          description: 'A project whose peak construction cash shortfall exceeds available development capital cannot be self-funded to completion.',
+          rationale: 'Egypt RE development 2026: peak financing gap > available equity means the project stalls at peak drawdown without uncommitted external financing.',
+          priority: 5,
+          domains: ['market_intelligence'],
+          category: 'financial',
+          weight: 2.0,
+          conditionGroups: [{ conditions: [
+            { factPath: 'optionId', operator: 'eq', value: 'proceed' },
+            { factPath: 'parameters.computed_financing_gap_exceeded', operator: 'eq', value: true },
+          ]}],
+          firesWithAction: 'FAIL',
+          message: 'Peak construction financing gap exceeds estimated available capital — the project cannot be self-funded through peak drawdown. Secure committed financing or reduce capital requirements before proceeding.',
+          overrideable: true,
+          enabled: true,
+        },
+        {
+          id: ruleId('feasibility-npv-negative-blocks-proceed'),
+          name: 'Negative NPV blocks proceed',
+          description: 'A project with NPV ≤ 0 at the 20% hurdle rate cannot be recommended for immediate execution.',
+          rationale: 'Egypt real estate benchmark: NPV must be positive at a minimum 20% discount rate to justify capital allocation.',
+          priority: 10,
+          domains: ['market_intelligence'],
+          category: 'financial',
+          weight: 2.0,
+          conditionGroups: [{ conditions: [
+            { factPath: 'optionId', operator: 'eq', value: 'proceed' },
+            { factPath: 'parameters.computed_npv', operator: 'lte', value: 0 },
+          ]}],
+          firesWithAction: 'FAIL',
+          message: 'Project NPV is negative — investment does not cover capital costs at the 20% hurdle rate. Revise cost structure or pricing before proceeding.',
+          overrideable: true,
+          enabled: true,
+        },
+        {
+          id: ruleId('feasibility-net-profit-negative-blocks-proceed'),
+          name: 'Negative net profit blocks proceed',
+          description: 'A project with negative after-tax net profit cannot be recommended for immediate execution.',
+          rationale: 'A project that loses money after tax cannot be approved under any standard investment policy.',
+          priority: 20,
+          domains: ['market_intelligence'],
+          category: 'financial',
+          weight: 2.0,
+          conditionGroups: [{ conditions: [
+            { factPath: 'optionId', operator: 'eq', value: 'proceed' },
+            { factPath: 'parameters.computed_net_profit', operator: 'lte', value: 0 },
+          ]}],
+          firesWithAction: 'FAIL',
+          message: 'Project generates negative net profit after tax — costs exceed revenues under current assumptions.',
+          overrideable: true,
+          enabled: true,
+        },
+        {
+          id: ruleId('feasibility-roi-below-egypt-minimum'),
+          name: 'ROI below Egypt market minimum benchmark',
+          description: 'Annual ROI below 8% falls beneath the Egypt real estate market minimum acceptable return.',
+          rationale: 'Egypt real estate benchmark 2026: minimum acceptable annual ROI is 8%. Below this, alternative investments outperform this project.',
+          priority: 30,
+          domains: ['market_intelligence'],
+          category: 'financial',
+          weight: 1.5,
+          conditionGroups: [{ conditions: [
+            { factPath: 'parameters.computed_roi_annual', operator: 'lt', value: 0.08 },
+          ]}],
+          firesWithAction: 'WARN',
+          message: 'Annual ROI is below the Egypt market minimum benchmark of 8%. Consider revising selling price, reducing construction costs, or adjusting project scope.',
+          overrideable: true,
+          enabled: true,
+        },
+        {
+          id: ruleId('feasibility-low-roi-advises-revision'),
+          name: 'Sub-benchmark ROI advises revision over direct proceed',
+          description: 'When annual ROI < 8% but NPV and profit are positive, proceeding without revision is inadvisable.',
+          rationale: 'Egypt RE benchmark 2026: a project returning below the 8% minimum warrants structural revision before committing capital.',
+          priority: 35,
+          domains: ['market_intelligence'],
+          category: 'financial',
+          weight: 1.0,
+          conditionGroups: [{ conditions: [
+            { factPath: 'optionId', operator: 'eq', value: 'proceed' },
+            { factPath: 'parameters.computed_roi_annual', operator: 'lt', value: 0.08 },
+          ]}],
+          firesWithAction: 'WARN',
+          message: 'Annual ROI is below the Egypt market minimum of 8% — proceeding without structural revision is inadvisable.',
+          overrideable: true,
+          enabled: true,
+        },
+        {
+          id: ruleId('feasibility-strong-roi-warns-defer'),
+          name: 'Strong ROI makes deferral costly',
+          description: 'When annual ROI exceeds 15%, deferring the project carries measurable opportunity cost.',
+          rationale: 'A 15%+ annual ROI represents an above-market return. Every month of deferral sacrifices compounding profit.',
+          priority: 40,
+          domains: ['market_intelligence'],
+          category: 'strategic',
+          weight: 1.0,
+          conditionGroups: [{ conditions: [
+            { factPath: 'optionId', operator: 'eq', value: 'defer' },
+            { factPath: 'parameters.computed_roi_annual', operator: 'gte', value: 0.15 },
+          ]}],
+          firesWithAction: 'WARN',
+          message: 'Project ROI exceeds 15% annually — deferring carries measurable opportunity cost at current market conditions.',
+          overrideable: true,
+          enabled: true,
+        },
+        {
+          id: ruleId('feasibility-strong-roi-warns-revise'),
+          name: 'Strong ROI makes major revision unnecessary',
+          description: 'When annual ROI exceeds 15%, major parameter revision risks disrupting a high-performing structure.',
+          rationale: 'A project with 15%+ annual ROI and positive NPV does not require structural revision.',
+          priority: 50,
+          domains: ['market_intelligence'],
+          category: 'strategic',
+          weight: 1.0,
+          conditionGroups: [{ conditions: [
+            { factPath: 'optionId', operator: 'eq', value: 'revise' },
+            { factPath: 'parameters.computed_roi_annual', operator: 'gte', value: 0.15 },
+          ]}],
+          firesWithAction: 'WARN',
+          message: 'Project ROI exceeds 15% annually — major revision is not required and risks disrupting a strong-performing structure.',
+          overrideable: true,
+          enabled: true,
+        },
+      ]
+
+    case 'campaign_roi':
+      return [
+        {
+          id: ruleId('campaign-roi-extreme-cpl-blocks-scale'),
+          name: 'CPL >50% above benchmark blocks budget scaling',
+          description: 'Scaling budget when CPL is more than 50% above the Egypt benchmark amplifies inefficiency.',
+          rationale: 'Egypt benchmark 2026: Developer CPL 550 EGP, Broker 400 EGP. Scaling with CPL 50%+ above benchmark multiplies wasted spend.',
+          priority: 10,
+          domains: ['market_intelligence'],
+          category: 'market',
+          weight: 2.0,
+          conditionGroups: [{ conditions: [
+            { factPath: 'optionId', operator: 'eq', value: 'scale_budget' },
+            { factPath: 'parameters.computed_cpl_gap_pct', operator: 'gt', value: 50 },
+          ]}],
+          firesWithAction: 'FAIL',
+          message: 'CPL is more than 50% above the Egypt 2026 benchmark — scaling budget will amplify wasted spend, not improve results. Fix CPL efficiency first.',
+          overrideable: false,
+          enabled: true,
+        },
+        {
+          id: ruleId('campaign-roi-cpl-above-benchmark-warns-all'),
+          name: 'CPL above benchmark — efficiency warning',
+          description: 'CPL more than 20% above benchmark indicates structural campaign inefficiency requiring action.',
+          rationale: 'Egypt benchmark 2026: CPL gaps above 20% are significant and require active optimization before any other strategic decision.',
+          priority: 20,
+          domains: ['market_intelligence'],
+          category: 'market',
+          weight: 1.5,
+          conditionGroups: [{ conditions: [
+            { factPath: 'parameters.computed_cpl_gap_pct', operator: 'gt', value: 20 },
+          ]}],
+          firesWithAction: 'WARN',
+          message: 'CPL is more than 20% above the Egypt 2026 benchmark — campaign optimization must be a priority regardless of chosen strategy.',
+          overrideable: true,
+          enabled: true,
+        },
+        {
+          id: ruleId('campaign-roi-good-cpl-warns-restructure'),
+          name: 'At-benchmark CPL warns against full restructure',
+          description: 'When CPL is at or below benchmark, restructuring risks disrupting positive performance.',
+          rationale: 'A campaign performing at or below benchmark CPL is generating competitive results. Full restructure introduces disruption risk without clear upside.',
+          priority: 30,
+          domains: ['market_intelligence'],
+          category: 'market',
+          weight: 1.0,
+          conditionGroups: [{ conditions: [
+            { factPath: 'optionId', operator: 'eq', value: 'restructure' },
+            { factPath: 'parameters.computed_cpl_gap_pct', operator: 'lte', value: 0 },
+          ]}],
+          firesWithAction: 'WARN',
+          message: 'CPL is at or below the Egypt benchmark — full restructure risks disrupting a performing system. Optimize incrementally instead.',
+          overrideable: true,
+          enabled: true,
+        },
+      ]
+
+    case 'market_entry':
+      return [
+        {
+          id: ruleId('market-entry-budget-insufficient-blocks-now'),
+          name: 'Insufficient budget blocks immediate market entry',
+          description: 'Entering without sufficient test budget produces statistically unreliable results.',
+          rationale: 'A minimum 30-lead test is required to validate market entry assumptions. Below this threshold, results are not statistically meaningful.',
+          priority: 10,
+          domains: ['market_intelligence'],
+          category: 'financial',
+          weight: 2.0,
+          conditionGroups: [{ conditions: [
+            { factPath: 'optionId', operator: 'eq', value: 'enter_now' },
+            { factPath: 'parameters.computed_budget_sufficient', operator: 'eq', value: false },
+          ]}],
+          firesWithAction: 'FAIL',
+          message: 'Available budget is below the minimum test budget for this market — immediate entry risks campaign failure and unreliable market signals.',
+          overrideable: true,
+          enabled: true,
+        },
+        {
+          id: ruleId('market-entry-low-leads-warns-immediate'),
+          name: 'Low expected leads warns against immediate entry',
+          description: 'Fewer than 15 expected monthly leads is insufficient to generate actionable market intelligence.',
+          rationale: 'Market entry validation requires minimum lead volume to distinguish signal from noise in campaign performance.',
+          priority: 20,
+          domains: ['market_intelligence'],
+          category: 'operational',
+          weight: 1.5,
+          conditionGroups: [{ conditions: [
+            { factPath: 'optionId', operator: 'eq', value: 'enter_now' },
+            { factPath: 'parameters.computed_monthly_leads_at_budget', operator: 'lt', value: 15 },
+          ]}],
+          firesWithAction: 'WARN',
+          message: 'Expected monthly leads at current budget are below 15 — insufficient volume to validate market entry assumptions reliably.',
+          overrideable: true,
+          enabled: true,
+        },
+        {
+          id: ruleId('market-entry-good-conditions-warns-hold'),
+          name: 'Strong conditions make holding entry costly',
+          description: 'Holding when budget is sufficient and market attractiveness is high carries first-mover opportunity cost.',
+          rationale: 'High-attractiveness markets attract competitors. Delaying in favorable conditions cedes first-mover advantage.',
+          priority: 30,
+          domains: ['market_intelligence'],
+          category: 'strategic',
+          weight: 1.0,
+          conditionGroups: [{ conditions: [
+            { factPath: 'optionId', operator: 'eq', value: 'hold' },
+            { factPath: 'parameters.computed_budget_sufficient', operator: 'eq', value: true },
+            { factPath: 'parameters.computed_market_attractiveness_high', operator: 'eq', value: true },
+          ]}],
+          firesWithAction: 'WARN',
+          message: 'Budget is sufficient and market attractiveness is high — holding entry risks losing first-mover advantage to competitors.',
+          overrideable: true,
+          enabled: true,
+        },
+        {
+          id: ruleId('market-entry-long-breakeven-warns-immediate'),
+          name: 'Long break-even period warns against full immediate entry',
+          description: 'A break-even period exceeding 9 months suggests phased entry to manage capital risk.',
+          rationale: 'Egyptian market entry benchmarks: break-even within 6–9 months is the target range. Beyond 9 months, phased entry reduces capital-at-risk.',
+          priority: 40,
+          domains: ['market_intelligence'],
+          category: 'financial',
+          weight: 1.5,
+          conditionGroups: [{ conditions: [
+            { factPath: 'optionId', operator: 'eq', value: 'enter_now' },
+            { factPath: 'parameters.computed_break_even_months', operator: 'gt', value: 9 },
+          ]}],
+          firesWithAction: 'WARN',
+          message: 'Break-even period exceeds 9 months — consider a phased entry to manage capital risk and validate before full commitment.',
+          overrideable: true,
+          enabled: true,
+        },
+      ]
+
+    case 'lead_gen':
+      return [
+        {
+          id: ruleId('lead-gen-high-cac-blocks-volume-increase'),
+          name: 'CAC >2.5× benchmark blocks lead volume increase',
+          description: 'Increasing lead volume when CAC is more than 2.5× the benchmark multiplies losses.',
+          rationale: 'Egypt benchmark 2026: Developer CAC ~12,500 EGP, Broker ~5,000 EGP. At 2.5× these benchmarks, unit economics are fundamentally broken.',
+          priority: 10,
+          domains: ['market_intelligence'],
+          category: 'financial',
+          weight: 2.0,
+          conditionGroups: [{ conditions: [
+            { factPath: 'optionId', operator: 'eq', value: 'increase_volume' },
+            { factPath: 'parameters.computed_cac_gap_ratio', operator: 'gt', value: 2.5 },
+          ]}],
+          firesWithAction: 'FAIL',
+          message: 'Customer Acquisition Cost exceeds 2.5× the Egypt benchmark — increasing lead volume will multiply losses. Fix qualification and conversion first.',
+          overrideable: false,
+          enabled: true,
+        },
+        {
+          id: ruleId('lead-gen-low-qual-rate-warns-volume'),
+          name: 'Low qualification rate warns against volume increase',
+          description: 'A qualification rate below 8% means more leads will not proportionally produce more deals.',
+          rationale: 'Egypt real estate benchmark: 15–25% qualification rate. Below 8% indicates a fundamental targeting or qualification framework problem.',
+          priority: 20,
+          domains: ['market_intelligence'],
+          category: 'operational',
+          weight: 1.5,
+          conditionGroups: [{ conditions: [
+            { factPath: 'optionId', operator: 'eq', value: 'increase_volume' },
+            { factPath: 'parameters.computed_qual_rate_pct', operator: 'lt', value: 8 },
+          ]}],
+          firesWithAction: 'WARN',
+          message: 'Qualification rate is below 8% — generating more leads without fixing qualification will not meaningfully increase deals or revenue.',
+          overrideable: true,
+          enabled: true,
+        },
+        {
+          id: ruleId('lead-gen-benchmark-qual-warns-tighten'),
+          name: 'Above-benchmark qualification warns against further tightening',
+          description: 'When qualification rate already meets the benchmark, further tightening may reduce total deal flow.',
+          rationale: 'Egypt benchmark: 20% qualification rate is the target. Above this, tightening reduces lead volume without proportional deal improvement.',
+          priority: 30,
+          domains: ['market_intelligence'],
+          category: 'operational',
+          weight: 1.0,
+          conditionGroups: [{ conditions: [
+            { factPath: 'optionId', operator: 'eq', value: 'qualify_better' },
+            { factPath: 'parameters.computed_qual_rate_pct', operator: 'gte', value: 20 },
+          ]}],
+          firesWithAction: 'WARN',
+          message: 'Qualification rate meets or exceeds the 20% Egypt benchmark — further tightening may reduce total deal flow without proportional benefit.',
+          overrideable: true,
+          enabled: true,
+        },
+      ]
+
+    case 'full_analysis':
+      return [
+        {
+          id: ruleId('full-analysis-very-low-score-blocks-growth'),
+          name: 'Very low marketing score blocks growth investment',
+          description: 'Marketing infrastructure below 25/100 is too weak to absorb growth investment productively.',
+          rationale: 'Growth investment without marketing fundamentals in place generates negative ROI and wastes capital.',
+          priority: 10,
+          domains: ['market_intelligence'],
+          category: 'operational',
+          weight: 2.0,
+          conditionGroups: [{ conditions: [
+            { factPath: 'optionId', operator: 'eq', value: 'invest_growth' },
+            { factPath: 'parameters.computed_marketing_score', operator: 'lt', value: 25 },
+          ]}],
+          firesWithAction: 'FAIL',
+          message: 'Marketing score is below 25/100 — foundational marketing infrastructure must be established before growth investment produces measurable returns.',
+          overrideable: true,
+          enabled: true,
+        },
+        {
+          id: ruleId('full-analysis-low-score-warns-growth'),
+          name: 'Low marketing score warns against growth investment',
+          description: 'Marketing score below 45 indicates the foundation cannot efficiently absorb growth capital.',
+          rationale: 'Growth investment on a weak marketing foundation produces diminishing returns. Fixing fundamentals first delivers higher ROI per EGP spent.',
+          priority: 20,
+          domains: ['market_intelligence'],
+          category: 'operational',
+          weight: 1.5,
+          conditionGroups: [{ conditions: [
+            { factPath: 'optionId', operator: 'eq', value: 'invest_growth' },
+            { factPath: 'parameters.computed_marketing_score', operator: 'lt', value: 45 },
+          ]}],
+          firesWithAction: 'WARN',
+          message: 'Marketing score below 45/100 — scaling investment without fixing foundational issues significantly reduces growth ROI.',
+          overrideable: true,
+          enabled: true,
+        },
+        {
+          id: ruleId('full-analysis-strong-score-warns-restructure'),
+          name: 'Strong marketing score warns against full restructure',
+          description: 'When marketing score exceeds 65, full strategy restructure risks disrupting a performing system.',
+          rationale: 'A marketing system scoring 65+ is performing above average for Egypt real estate. Restructure introduces disruption risk without guaranteed improvement.',
+          priority: 30,
+          domains: ['market_intelligence'],
+          category: 'strategic',
+          weight: 1.0,
+          conditionGroups: [{ conditions: [
+            { factPath: 'optionId', operator: 'eq', value: 'restructure_strategy' },
+            { factPath: 'parameters.computed_marketing_score', operator: 'gte', value: 65 },
+          ]}],
+          firesWithAction: 'WARN',
+          message: 'Marketing score exceeds 65/100 — full strategy restructure risks disrupting a performing system. Optimize incrementally rather than restructure.',
+          overrideable: true,
+          enabled: true,
+        },
+      ]
+
+    default: return []
+  }
 }
 // ── END DI ENGINE HELPERS ─────────────────────────────────────────────
 
@@ -1071,6 +1681,7 @@ export async function POST(request: Request) {
     let decisionReport: UniversalDecisionReport | null = null
     try {
       const diDecisionId = requestId ?? `di-${Date.now()}`
+      const diMetrics = computeDIMetrics(reportType, formData)
       const diResult = runDecisionEngine({
         input: {
           subject: {
@@ -1080,7 +1691,7 @@ export async function POST(request: Request) {
           },
           context: {
             question: `What is the optimal decision for this ${reportType.replace(/_/g, ' ')} analysis?`,
-            parameters: formData as Record<string, unknown>,
+            parameters: { ...formData, ...diMetrics } as Record<string, unknown>,
             constraints: [],
             objectives: ['maximize_roi', 'minimize_risk', 'optimize_market_position'],
           },
@@ -1088,8 +1699,8 @@ export async function POST(request: Request) {
           requestedBy: 'user',
           requestedByUserId: user.id,
         },
-        evidence: buildDIEvidence(diDecisionId, reportType, formData),
-        rules: [],
+        evidence: buildDIEvidence(diDecisionId, reportType, formData, diMetrics),
+        rules: buildDIRules(reportType),
       })
       decisionReport = diResult.report
     } catch (err) {
@@ -1130,6 +1741,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Failed to parse AI response', raw: rawText.slice(0, 500) }, { status: 500 })
     }
 
+    // Build Executive Business Report — fail-safe: never breaks existing response
+    let executiveReport: ExecutiveBusinessReport | null = null
+    try {
+      if (decisionReport) {
+        executiveReport = buildExecutiveReport(reportType, decisionReport, reportData)
+      }
+    } catch (err) {
+      console.error('[intelligence/executive-report]', err)
+    }
+
     // Save to Supabase (reports table may not be in generated types yet)
     const { data: reportRow, error: dbError } = await sb
       .from('reports')
@@ -1139,6 +1760,8 @@ export async function POST(request: Request) {
         company_name: formData.companyName ?? formData.projectName ?? 'Unknown',
         city: formData.city ?? formData.targetCity ?? '',
         report_data: reportData,
+        decision_report: decisionReport ?? null,
+        trust_score: decisionReport?.trustScore ?? null,
         created_at: new Date().toISOString(),
       })
       .select('id')
@@ -1147,13 +1770,17 @@ export async function POST(request: Request) {
     if (requestId) await sb.from('research_requests').update({ status: 'completed', result_report_id: reportRow?.id ?? null }).eq('id', requestId)
     if (dbError) console.error('[intelligence] DB error:', dbError.message)
 
+    // Suppress GPT-embedded confidence_score: only the DI engine confidence reaches the client
+    // to prevent contradictory signals in investment committee reports.
+    const { confidence_score: _gptConfidence, ...reportToClient } = reportData as Record<string, unknown>
     return NextResponse.json({
       success: true,
-      report: reportData,
+      report: reportToClient,
       ...(decisionReport && {
         decisionReport,
         trustScore: decisionReport.trustScore,
       }),
+      ...(executiveReport && { executiveReport }),
     })
   } catch (err) {
     console.error('[intelligence] Error:', err)
