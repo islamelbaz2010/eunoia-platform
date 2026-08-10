@@ -82,8 +82,16 @@ export async function POST(req: NextRequest) {
 
       if (reportRow?.decision_report) {
         const dr = reportRow.decision_report as Record<string, unknown>
-        system_recommendation = typeof dr.recommendedOptionId === 'string' ? dr.recommendedOptionId : null
-        system_confidence = typeof dr.confidence === 'number' ? dr.confidence : null
+        // UniversalDecisionReport nests the recommendation under .recommendation.recommendedOptionId
+        const rec = dr.recommendation as Record<string, unknown> | null | undefined
+        const rawRec = typeof rec?.recommendedOptionId === 'string' ? rec.recommendedOptionId : null
+        // Guard against DB check constraint: only ('proceed','revise','error') are accepted
+        system_recommendation = (rawRec === 'proceed' || rawRec === 'revise' || rawRec === 'error')
+          ? rawRec
+          : null
+        // UniversalDecisionReport stores confidence as a ConfidenceScore object; the numeric value is .overall
+        const conf = dr.confidence as Record<string, unknown> | null | undefined
+        system_confidence = typeof conf?.overall === 'number' ? Math.round(conf.overall) : null
         system_trust_score = typeof reportRow.trust_score === 'number' ? reportRow.trust_score : null
       }
     }
